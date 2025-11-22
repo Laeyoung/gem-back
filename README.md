@@ -2,7 +2,7 @@
 
 > Smart Gemini API Fallback Library for Node.js & TypeScript
 
-[![npm version](https://badge.fury.io/js/gem-back.svg)](https://www.npmjs.com/package/gem-back)
+[![npm version](https://badge.fury.io/js/gemback.svg)](https://www.npmjs.com/package/gemback)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 
@@ -40,11 +40,11 @@ gemini-2.0-flash-lite (경량 안정 버전)
 ## 📦 설치
 
 ```bash
-npm install gem-back
+npm install gemback
 # 또는
-yarn add gem-back
+yarn add gemback
 # 또는
-pnpm add gem-back
+pnpm add gemback
 ```
 
 ---
@@ -54,7 +54,7 @@ pnpm add gem-back
 ### 기본 사용법
 
 ```typescript
-import { GeminiBackClient } from 'gem-back';
+import { GeminiBackClient } from 'gemback';
 
 // 클라이언트 생성
 const client = new GeminiBackClient({
@@ -318,7 +318,7 @@ MIT License - 자유롭게 사용, 수정, 배포할 수 있습니다.
 
 - **문서**: [API Documentation](https://github.com/Laeyoung/gem-back/docs)
 - **이슈**: [GitHub Issues](https://github.com/Laeyoung/gem-back/issues)
-- **NPM**: [npm package](https://www.npmjs.com/package/gem-back)
+- **NPM**: [npm package](https://www.npmjs.com/package/gemback)
 - **Gemini API**: [Google AI Gemini](https://ai.google.dev/docs)
 
 ---
