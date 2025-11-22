@@ -8,10 +8,7 @@ export async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  options: RetryOptions
-): Promise<T> {
+export async function retryWithBackoff<T>(fn: () => Promise<T>, options: RetryOptions): Promise<T> {
   const { maxRetries, delay, shouldRetry } = options;
   let lastError: Error;
 

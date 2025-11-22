@@ -1,31 +1,86 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { GeminiModel } from '../types/models';
 import type { GenerateOptions } from '../types/config';
 import type { GeminiResponse } from '../types/response';
 
 export class GeminiClient {
-  private _apiKey: string;
-  private _timeout: number;
+  private genAI: GoogleGenerativeAI;
+  private timeout: number;
 
   constructor(apiKey: string, timeout = 30000) {
-    this._apiKey = apiKey;
-    this._timeout = timeout;
+    this.genAI = new GoogleGenerativeAI(apiKey);
+    this.timeout = timeout;
   }
 
   async generate(
-    _prompt: string,
-    _model: GeminiModel,
-    _options?: GenerateOptions
+    prompt: string,
+    modelName: GeminiModel,
+    options?: GenerateOptions
   ): Promise<GeminiResponse> {
-    // TODO: Implement actual Gemini API call
-    throw new Error('Not implemented yet');
+    const model = this.genAI.getGenerativeModel({
+      model: modelName,
+    });
+
+    const generationConfig = {
+      temperature: options?.temperature,
+      maxOutputTokens: options?.maxTokens,
+      topP: options?.topP,
+      topK: options?.topK,
+    };
+
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Request timeout')), this.timeout);
+    });
+
+    const generatePromise = model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig,
+    });
+
+    const result = await Promise.race([generatePromise, timeoutPromise]);
+    const response = result.response;
+    const text = response.text();
+
+    return {
+      text,
+      model: modelName,
+      finishReason: response.candidates?.[0]?.finishReason,
+      usage: response.usageMetadata
+        ? {
+            promptTokens: response.usageMetadata.promptTokenCount || 0,
+            completionTokens: response.usageMetadata.candidatesTokenCount || 0,
+            totalTokens: response.usageMetadata.totalTokenCount || 0,
+          }
+        : undefined,
+    };
   }
 
   async *generateStream(
-    _prompt: string,
-    _model: GeminiModel,
-    _options?: GenerateOptions
+    prompt: string,
+    modelName: GeminiModel,
+    options?: GenerateOptions
   ): AsyncGenerator<{ text: string }> {
-    // TODO: Implement streaming
-    throw new Error('Not implemented yet');
+    const model = this.genAI.getGenerativeModel({
+      model: modelName,
+    });
+
+    const generationConfig = {
+      temperature: options?.temperature,
+      maxOutputTokens: options?.maxTokens,
+      topP: options?.topP,
+      topK: options?.topK,
+    };
+
+    const result = await model.generateContentStream({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig,
+    });
+
+    for await (const chunk of result.stream) {
+      const chunkText = chunk.text();
+      if (chunkText) {
+        yield { text: chunkText };
+      }
+    }
   }
 }
