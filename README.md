@@ -14,10 +14,17 @@
 
 Gemini API는 무료 티어에서 **RPM(분당 요청 수) 제한**이 있어, 높은 트래픽 상황에서 `429 Too Many Requests` 에러가 발생합니다. Gem Back은 이 문제를 다음과 같이 해결합니다:
 
+### 핵심 기능 ✨
+
 - ✅ **자동 Fallback**: 한 모델이 실패하면 자동으로 다음 모델로 전환
 - ✅ **스마트 재시도**: Exponential Backoff로 일시적 오류 처리
+- ✅ **스트리밍 지원**: 실시간 응답 스트리밍 (`generateStream()`)
+- ✅ **대화형 인터페이스**: 멀티턴 대화 지원 (`chat()`)
+- ✅ **통계 추적**: 모델별 사용률 및 성공률 모니터링
 - ✅ **제로 설정**: 기본 설정만으로 바로 사용 가능
 - ✅ **완벽한 타입 지원**: TypeScript로 작성되어 자동완성 지원
+- ✅ **이중 모듈**: CommonJS + ESM 동시 지원
+- ✅ **완전한 테스트**: 66개 테스트로 검증된 안정성
 
 ---
 
@@ -275,23 +282,31 @@ const client = new GeminiBackClient({
 
 ## 🗺️ 로드맵
 
-### Phase 1: Core Features ✅ (진행 중)
+### Phase 1: Core Features ✅ (완료 - v0.1.0)
 - [x] 프로젝트 구조 설계
-- [ ] 기본 Fallback 로직
-- [ ] 4개 모델 지원
-- [ ] TypeScript 타입 정의
+- [x] 기본 Fallback 로직
+- [x] 4개 모델 지원
+- [x] TypeScript 타입 정의
+- [x] 자동 재시도 with Exponential Backoff
+- [x] 스트리밍 응답 지원
+- [x] 대화형 인터페이스 (chat)
+- [x] 통계 추적 기능
+- [x] 완전한 테스트 커버리지 (66개 테스트)
+- [x] 종합 문서화 및 예제
 
-### Phase 2: Advanced Features
-- [ ] Rate Limiting 추적
-- [ ] 응답 캐싱
-- [ ] 멀티 API 키 지원
+### Phase 2: Advanced Features (계획 중)
+- [ ] Rate Limiting 추적 및 예측
+- [ ] 응답 캐싱 (중복 요청 최적화)
+- [ ] 멀티 API 키 지원 및 로테이션
 - [ ] Circuit Breaker 패턴
+- [ ] Health Check 및 모델 상태 모니터링
+- [ ] Connection Pooling
 
-### Phase 3: Ecosystem
+### Phase 3: Ecosystem (향후 계획)
 - [ ] CLI 도구
-- [ ] 웹 대시보드
-- [ ] 모니터링 통합
-- [ ] 추가 모델 지원
+- [ ] 웹 대시보드 (실시간 모니터링)
+- [ ] 모니터링 통합 (Prometheus, Grafana)
+- [ ] 추가 AI 모델 지원 (Claude, GPT 등)
 
 ---
 
