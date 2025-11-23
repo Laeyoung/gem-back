@@ -4,20 +4,20 @@ import type { GenerateOptions } from '../types/config';
 import type { GeminiResponse } from '../types/response';
 
 export class GeminiClient {
-  private genAI: GoogleGenerativeAI;
   private timeout: number;
 
-  constructor(apiKey: string, timeout = 30000) {
-    this.genAI = new GoogleGenerativeAI(apiKey);
+  constructor(timeout = 30000) {
     this.timeout = timeout;
   }
 
   async generate(
     prompt: string,
     modelName: GeminiModel,
+    apiKey: string,
     options?: GenerateOptions
   ): Promise<GeminiResponse> {
-    const model = this.genAI.getGenerativeModel({
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
       model: modelName,
     });
 
@@ -58,9 +58,11 @@ export class GeminiClient {
   async *generateStream(
     prompt: string,
     modelName: GeminiModel,
+    apiKey: string,
     options?: GenerateOptions
   ): AsyncGenerator<{ text: string }> {
-    const model = this.genAI.getGenerativeModel({
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
       model: modelName,
     });
 

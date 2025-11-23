@@ -13,4 +13,5 @@ export const DEFAULT_CLIENT_OPTIONS: Partial<GeminiBackClientOptions> = {
   retryDelay: DEFAULT_RETRY_DELAY,
   debug: false,
   logLevel: DEFAULT_LOG_LEVEL,
+  apiKeyRotationStrategy: 'round-robin',
 };

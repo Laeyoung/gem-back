@@ -1,80 +1,85 @@
 # 💎 Gem Back
 
-> Smart Gemini API Fallback Library for Node.js & TypeScript
+> Smart Gemini API Fallback Library with Multi-Key Rotation & Monitoring
 
 [![npm version](https://badge.fury.io/js/gemback.svg)](https://www.npmjs.com/package/gemback)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+[![Tests](https://img.shields.io/badge/tests-165%20passing-brightgreen.svg)](https://github.com/Laeyoung/gem-back)
 
-**Gem Back**은 Google Gemini API의 RPM(Requests Per Minute) 제한을 자동으로 처리하는 Fallback 시스템을 제공하는 NPM 라이브러리입니다.
+**Gem Back** is an NPM library that provides an intelligent fallback system and production-grade monitoring for Google Gemini API, automatically handling RPM (Requests Per Minute) rate limits.
 
----
-
-## 🎯 왜 Gem Back인가?
-
-Gemini API는 무료 티어에서 **RPM(분당 요청 수) 제한**이 있어, 높은 트래픽 상황에서 `429 Too Many Requests` 에러가 발생합니다. Gem Back은 이 문제를 다음과 같이 해결합니다:
-
-### 핵심 기능 ✨
-
-- ✅ **자동 Fallback**: 한 모델이 실패하면 자동으로 다음 모델로 전환
-- ✅ **스마트 재시도**: Exponential Backoff로 일시적 오류 처리
-- ✅ **스트리밍 지원**: 실시간 응답 스트리밍 (`generateStream()`)
-- ✅ **대화형 인터페이스**: 멀티턴 대화 지원 (`chat()`)
-- ✅ **통계 추적**: 모델별 사용률 및 성공률 모니터링
-- ✅ **제로 설정**: 기본 설정만으로 바로 사용 가능
-- ✅ **완벽한 타입 지원**: TypeScript로 작성되어 자동완성 지원
-- ✅ **이중 모듈**: CommonJS + ESM 동시 지원
-- ✅ **완전한 테스트**: 66개 테스트로 검증된 안정성
+**[한국어 문서](./README.ko.md)** | **[Examples](./examples)** | **[Changelog](./CHANGELOG.md)**
 
 ---
 
-## 🚀 지원 모델
+## 🎯 Why Gem Back?
 
-Gem Back은 다음 4개 모델의 Fallback 체인을 지원합니다:
+The Gemini API has **RPM (Requests Per Minute) limits** on the free tier, causing `429 Too Many Requests` errors in high-traffic scenarios. Gem Back solves this problem with:
+
+### Key Features ✨
+
+- ✅ **Automatic Fallback**: Seamlessly switches to alternate models when one fails
+- ✅ **Smart Retry**: Handles transient errors with Exponential Backoff
+- ✅ **Multi-Key Rotation**: Rotates through multiple API keys to bypass RPM limits
+- ✅ **Streaming Support**: Real-time response streaming (`generateStream()`)
+- ✅ **Conversational Interface**: Multi-turn chat support (`chat()`)
+- ✅ **Statistics Tracking**: Monitor usage and success rates per model/key
+- ✅ **Zero Configuration**: Works out of the box with sensible defaults
+- ✅ **Full TypeScript Support**: Complete type definitions and autocomplete
+- ✅ **Dual Module Format**: CommonJS + ESM support
+- ✅ **Extensively Tested**: 165 tests verify reliability
+- ✅ **Monitoring & Tracking**: Rate limit prediction and model health monitoring
+
+---
+
+## 🚀 Supported Models
+
+Gem Back supports automatic fallback across 4 Gemini models:
 
 ```
-gemini-2.5-flash (최신, 최고 성능)
-  ↓ 실패 시
-gemini-2.5-flash-lite (경량 버전)
-  ↓ 실패 시
-gemini-2.0-flash (안정 버전)
-  ↓ 실패 시
-gemini-2.0-flash-lite (경량 안정 버전)
+gemini-2.5-flash (Latest, highest performance)
+  ↓ On failure
+gemini-2.5-flash-lite (Lightweight version)
+  ↓ On failure
+gemini-2.0-flash (Stable version)
+  ↓ On failure
+gemini-2.0-flash-lite (Lightweight stable version)
 ```
 
 ---
 
-## 📦 설치
+## 📦 Installation
 
 ```bash
 npm install gemback
-# 또는
+# or
 yarn add gemback
-# 또는
+# or
 pnpm add gemback
 ```
 
 ---
 
-## ⚡ 빠른 시작
+## ⚡ Quick Start
 
-### 기본 사용법
+### Basic Usage
 
 ```typescript
 import { GeminiBackClient } from 'gemback';
 
-// 클라이언트 생성
+// Create client
 const client = new GeminiBackClient({
   apiKey: process.env.GEMINI_API_KEY
 });
 
-// 텍스트 생성
-const response = await client.generate('안녕하세요, Gemini!');
+// Generate text
+const response = await client.generate('Hello, Gemini!');
 console.log(response.text);
-// 자동으로 최적의 모델을 선택하여 응답
+// Automatically selects the best model and handles fallback
 ```
 
-### 커스텀 Fallback 순서
+### Custom Fallback Order
 
 ```typescript
 const client = new GeminiBackClient({
@@ -85,56 +90,159 @@ const client = new GeminiBackClient({
   ],
   maxRetries: 3,
   timeout: 30000,
-  debug: true // 상세 로그 출력
+  debug: true // Enable detailed logging
 });
 ```
 
-### 스트리밍 응답
+### Streaming Response
 
 ```typescript
-const stream = await client.generateStream('긴 이야기를 들려주세요');
+const stream = client.generateStream('Tell me a long story');
 
 for await (const chunk of stream) {
   process.stdout.write(chunk.text);
 }
 ```
 
----
+### Multi-Key Rotation (New!)
 
-## 📖 주요 기능
-
-### 1. 자동 Fallback
+Effectively bypass RPM limits by using multiple API keys:
 
 ```typescript
-// gemini-2.5-flash가 RPM 제한에 걸리면
-// 자동으로 gemini-2.5-flash-lite로 전환
-const response = await client.generate('복잡한 질문');
+const client = new GeminiBackClient({
+  apiKeys: [
+    process.env.GEMINI_API_KEY_1,
+    process.env.GEMINI_API_KEY_2,
+    process.env.GEMINI_API_KEY_3
+  ],
+  apiKeyRotationStrategy: 'round-robin' // or 'least-used'
+});
+
+// Automatically rotates through keys for each request
+const response1 = await client.generate('First question'); // Uses key_1
+const response2 = await client.generate('Second question'); // Uses key_2
+const response3 = await client.generate('Third question'); // Uses key_3
+
+// Check per-key statistics
+const stats = client.getFallbackStats();
+console.log(stats.apiKeyStats); // Usage and success rate per key
 ```
 
-### 2. 재시도 로직
+**Rotation Strategies:**
+- `round-robin` (default): Rotate through keys sequentially
+- `least-used`: Prioritize the least-used key
+
+### Monitoring & Tracking (New!)
+
+Improve stability with real-time rate limit tracking and model health monitoring:
+
+```typescript
+const client = new GeminiBackClient({
+  apiKey: process.env.GEMINI_API_KEY,
+  enableMonitoring: true  // Enable monitoring
+});
+
+// Use the API
+await client.generate('Question 1');
+await client.generate('Question 2');
+// ...
+
+// Get detailed monitoring statistics
+const stats = client.getFallbackStats();
+
+// Check rate limit status
+console.log(stats.monitoring?.rateLimitStatus);
+// [
+//   {
+//     model: 'gemini-2.5-flash',
+//     currentRPM: 5,          // Current requests per minute
+//     maxRPM: 15,             // Maximum RPM
+//     utilizationPercent: 33, // Utilization percentage
+//     isNearLimit: false,     // Near limit warning
+//     willExceedSoon: false,  // Will exceed soon warning
+//     windowStats: {
+//       requestsInLastMinute: 5,
+//       requestsInLast5Minutes: 12,
+//       averageRPM: 2.4
+//     }
+//   }
+// ]
+
+// Check model health status
+console.log(stats.monitoring?.modelHealth);
+// [
+//   {
+//     model: 'gemini-2.5-flash',
+//     status: 'healthy',           // healthy | degraded | unhealthy
+//     successRate: 0.98,           // Success rate
+//     averageResponseTime: 1234,   // Average response time (ms)
+//     availability: 0.99,          // Availability
+//     consecutiveFailures: 0,      // Consecutive failures
+//     metrics: {
+//       totalRequests: 100,
+//       successfulRequests: 98,
+//       failedRequests: 2,
+//       p50ResponseTime: 1100,     // 50th percentile
+//       p95ResponseTime: 1800,     // 95th percentile
+//       p99ResponseTime: 2100      // 99th percentile
+//     }
+//   }
+// ]
+
+// Overall summary
+console.log(stats.monitoring?.summary);
+// {
+//   healthyModels: 3,
+//   degradedModels: 1,
+//   unhealthyModels: 0,
+//   overallSuccessRate: 0.96,
+//   averageResponseTime: 1500
+// }
+```
+
+**Monitoring Features:**
+- ✅ **Rate Limit Tracking**: Real-time RPM usage tracking per model
+- ✅ **Predictive Warnings**: Automatic warnings before hitting limits (80%, 90% thresholds)
+- ✅ **Health Monitoring**: Track success rate, response time, and availability per model
+- ✅ **Percentile Metrics**: Analyze p50, p95, p99 response times
+- ✅ **Failure Detection**: Automatic status detection (healthy/degraded/unhealthy)
+
+---
+
+## 📖 Core Features
+
+### 1. Automatic Fallback
+
+```typescript
+// Automatically falls back to gemini-2.5-flash-lite
+// when gemini-2.5-flash hits rate limit
+const response = await client.generate('Complex question');
+```
+
+### 2. Retry Logic
 
 ```typescript
 const client = new GeminiBackClient({
   apiKey: 'YOUR_KEY',
-  maxRetries: 3, // 각 모델당 최대 3번 재시도
-  retryDelay: 1000 // 초기 재시도 대기 시간 (ms)
+  maxRetries: 3, // Max retries per model
+  retryDelay: 1000 // Initial retry delay (ms)
 });
 ```
 
-### 3. 에러 처리
+### 3. Error Handling
 
 ```typescript
 try {
   const response = await client.generate('Hello');
 } catch (error) {
   if (error instanceof GeminiBackError) {
-    console.log('시도한 모델들:', error.allAttempts);
-    console.log('마지막 에러:', error.message);
+    console.log('Models attempted:', error.allAttempts);
+    console.log('Last error:', error.message);
   }
 }
 ```
 
-### 4. 통계 조회
+### 4. Statistics
 
 ```typescript
 const stats = client.getFallbackStats();
@@ -142,17 +250,40 @@ console.log(stats);
 // {
 //   totalRequests: 100,
 //   successRate: 0.95,
+//   failureCount: 5,
 //   modelUsage: {
 //     'gemini-2.5-flash': 70,
 //     'gemini-2.5-flash-lite': 25,
 //     'gemini-2.0-flash': 5
+//   },
+//   apiKeyStats: [  // Only in multi-key mode
+//     {
+//       keyIndex: 0,
+//       totalRequests: 35,
+//       successCount: 33,
+//       failureCount: 2,
+//       successRate: 0.94,
+//       lastUsed: Date
+//     },
+//     // ... other keys
+//   ],
+//   monitoring: {  // Only when enableMonitoring: true
+//     rateLimitStatus: [...],  // Rate limit status per model
+//     modelHealth: [...],      // Health status per model
+//     summary: {
+//       healthyModels: 3,
+//       degradedModels: 1,
+//       unhealthyModels: 0,
+//       overallSuccessRate: 0.96,
+//       averageResponseTime: 1500
+//     }
 //   }
 // }
 ```
 
 ---
 
-## 🔧 API 레퍼런스
+## 🔧 API Reference
 
 ### `GeminiBackClient`
 
@@ -160,25 +291,31 @@ console.log(stats);
 
 ```typescript
 interface GeminiBackClientOptions {
-  apiKey: string;                    // 필수: Gemini API 키
-  fallbackOrder?: GeminiModel[];     // 선택: Fallback 순서
-  maxRetries?: number;               // 선택: 최대 재시도 횟수 (기본: 2)
-  timeout?: number;                  // 선택: 요청 타임아웃 (기본: 30000ms)
-  retryDelay?: number;               // 선택: 초기 재시도 대기 시간 (기본: 1000ms)
-  debug?: boolean;                   // 선택: 디버그 로그 (기본: false)
+  apiKey?: string;                   // Gemini API key (single key)
+  apiKeys?: string[];                // Multiple API keys (multi-key mode)
+  fallbackOrder?: GeminiModel[];     // Optional: Fallback order
+  maxRetries?: number;               // Optional: Max retries (default: 2)
+  timeout?: number;                  // Optional: Request timeout (default: 30000ms)
+  retryDelay?: number;               // Optional: Initial retry delay (default: 1000ms)
+  debug?: boolean;                   // Optional: Debug logging (default: false)
   logLevel?: 'debug' | 'info' | 'warn' | 'error' | 'silent';
+  apiKeyRotationStrategy?: 'round-robin' | 'least-used'; // Key rotation strategy (default: round-robin)
+  enableMonitoring?: boolean;        // Optional: Enable monitoring (default: false)
+  enableRateLimitPrediction?: boolean; // Optional: Rate limit prediction warnings (default: false)
 }
 ```
 
-#### 메서드
+**Note:** Either `apiKey` or `apiKeys` must be provided.
+
+#### Methods
 
 ##### `generate(prompt, options?)`
 
-단일 텍스트 생성 요청
+Generate text response
 
 ```typescript
 const response = await client.generate('Hello!', {
-  model: 'gemini-2.5-flash',  // 특정 모델 지정
+  model: 'gemini-2.5-flash',  // Specify model
   temperature: 0.7,
   maxTokens: 1000
 });
@@ -186,10 +323,10 @@ const response = await client.generate('Hello!', {
 
 ##### `generateStream(prompt, options?)`
 
-스트리밍 텍스트 생성
+Generate streaming response
 
 ```typescript
-const stream = await client.generateStream('Tell me a story');
+const stream = client.generateStream('Tell me a story');
 for await (const chunk of stream) {
   console.log(chunk.text);
 }
@@ -197,19 +334,19 @@ for await (const chunk of stream) {
 
 ##### `chat(messages, options?)`
 
-대화형 인터페이스
+Conversational interface
 
 ```typescript
 const response = await client.chat([
-  { role: 'user', content: '안녕하세요' },
-  { role: 'assistant', content: '안녕하세요! 무엇을 도와드릴까요?' },
-  { role: 'user', content: 'TypeScript에 대해 알려주세요' }
+  { role: 'user', content: 'Hello' },
+  { role: 'assistant', content: 'Hi! How can I help?' },
+  { role: 'user', content: 'Tell me about TypeScript' }
 ]);
 ```
 
 ##### `getFallbackStats()`
 
-Fallback 통계 조회
+Get fallback statistics
 
 ```typescript
 const stats = client.getFallbackStats();
@@ -217,58 +354,78 @@ const stats = client.getFallbackStats();
 
 ---
 
-## ⚙️ 설정 옵션
+## ⚙️ Configuration
 
-### Fallback 동작 커스터마이징
+### Basic Configuration
 
 ```typescript
 const client = new GeminiBackClient({
   apiKey: 'YOUR_KEY',
 
-  // 사용할 모델만 지정
+  // Specify models to use
   fallbackOrder: [
     'gemini-2.5-flash',
     'gemini-2.0-flash-lite'
   ],
 
-  // 재시도 설정
+  // Retry settings
   maxRetries: 3,
   retryDelay: 2000,
 
-  // 타임아웃 설정
+  // Timeout settings
   timeout: 60000,
 
-  // 로깅 설정
+  // Logging settings
   debug: true,
+  logLevel: 'info'
+});
+```
+
+### Advanced Configuration (v0.2.0)
+
+```typescript
+const client = new GeminiBackClient({
+  // Multi-key rotation (v0.2.0+)
+  apiKeys: ['KEY_1', 'KEY_2', 'KEY_3'],
+  apiKeyRotationStrategy: 'least-used',  // or 'round-robin'
+
+  // Monitoring & tracking (v0.2.0+)
+  enableMonitoring: true,                // Enable monitoring
+  enableRateLimitPrediction: true,       // Rate limit prediction warnings
+
+  // Base settings
+  fallbackOrder: ['gemini-2.5-flash', 'gemini-2.0-flash'],
+  maxRetries: 2,
+  timeout: 30000,
   logLevel: 'info'
 });
 ```
 
 ---
 
-## 🔄 Fallback 동작 방식
+## 🔄 Fallback Behavior
 
-### 처리 시나리오
+### Error Handling Scenarios
 
-| 에러 타입 | 처리 방법 |
+| Error Type | Handling |
 |-----------|-----------|
-| **429 RPM 제한** | ⚡ 즉시 다음 모델로 Fallback |
-| **5xx 서버 에러** | 🔄 재시도 후 다음 모델 |
-| **타임아웃** | 🔄 재시도 후 다음 모델 |
-| **401/403 인증 에러** | ❌ 즉시 실패 (Fallback 중단) |
-| **모든 모델 실패** | ❌ 상세 에러 정보 반환 |
+| **429 RPM Limit** | ⚡ Immediate fallback to next model |
+| **5xx Server Error** | 🔄 Retry then fallback |
+| **Timeout** | 🔄 Retry then fallback |
+| **401/403 Auth Error** | ❌ Immediate failure (stop fallback) |
+| **All Models Failed** | ❌ Return detailed error info |
 
-### 재시도 전략
+### Retry Strategy
 
-- **Exponential Backoff**: 1초 → 2초 → 4초 → ...
-- **재시도 가능 에러**: 5xx, Timeout, Network Error
-- **재시도 불가 에러**: 4xx (429 제외), 인증 에러
+- **Exponential Backoff**: 1s → 2s → 4s → ...
+- **Retryable Errors**: 5xx, Timeout, Network Error
+- **Non-retryable Errors**: 4xx (except 429), Auth errors
 
 ---
 
-## 📊 로깅 예시
+## 📊 Logging Examples
 
-`debug: true`로 설정 시:
+### Basic Logging (`debug: true`)
 
 ```
 [GemBack] Attempting: gemini-2.5-flash
@@ -278,61 +435,111 @@ const client = new GeminiBackClient({
 [GemBack] Success: gemini-2.5-flash-lite (2nd attempt)
 ```
 
----
+### With Monitoring Enabled (`enableMonitoring: true`)
 
-## 🗺️ 로드맵
-
-### Phase 1: Core Features ✅ (완료 - v0.1.0)
-- [x] 프로젝트 구조 설계
-- [x] 기본 Fallback 로직
-- [x] 4개 모델 지원
-- [x] TypeScript 타입 정의
-- [x] 자동 재시도 with Exponential Backoff
-- [x] 스트리밍 응답 지원
-- [x] 대화형 인터페이스 (chat)
-- [x] 통계 추적 기능
-- [x] 완전한 테스트 커버리지 (66개 테스트)
-- [x] 종합 문서화 및 예제
-
-### Phase 2: Advanced Features (계획 중)
-- [ ] Rate Limiting 추적 및 예측
-- [ ] 응답 캐싱 (중복 요청 최적화)
-- [ ] 멀티 API 키 지원 및 로테이션
-- [ ] Circuit Breaker 패턴
-- [ ] Health Check 및 모델 상태 모니터링
-- [ ] Connection Pooling
-
-### Phase 3: Ecosystem (향후 계획)
-- [ ] CLI 도구
-- [ ] 웹 대시보드 (실시간 모니터링)
-- [ ] 모니터링 통합 (Prometheus, Grafana)
-- [ ] 추가 AI 모델 지원 (Claude, GPT 등)
+```
+[GemBack] Monitoring enabled: Rate limit tracking and health monitoring
+[GemBack] Attempting: gemini-2.5-flash (API Key #1)
+[GemBack] Rate limit warning for gemini-2.5-flash: 12/15 RPM
+[GemBack] Success: gemini-2.5-flash (1234ms)
+```
 
 ---
 
-## 🤝 기여하기
+## 🗺️ Roadmap
 
-기여를 환영합니다! 다음 방법으로 참여할 수 있습니다:
+### Phase 1: Core Features ✅ (Completed - v0.1.0)
+- [x] Project structure
+- [x] Basic fallback logic
+- [x] 4 model support
+- [x] TypeScript type definitions
+- [x] Automatic retry with Exponential Backoff
+- [x] Streaming response support
+- [x] Conversational interface (chat)
+- [x] Statistics tracking
+- [x] Comprehensive test coverage (100 tests)
+- [x] Complete documentation and examples
 
-1. 이슈 리포트
-2. 기능 제안
-3. Pull Request
-4. 문서 개선
+### Phase 2: Advanced Features ✅ (Completed - v0.2.0)
 
-자세한 내용은 [CONTRIBUTING.md](CONTRIBUTING.md)를 참조하세요.
+Phase 2 added advanced features to improve production stability.
+
+#### 🔐 Multi-Key Support & Rotation ✅
+- [x] **Load balancing with multiple API keys**
+  - Automatic key rotation to bypass RPM limits
+  - Support for round-robin and least-used strategies
+  - Per-key usage tracking and statistics
+
+#### 📊 Monitoring & Tracking ✅
+- [x] **Rate Limit Tracking & Prediction**
+  - Real-time usage tracking per model
+  - Predictive warnings before hitting limits (80%, 90% thresholds)
+  - Sliding window analysis (1-minute, 5-minute)
+
+- [x] **Health Check & Model Status Monitoring**
+  - Status monitoring per model (response time, success rate, availability)
+  - Real-time health status (healthy/degraded/unhealthy)
+  - Percentile-based performance metrics (p50, p95, p99)
+  - Consecutive failure detection and tracking
+
+**Phase 2 Achievements:**
+- ✅ 165 comprehensive tests (65% increase from Phase 1)
+- ✅ Production-level monitoring system
+- ✅ Multi-key rotation for RPM limit bypass
+- ✅ Real-time model health tracking
+
+### Phase 3: Performance & Ecosystem (Planned)
+
+Phase 3 will focus on performance optimization and ecosystem expansion.
+
+#### ⚡ Performance Optimization
+- [ ] **Response Caching**
+  - Reduce API calls with caching
+  - TTL-based cache expiration
+  - Memory-efficient cache strategy
+
+- [ ] **Connection Pooling**
+  - Improve performance with connection reuse
+  - Optimize concurrent request handling
+  - Efficient resource usage
+
+#### 🛡️ Advanced Reliability Patterns
+- [ ] **Circuit Breaker Pattern**
+  - Temporary blocking on persistent failures
+  - Automatic recovery and retry
+  - System overload prevention
+
+#### 🌐 Ecosystem Expansion
+- [ ] CLI tools
+- [ ] Web dashboard (real-time monitoring)
+- [ ] Monitoring integration (Prometheus, Grafana)
+- [ ] Additional AI model support (Claude, GPT, etc.)
 
 ---
 
-## 📄 라이선스
+## 🤝 Contributing
 
-MIT License - 자유롭게 사용, 수정, 배포할 수 있습니다.
+Contributions are welcome! You can participate by:
+
+1. Reporting issues
+2. Suggesting features
+3. Submitting pull requests
+4. Improving documentation
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ---
 
-## 🔗 링크
+## 📄 License
 
-- **문서**: [API Documentation](https://github.com/Laeyoung/gem-back/docs)
-- **이슈**: [GitHub Issues](https://github.com/Laeyoung/gem-back/issues)
+MIT License - Free to use, modify, and distribute.
+
+---
+
+## 🔗 Links
+
+- **Documentation**: [API Documentation](https://github.com/Laeyoung/gem-back/docs)
+- **Issues**: [GitHub Issues](https://github.com/Laeyoung/gem-back/issues)
 - **NPM**: [npm package](https://www.npmjs.com/package/gemback)
 - **Gemini API**: [Google AI Gemini](https://ai.google.dev/docs)
 
@@ -340,17 +547,17 @@ MIT License - 자유롭게 사용, 수정, 배포할 수 있습니다.
 
 ## 💡 FAQ
 
-### Q: API 키는 어디서 발급받나요?
-A: [Google AI Studio](https://makersuite.google.com/app/apikey)에서 무료로 발급받을 수 있습니다.
+### Q: Where can I get an API key?
+A: Get a free API key at [Google AI Studio](https://makersuite.google.com/app/apikey).
 
-### Q: 모든 모델이 실패하면 어떻게 되나요?
-A: `GeminiBackError`를 throw하며, 모든 시도 내역이 포함됩니다.
+### Q: What happens when all models fail?
+A: Throws `GeminiBackError` with details of all attempts.
 
-### Q: 특정 모델만 사용하고 싶어요
-A: `fallbackOrder` 옵션에 원하는 모델만 배열로 전달하세요.
+### Q: Can I use only specific models?
+A: Yes, pass your preferred models in the `fallbackOrder` option.
 
-### Q: 비용은 어떻게 되나요?
-A: Gemini API 자체 비용만 발생하며, Gem Back은 무료 오픈소스입니다.
+### Q: What are the costs?
+A: Only Gemini API costs apply. Gem Back is free and open-source.
 
 ---
 

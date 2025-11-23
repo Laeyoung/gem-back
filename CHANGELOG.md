@@ -7,6 +7,97 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-11-23
+
+### Added
+
+#### 🔐 Multi API Key Support and Rotation
+- **Multiple API key management**: Support for using multiple API keys to bypass RPM limits
+- **Rotation strategies**:
+  - `round-robin`: Sequentially rotate through keys
+  - `least-used`: Prioritize the least-used key
+- **Per-key statistics**: Track usage, success/failure counts, and success rates for each key
+- `ApiKeyRotator` class for intelligent key management
+- 15 new tests for multi-key functionality
+
+#### 📊 Monitoring & Tracking System
+- **Rate Limit Tracker** (`RateLimitTracker`):
+  - Real-time RPM (Requests Per Minute) tracking per model
+  - Sliding window analysis (1-minute and 5-minute windows)
+  - Predictive warnings:
+    - 80% threshold: "Near limit" warning
+    - 90% threshold: "Will exceed soon" warning
+  - Recommended wait time calculation
+  - Customizable rate limits per model
+  - 21 comprehensive unit tests
+
+- **Health Monitor** (`HealthMonitor`):
+  - Model health status classification:
+    - `healthy`: ≥95% success rate, <3s response time
+    - `degraded`: 80-95% success rate, 3-5s response time
+    - `unhealthy`: <80% success rate or >5s response time
+  - Performance metrics:
+    - Average response time
+    - Percentile metrics (p50, p95, p99)
+    - Success rate and availability tracking
+    - Consecutive failure detection
+  - 29 comprehensive unit tests
+
+- **FallbackClient Integration**:
+  - `enableMonitoring` option for opt-in monitoring
+  - Automatic tracking for both `generate()` and `generateStream()`
+  - Extended `getFallbackStats()` with monitoring data:
+    - Rate limit status for all models
+    - Health status for all models
+    - Summary statistics across all models
+  - 15 integration tests for monitoring features
+
+### Enhanced
+
+- **Configuration Options**:
+  - Added `apiKeys` option for multi-key mode (alternative to `apiKey`)
+  - Added `apiKeyRotationStrategy` option ('round-robin' | 'least-used')
+  - Added `enableMonitoring` option to activate monitoring features
+  - Added `enableRateLimitPrediction` option for rate limit warnings
+
+- **Statistics**:
+  - Extended `FallbackStats` with optional `apiKeyStats` array
+  - Extended `FallbackStats` with optional `monitoring` object containing:
+    - Rate limit status per model
+    - Health metrics per model
+    - Overall summary statistics
+
+### Documentation
+
+- Updated README.md with:
+  - Multi-key rotation usage examples
+  - Comprehensive monitoring feature documentation
+  - Updated API reference with new options
+  - Phase 2 completion status
+- Added `examples/multi-key-example.ts` with 8 usage examples
+- Added `examples/monitoring-example.ts` with 5 monitoring examples
+- Updated PLAN.md with Phase 2 completion and Phase 3 roadmap
+
+### Testing
+
+- **Total tests increased from 100 to 165 (65% increase)**:
+  - 21 unit tests for RateLimitTracker
+  - 29 unit tests for HealthMonitor
+  - 15 unit tests for ApiKeyRotator
+  - 11 integration tests for multi-key functionality
+  - 15 integration tests for monitoring features
+- All 165 tests passing
+
+### Performance
+
+- Monitoring system uses efficient sliding windows for minimal overhead
+- Optional monitoring features have zero impact when disabled
+- Multi-key rotation optimizes RPM limit usage across keys
+
+### Breaking Changes
+
+- None - v0.2.0 is fully backward compatible with v0.1.0
+
 ## [0.1.0] - 2025-11-22
 
 ### Added
@@ -52,5 +143,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contribution guidelines
 - MIT License
 
-[Unreleased]: https://github.com/Laeyoung/gem-back/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Laeyoung/gem-back/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Laeyoung/gem-back/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Laeyoung/gem-back/releases/tag/v0.1.0

@@ -115,9 +115,14 @@ describe('GeminiBackClient', () => {
       const client = new GeminiBackClient({ apiKey: 'test-key' });
       await client.generate('Hello', { model: 'gemini-2.0-flash' });
 
-      expect(mockGeminiClient.generate).toHaveBeenCalledWith('Hello', 'gemini-2.0-flash', {
-        model: 'gemini-2.0-flash',
-      });
+      expect(mockGeminiClient.generate).toHaveBeenCalledWith(
+        'Hello',
+        'gemini-2.0-flash',
+        'test-key',
+        {
+          model: 'gemini-2.0-flash',
+        }
+      );
     });
 
     it('should retry on retryable errors', async () => {
@@ -210,6 +215,7 @@ describe('GeminiBackClient', () => {
       expect(mockGeminiClient.generate).toHaveBeenCalledWith(
         expectedPrompt,
         'gemini-2.5-flash',
+        'test-key',
         undefined
       );
     });
@@ -230,6 +236,7 @@ describe('GeminiBackClient', () => {
           'gemini-2.0-flash-lite': 0,
         },
         failureCount: 0,
+        apiKeyStats: undefined,
       });
     });
 
@@ -301,6 +308,149 @@ describe('GeminiBackClient', () => {
       expect(stats.totalRequests).toBe(3);
       expect(stats.successRate).toBeCloseTo(0.6667, 2);
       expect(stats.failureCount).toBe(1);
+    });
+  });
+
+  describe('Multi API Key Support', () => {
+    it('should initialize with multiple API keys', () => {
+      const client = new GeminiBackClient({
+        apiKeys: ['key1', 'key2', 'key3'],
+      });
+      expect(client).toBeInstanceOf(GeminiBackClient);
+    });
+
+    it('should throw error when neither apiKey nor apiKeys provided', () => {
+      expect(() => new GeminiBackClient({} as any)).toThrow(
+        'Either apiKey or apiKeys must be provided'
+      );
+    });
+
+    it('should rotate through API keys with round-robin', async () => {
+      const mockResponse = {
+        text: 'Success',
+        model: 'gemini-2.5-flash' as const,
+        finishReason: 'STOP',
+      };
+      mockGeminiClient.generate.mockResolvedValue(mockResponse);
+
+      const client = new GeminiBackClient({
+        apiKeys: ['key1', 'key2', 'key3'],
+        apiKeyRotationStrategy: 'round-robin',
+      });
+
+      await client.generate('Hello');
+      await client.generate('Hello');
+      await client.generate('Hello');
+
+      const calls = mockGeminiClient.generate.mock.calls;
+      expect(calls[0][2]).toBe('key1'); // First call uses key1
+      expect(calls[1][2]).toBe('key2'); // Second call uses key2
+      expect(calls[2][2]).toBe('key3'); // Third call uses key3
+    });
+
+    it('should use least-used strategy when specified', async () => {
+      const mockResponse = {
+        text: 'Success',
+        model: 'gemini-2.5-flash' as const,
+        finishReason: 'STOP',
+      };
+      mockGeminiClient.generate.mockResolvedValue(mockResponse);
+
+      const client = new GeminiBackClient({
+        apiKeys: ['key1', 'key2'],
+        apiKeyRotationStrategy: 'least-used',
+      });
+
+      await client.generate('Hello');
+      await client.generate('Hello');
+
+      const calls = mockGeminiClient.generate.mock.calls;
+      expect(calls[0][2]).toBe('key1');
+      expect(calls[1][2]).toBe('key2');
+    });
+
+    it('should track API key usage in stats', async () => {
+      const mockResponse = {
+        text: 'Success',
+        model: 'gemini-2.5-flash' as const,
+        finishReason: 'STOP',
+      };
+      mockGeminiClient.generate.mockResolvedValue(mockResponse);
+
+      const client = new GeminiBackClient({
+        apiKeys: ['key1', 'key2'],
+      });
+
+      await client.generate('Hello');
+      await client.generate('Hello');
+
+      const stats = client.getFallbackStats();
+      expect(stats.apiKeyStats).toBeDefined();
+      expect(stats.apiKeyStats).toHaveLength(2);
+      expect(stats.apiKeyStats![0].totalRequests).toBe(1);
+      expect(stats.apiKeyStats![1].totalRequests).toBe(1);
+      expect(stats.apiKeyStats![0].successCount).toBe(1);
+      expect(stats.apiKeyStats![1].successCount).toBe(1);
+    });
+
+    it('should track API key failures', async () => {
+      const error = new Error('500 Server error');
+      mockGeminiClient.generate.mockRejectedValue(error);
+
+      const client = new GeminiBackClient({
+        apiKeys: ['key1', 'key2'],
+        maxRetries: 0,
+      });
+
+      try {
+        await client.generate('Hello');
+      } catch (e) {
+        // Expected
+      }
+
+      const stats = client.getFallbackStats();
+      expect(stats.apiKeyStats).toBeDefined();
+      expect(stats.apiKeyStats![0].failureCount).toBe(1);
+      expect(stats.apiKeyStats![0].successRate).toBe(0);
+    });
+
+    it('should work with single apiKey in backward compatibility mode', async () => {
+      const mockResponse = {
+        text: 'Success',
+        model: 'gemini-2.5-flash' as const,
+        finishReason: 'STOP',
+      };
+      mockGeminiClient.generate.mockResolvedValue(mockResponse);
+
+      const client = new GeminiBackClient({
+        apiKey: 'single-key',
+      });
+
+      await client.generate('Hello');
+
+      const stats = client.getFallbackStats();
+      expect(stats.apiKeyStats).toBeUndefined(); // Single key mode doesn't track
+    });
+
+    it('should stream with multiple API keys', async () => {
+      async function* mockStream() {
+        yield { text: 'Hello' };
+      }
+      mockGeminiClient.generateStream.mockReturnValue(mockStream());
+
+      const client = new GeminiBackClient({
+        apiKeys: ['key1', 'key2'],
+      });
+
+      const stream = client.generateStream('Hello');
+      const chunks = [];
+      for await (const chunk of stream) {
+        chunks.push(chunk);
+      }
+
+      const call = mockGeminiClient.generateStream.mock.calls[0];
+      expect(call[2]).toBe('key1'); // Should use first key
+      expect(chunks).toHaveLength(2); // 1 text + 1 complete
     });
   });
 });

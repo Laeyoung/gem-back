@@ -39,21 +39,21 @@ describe('GeminiClient', () => {
   });
 
   describe('constructor', () => {
-    it('should initialize with API key', () => {
-      const client = new GeminiClient('test-api-key');
+    it('should initialize with default timeout', () => {
+      const client = new GeminiClient();
       expect(client).toBeInstanceOf(GeminiClient);
     });
 
     it('should initialize with custom timeout', () => {
-      const client = new GeminiClient('test-api-key', 60000);
+      const client = new GeminiClient(60000);
       expect(client).toBeInstanceOf(GeminiClient);
     });
   });
 
   describe('generate', () => {
     it('should generate text successfully', async () => {
-      const client = new GeminiClient('test-api-key');
-      const response = await client.generate('Hello', 'gemini-2.5-flash');
+      const client = new GeminiClient();
+      const response = await client.generate('Hello', 'gemini-2.5-flash', 'test-api-key');
 
       expect(response).toEqual({
         text: 'Mock response text',
@@ -72,8 +72,8 @@ describe('GeminiClient', () => {
     });
 
     it('should pass generation options', async () => {
-      const client = new GeminiClient('test-api-key');
-      await client.generate('Hello', 'gemini-2.5-flash', {
+      const client = new GeminiClient();
+      await client.generate('Hello', 'gemini-2.5-flash', 'test-api-key', {
         temperature: 0.7,
         maxTokens: 1000,
         topP: 0.9,
@@ -94,15 +94,17 @@ describe('GeminiClient', () => {
     it('should throw error on API failure', async () => {
       mockGenerateContent.mockRejectedValue(new Error('API Error'));
 
-      const client = new GeminiClient('test-api-key');
-      await expect(client.generate('Hello', 'gemini-2.5-flash')).rejects.toThrow('API Error');
+      const client = new GeminiClient();
+      await expect(client.generate('Hello', 'gemini-2.5-flash', 'test-api-key')).rejects.toThrow(
+        'API Error'
+      );
     });
 
     it('should timeout after specified duration', async () => {
       mockGenerateContent.mockImplementation(() => new Promise(() => {})); // Never resolves
 
-      const client = new GeminiClient('test-api-key', 100);
-      await expect(client.generate('Hello', 'gemini-2.5-flash')).rejects.toThrow(
+      const client = new GeminiClient(100);
+      await expect(client.generate('Hello', 'gemini-2.5-flash', 'test-api-key')).rejects.toThrow(
         'Request timeout'
       );
     }, 10000);
@@ -110,8 +112,8 @@ describe('GeminiClient', () => {
 
   describe('generateStream', () => {
     it('should stream text successfully', async () => {
-      const client = new GeminiClient('test-api-key');
-      const stream = client.generateStream('Hello', 'gemini-2.5-flash');
+      const client = new GeminiClient();
+      const stream = client.generateStream('Hello', 'gemini-2.5-flash', 'test-api-key');
 
       const chunks: string[] = [];
       for await (const chunk of stream) {
@@ -122,8 +124,8 @@ describe('GeminiClient', () => {
     });
 
     it('should pass generation options for streaming', async () => {
-      const client = new GeminiClient('test-api-key');
-      const stream = client.generateStream('Hello', 'gemini-2.5-flash', {
+      const client = new GeminiClient();
+      const stream = client.generateStream('Hello', 'gemini-2.5-flash', 'test-api-key', {
         temperature: 0.5,
         maxTokens: 500,
       });
@@ -147,8 +149,8 @@ describe('GeminiClient', () => {
     it('should throw error on stream failure', async () => {
       mockGenerateContentStream.mockRejectedValue(new Error('Stream Error'));
 
-      const client = new GeminiClient('test-api-key');
-      const stream = client.generateStream('Hello', 'gemini-2.5-flash');
+      const client = new GeminiClient();
+      const stream = client.generateStream('Hello', 'gemini-2.5-flash', 'test-api-key');
 
       await expect(async () => {
         for await (const _ of stream) {
