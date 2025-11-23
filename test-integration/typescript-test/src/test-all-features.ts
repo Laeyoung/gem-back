@@ -7,17 +7,18 @@
 import {
   GeminiBackClient,
   type GeminiBackClientOptions,
-  type GenerateResponse,
+  type GeminiResponse,
   type GenerateOptions,
   type ChatMessage,
-  type FallbackStats
+  type FallbackStats,
+  type HealthStatus
 } from 'gemback';
 
 async function testBasicGeneration(client: GeminiBackClient): Promise<void> {
   console.log('\n📝 Test 1: Type-Safe Text Generation');
   console.log('─'.repeat(50));
 
-  const response: GenerateResponse = await client.generate('What is 2+2? Answer in one sentence.');
+  const response: GeminiResponse = await client.generate('What is 2+2? Answer in one sentence.');
   console.log('✅ Response:', response.text);
   console.log('   Model:', response.model);
   console.log('   Types verified: text is string, model is string');
@@ -33,7 +34,7 @@ async function testGenerationWithOptions(client: GeminiBackClient): Promise<void
     maxTokens: 100
   };
 
-  const response: GenerateResponse = await client.generate('Tell me a short joke.', options);
+  const response: GeminiResponse = await client.generate('Tell me a short joke.', options);
   console.log('✅ Response with options:', response.text.substring(0, 50) + '...');
   console.log('   Options type-checked at compile time');
 }
@@ -64,7 +65,7 @@ async function testChatInterface(client: GeminiBackClient): Promise<void> {
     { role: 'user', content: 'Can you help me with TypeScript?' }
   ];
 
-  const response: GenerateResponse = await client.chat(messages);
+  const response: GeminiResponse = await client.chat(messages);
   console.log('✅ Chat response:', response.text.substring(0, 100) + '...');
   console.log('   Messages type-checked at compile time');
 }
@@ -131,32 +132,38 @@ async function testMonitoring(): Promise<void> {
   const stats: FallbackStats = client.getFallbackStats();
 
   if (stats.monitoring) {
-    console.log('✅ Rate Limit Status (type-safe):');
-    stats.monitoring.rateLimitStatus.forEach(status => {
-      // All properties are type-checked
-      const model: string = status.model;
-      const currentRPM: number = status.currentRPM;
-      const maxRPM: number = status.maxRPM;
-      const utilization: number = status.utilizationPercent;
+    if (stats.monitoring.rateLimitStatus) {
+      console.log('✅ Rate Limit Status (type-safe):');
+      stats.monitoring.rateLimitStatus.forEach(status => {
+        // All properties are type-checked
+        const model: string = status.model;
+        const currentRPM: number = status.currentRPM;
+        const maxRPM: number = status.maxRPM;
+        const utilization: number = status.utilizationPercent;
 
-      console.log(`   ${model}: ${currentRPM}/${maxRPM} RPM (${utilization}%)`);
-    });
+        console.log(`   ${model}: ${currentRPM}/${maxRPM} RPM (${utilization}%)`);
+      });
+    }
 
-    console.log('\n✅ Model Health (type-safe):');
-    stats.monitoring.modelHealth.forEach(health => {
-      const model: string = health.model;
-      const status: 'healthy' | 'degraded' | 'unhealthy' = health.status;
-      const successRate: number = health.successRate;
-      const avgResponseTime: number = health.averageResponseTime;
+    if (stats.monitoring.modelHealth) {
+      console.log('\n✅ Model Health (type-safe):');
+      stats.monitoring.modelHealth.forEach(health => {
+        const model: string = health.model;
+        const status: HealthStatus = health.status;
+        const successRate: number = health.successRate;
+        const avgResponseTime: number = health.averageResponseTime;
 
-      console.log(`   ${model}: ${status} (success: ${(successRate * 100).toFixed(1)}%, avg: ${avgResponseTime}ms)`);
-    });
+        console.log(`   ${model}: ${status} (success: ${(successRate * 100).toFixed(1)}%, avg: ${avgResponseTime}ms)`);
+      });
+    }
 
-    console.log('\n✅ Summary (type-safe):');
-    const summary = stats.monitoring.summary;
-    console.log(`   Healthy models: ${summary.healthyModels}`);
-    console.log(`   Overall success rate: ${(summary.overallSuccessRate * 100).toFixed(1)}%`);
-    console.log(`   Average response time: ${summary.averageResponseTime}ms`);
+    if (stats.monitoring.summary) {
+      console.log('\n✅ Summary (type-safe):');
+      const summary = stats.monitoring.summary;
+      console.log(`   Healthy models: ${summary.healthyModels}`);
+      console.log(`   Overall success rate: ${(summary.overallSuccessRate * 100).toFixed(1)}%`);
+      console.log(`   Average response time: ${summary.averageResponseTime}ms`);
+    }
   }
 }
 

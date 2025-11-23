@@ -4,7 +4,7 @@
  * This tests the type safety and functionality of gemback in a TypeScript environment
  */
 
-import { GeminiBackClient, type GeminiBackClientOptions, type GenerateResponse } from 'gemback';
+import { GeminiBackClient, type GeminiBackClientOptions, type GeminiResponse } from 'gemback';
 
 async function main(): Promise<void> {
   console.log('=== TypeScript Integration Test ===\n');
@@ -60,7 +60,7 @@ async function main(): Promise<void> {
 
     // Test 2: Simple text generation with typed response
     console.log('Test 2: Type-safe text generation');
-    const response: GenerateResponse = await client.generate('Say "Hello from TypeScript test!" in a friendly way.');
+    const response: GeminiResponse = await client.generate('Say "Hello from TypeScript test!" in a friendly way.');
 
     // TypeScript should enforce these properties exist
     const text: string = response.text;
