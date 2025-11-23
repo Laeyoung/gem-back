@@ -39,3 +39,10 @@ logs/
 tmp/
 temp/
 .cache/
+
+# Package files
+*.tgz
+
+# Test integration builds
+test-integration/*/dist/
+test-integration/*/node_modules/

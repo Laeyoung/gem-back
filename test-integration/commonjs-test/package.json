@@ -1,0 +1,17 @@
+{
+  "name": "gemback-commonjs-test",
+  "version": "1.0.0",
+  "description": "CommonJS integration test for gemback",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node index.js",
+    "test:all": "node test-all-features.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "gemback": "file:../../gemback-0.2.0.tgz"
+  }
+}
