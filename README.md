@@ -25,7 +25,8 @@ Gemini API는 무료 티어에서 **RPM(분당 요청 수) 제한**이 있어, �
 - ✅ **제로 설정**: 기본 설정만으로 바로 사용 가능
 - ✅ **완벽한 타입 지원**: TypeScript로 작성되어 자동완성 지원
 - ✅ **이중 모듈**: CommonJS + ESM 동시 지원
-- ✅ **완전한 테스트**: 89개 테스트로 검증된 안정성
+- ✅ **완전한 테스트**: 165개 테스트로 검증된 안정성
+- ✅ **모니터링 & 추적**: Rate limiting 예측 및 모델 Health 모니터링
 
 ---
 
@@ -128,6 +129,81 @@ console.log(stats.apiKeyStats); // 각 키의 사용량, 성공률 등
 - `round-robin` (기본값): 순차적으로 키를 순환
 - `least-used`: 가장 적게 사용된 키를 우선 선택
 
+### 모니터링 & 추적 (신규!)
+
+실시간 Rate Limiting 추적 및 모델 Health 모니터링으로 안정성을 향상시킬 수 있습니다:
+
+```typescript
+const client = new GeminiBackClient({
+  apiKey: process.env.GEMINI_API_KEY,
+  enableMonitoring: true  // 모니터링 활성화
+});
+
+// API 사용
+await client.generate('질문 1');
+await client.generate('질문 2');
+// ...
+
+// 상세 모니터링 통계 조회
+const stats = client.getFallbackStats();
+
+// Rate Limit 상태 확인
+console.log(stats.monitoring?.rateLimitStatus);
+// [
+//   {
+//     model: 'gemini-2.5-flash',
+//     currentRPM: 5,          // 현재 분당 요청 수
+//     maxRPM: 15,             // 최대 RPM
+//     utilizationPercent: 33, // 사용률
+//     isNearLimit: false,     // 한계 접근 여부
+//     willExceedSoon: false,  // 곧 초과 예상 여부
+//     windowStats: {
+//       requestsInLastMinute: 5,
+//       requestsInLast5Minutes: 12,
+//       averageRPM: 2.4
+//     }
+//   }
+// ]
+
+// 모델 Health 상태 확인
+console.log(stats.monitoring?.modelHealth);
+// [
+//   {
+//     model: 'gemini-2.5-flash',
+//     status: 'healthy',           // healthy | degraded | unhealthy
+//     successRate: 0.98,           // 성공률
+//     averageResponseTime: 1234,   // 평균 응답 시간 (ms)
+//     availability: 0.99,          // 가용성
+//     consecutiveFailures: 0,      // 연속 실패 횟수
+//     metrics: {
+//       totalRequests: 100,
+//       successfulRequests: 98,
+//       failedRequests: 2,
+//       p50ResponseTime: 1100,     // 50th percentile
+//       p95ResponseTime: 1800,     // 95th percentile
+//       p99ResponseTime: 2100      // 99th percentile
+//     }
+//   }
+// ]
+
+// 종합 요약
+console.log(stats.monitoring?.summary);
+// {
+//   healthyModels: 3,
+//   degradedModels: 1,
+//   unhealthyModels: 0,
+//   overallSuccessRate: 0.96,
+//   averageResponseTime: 1500
+// }
+```
+
+**모니터링 기능:**
+- ✅ **Rate Limit 추적**: 모델별 RPM 사용량 실시간 추적
+- ✅ **사전 경고**: 한계 도달 전 자동 경고 (80%, 90% 임계값)
+- ✅ **Health Monitoring**: 모델별 성공률, 응답 시간, 가용성 추적
+- ✅ **Percentile 메트릭**: p50, p95, p99 응답 시간 분석
+- ✅ **연속 실패 감지**: 모델 상태 자동 감지 (healthy/degraded/unhealthy)
+
 ---
 
 ## 📖 주요 기능
@@ -209,6 +285,8 @@ interface GeminiBackClientOptions {
   debug?: boolean;                   // 선택: 디버그 로그 (기본: false)
   logLevel?: 'debug' | 'info' | 'warn' | 'error' | 'silent';
   apiKeyRotationStrategy?: 'round-robin' | 'least-used'; // 키 로테이션 전략 (기본: round-robin)
+  enableMonitoring?: boolean;        // 선택: 모니터링 활성화 (기본: false)
+  enableRateLimitPrediction?: boolean; // 선택: Rate limit 예측 경고 (기본: false)
 }
 ```
 
@@ -335,23 +413,24 @@ const client = new GeminiBackClient({
 - [x] 스트리밍 응답 지원
 - [x] 대화형 인터페이스 (chat)
 - [x] 통계 추적 기능
-- [x] 완전한 테스트 커버리지 (66개 테스트)
+- [x] 완전한 테스트 커버리지 (100개 테스트)
 - [x] 종합 문서화 및 예제
 
-### Phase 2: Advanced Features (계획 중)
+### Phase 2: Advanced Features (진행 중)
 
 Phase 2에서는 프로덕션 환경에서의 안정성과 성능을 향상시키는 고급 기능들을 추가할 예정입니다.
 
-#### 📊 모니터링 & 추적
-- [ ] **Rate Limiting 추적 및 예측**
+#### 📊 모니터링 & 추적 ✅ (v0.2.0)
+- [x] **Rate Limiting 추적 및 예측**
   - 각 모델별 사용량 실시간 추적
-  - RPM 제한 도달 예측 및 사전 Fallback
-  - 시간대별 사용 패턴 분석
+  - RPM 제한 도달 예측 및 사전 경고 (80%, 90% 임계값)
+  - 슬라이딩 윈도우 기반 사용 패턴 분석 (1분, 5분)
 
-- [ ] **Health Check 및 모델 상태 모니터링**
-  - 모델별 상태 체크 (응답 시간, 성공률)
-  - 실시간 모델 가용성 확인
-  - 성능 메트릭 수집 및 리포팅
+- [x] **Health Check 및 모델 상태 모니터링**
+  - 모델별 상태 체크 (응답 시간, 성공률, 가용성)
+  - 실시간 모델 Health 상태 (healthy/degraded/unhealthy)
+  - Percentile 기반 성능 메트릭 (p50, p95, p99)
+  - 연속 실패 감지 및 추적
 
 #### ⚡ 성능 최적화
 - [ ] **응답 캐싱 (중복 요청 최적화)**
