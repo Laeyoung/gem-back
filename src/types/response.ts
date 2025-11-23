@@ -17,9 +17,19 @@ export interface StreamChunk {
   isComplete: boolean;
 }
 
+export interface ApiKeyStats {
+  keyIndex: number;
+  totalRequests: number;
+  successCount: number;
+  failureCount: number;
+  successRate: number;
+  lastUsed?: Date;
+}
+
 export interface FallbackStats {
   totalRequests: number;
   successRate: number;
   modelUsage: Record<GeminiModel, number>;
   failureCount: number;
+  apiKeyStats?: ApiKeyStats[];
 }

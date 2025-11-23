@@ -3,13 +3,15 @@ import type { GeminiModel } from './models';
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'silent';
 
 export interface GeminiBackClientOptions {
-  apiKey: string;
+  apiKey?: string;
+  apiKeys?: string[];
   fallbackOrder?: GeminiModel[];
   maxRetries?: number;
   timeout?: number;
   retryDelay?: number;
   debug?: boolean;
   logLevel?: LogLevel;
+  apiKeyRotationStrategy?: 'round-robin' | 'least-used';
 }
 
 export interface GenerateOptions {

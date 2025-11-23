@@ -18,13 +18,14 @@ Gemini API는 무료 티어에서 **RPM(분당 요청 수) 제한**이 있어, �
 
 - ✅ **자동 Fallback**: 한 모델이 실패하면 자동으로 다음 모델로 전환
 - ✅ **스마트 재시도**: Exponential Backoff로 일시적 오류 처리
+- ✅ **멀티 API 키 로테이션**: 여러 API 키를 자동으로 순환하여 RPM 제한 우회
 - ✅ **스트리밍 지원**: 실시간 응답 스트리밍 (`generateStream()`)
 - ✅ **대화형 인터페이스**: 멀티턴 대화 지원 (`chat()`)
-- ✅ **통계 추적**: 모델별 사용률 및 성공률 모니터링
+- ✅ **통계 추적**: 모델별/키별 사용률 및 성공률 모니터링
 - ✅ **제로 설정**: 기본 설정만으로 바로 사용 가능
 - ✅ **완벽한 타입 지원**: TypeScript로 작성되어 자동완성 지원
 - ✅ **이중 모듈**: CommonJS + ESM 동시 지원
-- ✅ **완전한 테스트**: 66개 테스트로 검증된 안정성
+- ✅ **완전한 테스트**: 89개 테스트로 검증된 안정성
 
 ---
 
@@ -99,6 +100,34 @@ for await (const chunk of stream) {
 }
 ```
 
+### 멀티 API 키 로테이션 (신규!)
+
+여러 API 키를 사용하여 RPM 제한을 효과적으로 우회할 수 있습니다:
+
+```typescript
+const client = new GeminiBackClient({
+  apiKeys: [
+    process.env.GEMINI_API_KEY_1,
+    process.env.GEMINI_API_KEY_2,
+    process.env.GEMINI_API_KEY_3
+  ],
+  apiKeyRotationStrategy: 'round-robin' // 또는 'least-used'
+});
+
+// 각 요청마다 자동으로 다른 API 키를 사용
+const response1 = await client.generate('첫 번째 질문'); // key_1 사용
+const response2 = await client.generate('두 번째 질문'); // key_2 사용
+const response3 = await client.generate('세 번째 질문'); // key_3 사용
+
+// 키별 사용 통계 확인
+const stats = client.getFallbackStats();
+console.log(stats.apiKeyStats); // 각 키의 사용량, 성공률 등
+```
+
+**로테이션 전략:**
+- `round-robin` (기본값): 순차적으로 키를 순환
+- `least-used`: 가장 적게 사용된 키를 우선 선택
+
 ---
 
 ## 📖 주요 기능
@@ -146,7 +175,18 @@ console.log(stats);
 //     'gemini-2.5-flash': 70,
 //     'gemini-2.5-flash-lite': 25,
 //     'gemini-2.0-flash': 5
-//   }
+//   },
+//   apiKeyStats: [  // 멀티 키 모드일 때만 제공
+//     {
+//       keyIndex: 0,
+//       totalRequests: 35,
+//       successCount: 33,
+//       failureCount: 2,
+//       successRate: 0.94,
+//       lastUsed: Date
+//     },
+//     // ... 다른 키들
+//   ]
 // }
 ```
 
@@ -160,15 +200,19 @@ console.log(stats);
 
 ```typescript
 interface GeminiBackClientOptions {
-  apiKey: string;                    // 필수: Gemini API 키
+  apiKey?: string;                   // Gemini API 키 (단일 키)
+  apiKeys?: string[];                // 여러 API 키 (멀티 키 모드)
   fallbackOrder?: GeminiModel[];     // 선택: Fallback 순서
   maxRetries?: number;               // 선택: 최대 재시도 횟수 (기본: 2)
   timeout?: number;                  // 선택: 요청 타임아웃 (기본: 30000ms)
   retryDelay?: number;               // 선택: 초기 재시도 대기 시간 (기본: 1000ms)
   debug?: boolean;                   // 선택: 디버그 로그 (기본: false)
   logLevel?: 'debug' | 'info' | 'warn' | 'error' | 'silent';
+  apiKeyRotationStrategy?: 'round-robin' | 'least-used'; // 키 로테이션 전략 (기본: round-robin)
 }
 ```
+
+**참고:** `apiKey` 또는 `apiKeys` 중 하나는 반드시 제공해야 합니다.
 
 #### 메서드
 
@@ -295,12 +339,41 @@ const client = new GeminiBackClient({
 - [x] 종합 문서화 및 예제
 
 ### Phase 2: Advanced Features (계획 중)
-- [ ] Rate Limiting 추적 및 예측
-- [ ] 응답 캐싱 (중복 요청 최적화)
-- [ ] 멀티 API 키 지원 및 로테이션
-- [ ] Circuit Breaker 패턴
-- [ ] Health Check 및 모델 상태 모니터링
-- [ ] Connection Pooling
+
+Phase 2에서는 프로덕션 환경에서의 안정성과 성능을 향상시키는 고급 기능들을 추가할 예정입니다.
+
+#### 📊 모니터링 & 추적
+- [ ] **Rate Limiting 추적 및 예측**
+  - 각 모델별 사용량 실시간 추적
+  - RPM 제한 도달 예측 및 사전 Fallback
+  - 시간대별 사용 패턴 분석
+
+- [ ] **Health Check 및 모델 상태 모니터링**
+  - 모델별 상태 체크 (응답 시간, 성공률)
+  - 실시간 모델 가용성 확인
+  - 성능 메트릭 수집 및 리포팅
+
+#### ⚡ 성능 최적화
+- [ ] **응답 캐싱 (중복 요청 최적화)**
+  - 동일 요청에 대한 캐싱으로 API 호출 절감
+  - TTL 기반 캐시 만료 관리
+  - 메모리 효율적인 캐시 전략
+
+- [ ] **Connection Pooling**
+  - HTTP 연결 재사용으로 성능 향상
+  - 동시 요청 처리 최적화
+  - 리소스 사용 효율화
+
+#### 🔐 안정성 & 확장성
+- [x] **멀티 API 키 지원 및 로테이션** ✅
+  - 여러 API 키를 활용한 로드 밸런싱
+  - 자동 키 로테이션으로 RPM 제한 우회 (round-robin, least-used 전략)
+  - 키별 사용량 추적 및 관리
+
+- [ ] **Circuit Breaker 패턴**
+  - 지속적 실패 시 일시적 차단
+  - 자동 복구 및 재시도
+  - 시스템 과부하 방지
 
 ### Phase 3: Ecosystem (향후 계획)
 - [ ] CLI 도구
