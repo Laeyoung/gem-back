@@ -39,7 +39,7 @@ npm run build
 ## What's Tested
 
 ### Type Safety
-- ✅ Type imports (GeminiBackClient, GenerateResponse, etc.)
+- ✅ Type imports (GemBack, GenerateResponse, etc.)
 - ✅ Type-safe client options
 - ✅ Type-safe method parameters
 - ✅ Type-safe return values

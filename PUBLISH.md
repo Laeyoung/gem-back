@@ -63,7 +63,7 @@ cd /path/to/test-project
 npm install /path/to/gem-back/gemback-0.1.0.tgz
 
 # Verify imports work
-node -e "const { GeminiBackClient } = require('gemback'); console.log('✓ CJS import works');"
+node -e "const { GemBack } = require('gemback'); console.log('✓ CJS import works');"
 node -e "import('gemback').then(m => console.log('✓ ESM import works'));"
 ```
 

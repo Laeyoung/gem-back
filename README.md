@@ -66,10 +66,10 @@ pnpm add gemback
 ### Basic Usage
 
 ```typescript
-import { GeminiBackClient } from 'gemback';
+import { GemBack } from 'gemback';
 
 // Create client
-const client = new GeminiBackClient({
+const client = new GemBack({
   apiKey: process.env.GEMINI_API_KEY
 });
 
@@ -82,7 +82,7 @@ console.log(response.text);
 ### Custom Fallback Order
 
 ```typescript
-const client = new GeminiBackClient({
+const client = new GemBack({
   apiKey: process.env.GEMINI_API_KEY,
   fallbackOrder: [
     'gemini-2.5-flash',
@@ -109,7 +109,7 @@ for await (const chunk of stream) {
 Effectively bypass RPM limits by using multiple API keys:
 
 ```typescript
-const client = new GeminiBackClient({
+const client = new GemBack({
   apiKeys: [
     process.env.GEMINI_API_KEY_1,
     process.env.GEMINI_API_KEY_2,
@@ -137,7 +137,7 @@ console.log(stats.apiKeyStats); // Usage and success rate per key
 Improve stability with real-time rate limit tracking and model health monitoring:
 
 ```typescript
-const client = new GeminiBackClient({
+const client = new GemBack({
   apiKey: process.env.GEMINI_API_KEY,
   enableMonitoring: true  // Enable monitoring
 });
@@ -222,7 +222,7 @@ const response = await client.generate('Complex question');
 ### 2. Retry Logic
 
 ```typescript
-const client = new GeminiBackClient({
+const client = new GemBack({
   apiKey: 'YOUR_KEY',
   maxRetries: 3, // Max retries per model
   retryDelay: 1000 // Initial retry delay (ms)
@@ -285,7 +285,7 @@ console.log(stats);
 
 ## 🔧 API Reference
 
-### `GeminiBackClient`
+### `GemBack`
 
 #### Constructor Options
 
@@ -359,7 +359,7 @@ const stats = client.getFallbackStats();
 ### Basic Configuration
 
 ```typescript
-const client = new GeminiBackClient({
+const client = new GemBack({
   apiKey: 'YOUR_KEY',
 
   // Specify models to use
@@ -384,7 +384,7 @@ const client = new GeminiBackClient({
 ### Advanced Configuration (v0.2.0)
 
 ```typescript
-const client = new GeminiBackClient({
+const client = new GemBack({
   // Multi-key rotation (v0.2.0+)
   apiKeys: ['KEY_1', 'KEY_2', 'KEY_3'],
   apiKeyRotationStrategy: 'least-used',  // or 'round-robin'

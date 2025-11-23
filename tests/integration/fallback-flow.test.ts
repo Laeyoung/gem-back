@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GeminiBackClient } from '../../src/client/FallbackClient';
+import { GemBack } from '../../src/client/FallbackClient';
 import { GeminiClient } from '../../src/client/GeminiClient';
 import { GeminiBackError } from '../../src/types/errors';
 
@@ -32,7 +32,7 @@ describe('Fallback Flow Integration Tests', () => {
         throw new Error('429 Rate limit exceeded');
       });
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKey: 'test-key',
         maxRetries: 0,
         debug: false,
@@ -60,7 +60,7 @@ describe('Fallback Flow Integration Tests', () => {
         throw new Error('429 Rate limit exceeded');
       });
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKey: 'test-key',
         maxRetries: 0,
         debug: false,
@@ -95,7 +95,7 @@ describe('Fallback Flow Integration Tests', () => {
         throw new Error('Unexpected call');
       });
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKey: 'test-key',
         maxRetries: 2,
         retryDelay: 10,
@@ -125,7 +125,7 @@ describe('Fallback Flow Integration Tests', () => {
         throw new Error('429 Rate limit');
       });
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKey: 'test-key',
         fallbackOrder: ['gemini-2.5-flash', 'gemini-2.0-flash'],
         maxRetries: 0,
@@ -173,7 +173,7 @@ describe('Fallback Flow Integration Tests', () => {
         throw new Error('Unexpected call');
       });
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKey: 'test-key',
         maxRetries: 0,
         debug: false,
@@ -231,7 +231,7 @@ describe('Fallback Flow Integration Tests', () => {
         throw new Error('Unexpected');
       });
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKey: 'test-key',
         maxRetries: 1,
         retryDelay: 10,
@@ -264,7 +264,7 @@ describe('Fallback Flow Integration Tests', () => {
         throw new Error('Unexpected');
       });
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKey: 'test-key',
         maxRetries: 0,
         debug: false,

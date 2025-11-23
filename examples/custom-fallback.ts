@@ -5,11 +5,11 @@
  * You can specify which models to use and in what order.
  */
 
-import { GeminiBackClient } from 'gemback';
+import { GemBack } from 'gemback';
 
 async function main() {
   // Create a client with custom fallback order
-  const client = new GeminiBackClient({
+  const client = new GemBack({
     apiKey: process.env.GEMINI_API_KEY || 'your-api-key-here',
 
     // Only use these two models in this order

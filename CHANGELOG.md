@@ -108,7 +108,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `gemini-2.5-flash-lite` (lightweight version)
   - `gemini-2.0-flash` (stable version)
   - `gemini-2.0-flash-lite` (lightweight stable version)
-- `GeminiBackClient` class for automatic model fallback
+- `GemBack` class for automatic model fallback
 - `GeminiClient` class for direct model access
 - Automatic retry logic with exponential backoff
 - Smart error detection and handling:

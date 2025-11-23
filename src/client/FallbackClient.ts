@@ -16,7 +16,7 @@ import {
   getErrorStatusCode,
 } from '../utils/error-handler';
 
-export class GeminiBackClient {
+export class GemBack {
   private options: Required<Omit<GeminiBackClientOptions, 'apiKey' | 'apiKeys'>> & {
     apiKey?: string;
     apiKeys?: string[];

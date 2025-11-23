@@ -81,7 +81,7 @@ npm run test:all  # API 키가 있는 경우
 
 **확인 사항:**
 - ✅ `require('gemback')` 동작
-- ✅ GeminiBackClient 클래스 로드
+- ✅ GemBack 클래스 로드
 - ✅ 모든 메서드 접근 가능
 - ✅ API 호출 정상 동작 (키 있는 경우)
 
@@ -96,8 +96,8 @@ npm run test:all  # API 키가 있는 경우
 ```
 
 **확인 사항:**
-- ✅ `import { GeminiBackClient } from 'gemback'` 동작
-- ✅ GeminiBackClient 클래스 로드
+- ✅ `import { GemBack } from 'gemback'` 동작
+- ✅ GemBack 클래스 로드
 - ✅ 모든 메서드 접근 가능
 - ✅ API 호출 정상 동작 (키 있는 경우)
 
@@ -127,7 +127,7 @@ npm run test:all  # API 키가 있는 경우
 
 #### 1. 기본 텍스트 생성
 ```typescript
-const client = new GeminiBackClient({ apiKey: 'YOUR_KEY' });
+const client = new GemBack({ apiKey: 'YOUR_KEY' });
 const response = await client.generate('Hello');
 ```
 
@@ -138,7 +138,7 @@ const response = await client.generate('Hello');
 
 #### 2. Fallback 동작
 ```typescript
-const client = new GeminiBackClient({
+const client = new GemBack({
   apiKey: 'YOUR_KEY',
   fallbackOrder: ['gemini-2.5-flash', 'gemini-2.0-flash']
 });
@@ -191,7 +191,7 @@ console.log(stats);
 
 #### 6. Multi-Key Rotation
 ```typescript
-const client = new GeminiBackClient({
+const client = new GemBack({
   apiKeys: ['KEY1', 'KEY2', 'KEY3'],
   apiKeyRotationStrategy: 'round-robin'
 });
@@ -205,7 +205,7 @@ const client = new GeminiBackClient({
 
 #### 7. Monitoring
 ```typescript
-const client = new GeminiBackClient({
+const client = new GemBack({
   apiKey: 'YOUR_KEY',
   enableMonitoring: true,
   enableRateLimitPrediction: true

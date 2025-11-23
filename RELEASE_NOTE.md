@@ -75,9 +75,9 @@ pnpm add gemback
 
 ### 기본 사용법
 ```typescript
-import { GeminiBackClient } from 'gemback';
+import { GemBack } from 'gemback';
 
-const client = new GeminiBackClient({
+const client = new GemBack({
   apiKey: process.env.GEMINI_API_KEY
 });
 

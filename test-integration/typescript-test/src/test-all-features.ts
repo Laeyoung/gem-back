@@ -5,8 +5,8 @@
  */
 
 import {
-  GeminiBackClient,
-  type GeminiBackClientOptions,
+  GemBack,
+  type GemBackOptions,
   type GeminiResponse,
   type GenerateOptions,
   type ChatMessage,
@@ -14,7 +14,7 @@ import {
   type HealthStatus
 } from 'gemback';
 
-async function testBasicGeneration(client: GeminiBackClient): Promise<void> {
+async function testBasicGeneration(client: GemBack): Promise<void> {
   console.log('\n📝 Test 1: Type-Safe Text Generation');
   console.log('─'.repeat(50));
 
@@ -24,7 +24,7 @@ async function testBasicGeneration(client: GeminiBackClient): Promise<void> {
   console.log('   Types verified: text is string, model is string');
 }
 
-async function testGenerationWithOptions(client: GeminiBackClient): Promise<void> {
+async function testGenerationWithOptions(client: GemBack): Promise<void> {
   console.log('\n📝 Test 2: Generation with Type-Safe Options');
   console.log('─'.repeat(50));
 
@@ -39,7 +39,7 @@ async function testGenerationWithOptions(client: GeminiBackClient): Promise<void
   console.log('   Options type-checked at compile time');
 }
 
-async function testStreaming(client: GeminiBackClient): Promise<void> {
+async function testStreaming(client: GemBack): Promise<void> {
   console.log('\n📝 Test 3: Type-Safe Streaming');
   console.log('─'.repeat(50));
 
@@ -54,7 +54,7 @@ async function testStreaming(client: GeminiBackClient): Promise<void> {
   console.log('\n   Streaming with type safety completed');
 }
 
-async function testChatInterface(client: GeminiBackClient): Promise<void> {
+async function testChatInterface(client: GemBack): Promise<void> {
   console.log('\n📝 Test 4: Type-Safe Chat Interface');
   console.log('─'.repeat(50));
 
@@ -81,13 +81,13 @@ async function testMultiKeyRotation(): Promise<void> {
   }
 
   // Type-safe multi-key options
-  const options: GeminiBackClientOptions = {
+  const options: GemBackOptions = {
     apiKeys: [apiKey, apiKey, apiKey],
     apiKeyRotationStrategy: 'round-robin',
     debug: false
   };
 
-  const client = new GeminiBackClient(options);
+  const client = new GemBack(options);
 
   console.log('Making 3 requests with type-safe rotation...');
   await client.generate('Request 1');
@@ -115,14 +115,14 @@ async function testMonitoring(): Promise<void> {
     return;
   }
 
-  const options: GeminiBackClientOptions = {
+  const options: GemBackOptions = {
     apiKey: apiKey,
     enableMonitoring: true,
     enableRateLimitPrediction: true,
     debug: false
   };
 
-  const client = new GeminiBackClient(options);
+  const client = new GemBack(options);
 
   console.log('Making requests to populate monitoring data...');
   for (let i = 0; i < 3; i++) {
@@ -172,12 +172,12 @@ async function testErrorHandling(): Promise<void> {
   console.log('─'.repeat(50));
 
   try {
-    const options: GeminiBackClientOptions = {
+    const options: GemBackOptions = {
       apiKey: 'invalid-key-for-testing',
       debug: false
     };
 
-    const client = new GeminiBackClient(options);
+    const client = new GemBack(options);
     await client.generate('This should fail');
     console.log('❌ Expected error but succeeded');
   } catch (error) {
@@ -199,7 +199,7 @@ async function testTypeInference(): Promise<void> {
     return;
   }
 
-  const client = new GeminiBackClient({ apiKey });
+  const client = new GemBack({ apiKey });
 
   // Test that TypeScript can infer types correctly
   const response = await client.generate('Test');
@@ -229,7 +229,7 @@ async function main(): Promise<void> {
   }
 
   try {
-    const client = new GeminiBackClient({
+    const client = new GemBack({
       apiKey: apiKey || 'dummy-key',
       debug: false
     });
