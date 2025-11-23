@@ -1,12 +1,13 @@
 # 💎 Gem Back
 
-> Smart Gemini API Fallback Library for Node.js & TypeScript
+> Smart Gemini API Fallback Library with Multi-Key Rotation & Monitoring
 
 [![npm version](https://badge.fury.io/js/gemback.svg)](https://www.npmjs.com/package/gemback)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+[![Tests](https://img.shields.io/badge/tests-165%20passing-brightgreen.svg)](https://github.com/Laeyoung/gem-back)
 
-**Gem Back**은 Google Gemini API의 RPM(Requests Per Minute) 제한을 자동으로 처리하는 Fallback 시스템을 제공하는 NPM 라이브러리입니다.
+**Gem Back**은 Google Gemini API의 RPM(Requests Per Minute) 제한을 자동으로 처리하는 Fallback 시스템과 프로덕션급 모니터링 기능을 제공하는 NPM 라이브러리입니다.
 
 ---
 
@@ -247,6 +248,7 @@ console.log(stats);
 // {
 //   totalRequests: 100,
 //   successRate: 0.95,
+//   failureCount: 5,
 //   modelUsage: {
 //     'gemini-2.5-flash': 70,
 //     'gemini-2.5-flash-lite': 25,
@@ -262,7 +264,18 @@ console.log(stats);
 //       lastUsed: Date
 //     },
 //     // ... 다른 키들
-//   ]
+//   ],
+//   monitoring: {  // enableMonitoring: true일 때만 제공
+//     rateLimitStatus: [...],  // 모델별 Rate Limit 상태
+//     modelHealth: [...],      // 모델별 Health 상태
+//     summary: {
+//       healthyModels: 3,
+//       degradedModels: 1,
+//       unhealthyModels: 0,
+//       overallSuccessRate: 0.96,
+//       averageResponseTime: 1500
+//     }
+//   }
 // }
 ```
 
@@ -366,6 +379,26 @@ const client = new GeminiBackClient({
 });
 ```
 
+### v0.2.0 고급 설정
+
+```typescript
+const client = new GeminiBackClient({
+  // 멀티 API 키 로테이션 (v0.2.0+)
+  apiKeys: ['KEY_1', 'KEY_2', 'KEY_3'],
+  apiKeyRotationStrategy: 'least-used',  // 또는 'round-robin'
+
+  // 모니터링 & 추적 (v0.2.0+)
+  enableMonitoring: true,                // 모니터링 활성화
+  enableRateLimitPrediction: true,       // Rate limit 예측 경고
+
+  // 기본 설정
+  fallbackOrder: ['gemini-2.5-flash', 'gemini-2.0-flash'],
+  maxRetries: 2,
+  timeout: 30000,
+  logLevel: 'info'
+});
+```
+
 ---
 
 ## 🔄 Fallback 동작 방식
@@ -390,7 +423,7 @@ const client = new GeminiBackClient({
 
 ## 📊 로깅 예시
 
-`debug: true`로 설정 시:
+### 기본 로깅 (`debug: true`)
 
 ```
 [GemBack] Attempting: gemini-2.5-flash
@@ -398,6 +431,15 @@ const client = new GeminiBackClient({
 [GemBack] Fallback to: gemini-2.5-flash-lite
 [GemBack] Retry attempt 1/2: gemini-2.5-flash-lite
 [GemBack] Success: gemini-2.5-flash-lite (2nd attempt)
+```
+
+### 모니터링 활성화 시 (`enableMonitoring: true`)
+
+```
+[GemBack] Monitoring enabled: Rate limit tracking and health monitoring
+[GemBack] Attempting: gemini-2.5-flash (API Key #1)
+[GemBack] Rate limit warning for gemini-2.5-flash: 12/15 RPM
+[GemBack] Success: gemini-2.5-flash (1234ms)
 ```
 
 ---
