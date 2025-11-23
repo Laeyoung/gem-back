@@ -1,0 +1,20 @@
+{
+  "name": "gemback-typescript-test",
+  "version": "1.0.0",
+  "description": "TypeScript integration test for gemback",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "npm run build && node dist/index.js",
+    "test:all": "npm run build && node dist/test-all-features.js",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.0"
+  }
+}

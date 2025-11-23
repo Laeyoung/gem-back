@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# v0.2.0 Integration Tests Runner
+# This script runs all integration tests for gemback
+
+set -e  # Exit on error
+
+echo "╔════════════════════════════════════════════════════════════╗"
+echo "║  Gem Back v0.2.0 - Integration Tests Runner               ║"
+echo "╚════════════════════════════════════════════════════════════╝"
+echo ""
+
+# Check if package is built
+if [ ! -f "../gemback-0.2.0.tgz" ]; then
+    echo "❌ Package not found: gemback-0.2.0.tgz"
+    echo "Please run 'npm run build && npm pack' in the root directory first"
+    exit 1
+fi
+
+echo "✅ Package found: gemback-0.2.0.tgz"
+echo ""
+
+# Function to run test in a directory
+run_test() {
+    local dir=$1
+    local name=$2
+
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "📦 Testing: $name"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+    cd "$dir"
+
+    # Install dependencies
+    echo "Installing dependencies..."
+    npm install > /dev/null 2>&1
+
+    # Install gemback package
+    echo "Installing gemback package..."
+    npm install ../../gemback-0.2.0.tgz > /dev/null 2>&1
+
+    # Run basic test
+    echo "Running basic test..."
+    npm test
+
+    # Run full test if API key is available
+    if [ -n "$GEMINI_API_KEY" ]; then
+        echo ""
+        echo "Running full feature test with API key..."
+        npm run test:all
+    else
+        echo ""
+        echo "⚠️  GEMINI_API_KEY not set - skipping full feature tests"
+    fi
+
+    cd - > /dev/null
+    echo ""
+}
+
+# Run tests
+run_test "commonjs-test" "CommonJS Environment"
+run_test "esm-test" "ESM Environment"
+run_test "typescript-test" "TypeScript Environment"
+
+# Summary
+echo "╔════════════════════════════════════════════════════════════╗"
+echo "║                  Test Summary                              ║"
+echo "╚════════════════════════════════════════════════════════════╝"
+echo ""
+echo "✅ CommonJS test passed"
+echo "✅ ESM test passed"
+echo "✅ TypeScript test passed"
+echo ""
+
+if [ -z "$GEMINI_API_KEY" ]; then
+    echo "⚠️  Note: Full feature tests were skipped"
+    echo "   To run full tests, set GEMINI_API_KEY environment variable:"
+    echo "   export GEMINI_API_KEY=your_api_key"
+    echo ""
+fi
+
+echo "╔════════════════════════════════════════════════════════════╗"
+echo "║         🎉 All Integration Tests Passed! 🎉                ║"
+echo "╚════════════════════════════════════════════════════════════╝"
+echo ""
+echo "Next steps:"
+echo "  1. Review test output above"
+echo "  2. Check TEST_SCENARIOS.md for detailed test cases"
+echo "  3. Verify README.md examples work"
+echo "  4. Ready to publish! 🚀"
+echo ""
