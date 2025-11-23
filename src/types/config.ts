@@ -12,6 +12,8 @@ export interface GeminiBackClientOptions {
   debug?: boolean;
   logLevel?: LogLevel;
   apiKeyRotationStrategy?: 'round-robin' | 'least-used';
+  enableMonitoring?: boolean; // Enable rate limit tracking and health monitoring
+  enableRateLimitPrediction?: boolean; // Enable predictive rate limit warnings
 }
 
 export interface GenerateOptions {

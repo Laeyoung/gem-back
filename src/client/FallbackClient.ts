@@ -7,6 +7,8 @@ import { GeminiClient } from './GeminiClient';
 import { GeminiBackError } from '../types/errors';
 import { retryWithBackoff } from '../utils/retry';
 import { ApiKeyRotator } from '../utils/api-key-rotator';
+import { RateLimitTracker } from '../monitoring/rate-limit-tracker';
+import { HealthMonitor } from '../monitoring/health-monitor';
 import {
   isRateLimitError,
   isRetryableError,
@@ -23,6 +25,8 @@ export class GeminiBackClient {
   private client: GeminiClient;
   private stats: FallbackStats;
   private apiKeyRotator: ApiKeyRotator | null;
+  private rateLimitTracker: RateLimitTracker | null;
+  private healthMonitor: HealthMonitor | null;
 
   constructor(options: GeminiBackClientOptions) {
     if (!options.apiKey && (!options.apiKeys || options.apiKeys.length === 0)) {
@@ -47,6 +51,14 @@ export class GeminiBackClient {
         ? 'Single API key mode'
         : `Multi API key mode: ${apiKeys.length} keys with ${this.options.apiKeyRotationStrategy || 'round-robin'} strategy`
     );
+
+    // Initialize monitoring if enabled
+    this.rateLimitTracker = options.enableMonitoring ? new RateLimitTracker() : null;
+    this.healthMonitor = options.enableMonitoring ? new HealthMonitor() : null;
+
+    if (this.rateLimitTracker || this.healthMonitor) {
+      this.logger.info('Monitoring enabled: Rate limit tracking and health monitoring');
+    }
 
     this.stats = {
       totalRequests: 0,
@@ -82,7 +94,29 @@ export class GeminiBackClient {
         `Attempting: ${model}${keyIndex !== null ? ` (API Key #${keyIndex + 1})` : ''}`
       );
 
+      // Check rate limit prediction before making request
+      if (this.rateLimitTracker) {
+        const status = this.rateLimitTracker.getStatus(model);
+        if (status.willExceedSoon) {
+          this.logger.warn(
+            `Rate limit warning for ${model}: ${status.windowStats.requestsInLastMinute}/${status.maxRPM} RPM`
+          );
+        }
+        if (this.rateLimitTracker.wouldExceedLimit(model)) {
+          const waitTime = this.rateLimitTracker.getRecommendedWaitTime(model);
+          this.logger.warn(
+            `Would exceed rate limit for ${model}. Recommended wait: ${waitTime}ms`
+          );
+        }
+      }
+
+      const startTime = Date.now();
       try {
+        // Record rate limit tracking (tracked by model, not per API key)
+        if (this.rateLimitTracker) {
+          this.rateLimitTracker.recordRequest(model);
+        }
+
         const response = await retryWithBackoff(
           () => this.client.generate(prompt, model, apiKey, options),
           {
@@ -102,16 +136,29 @@ export class GeminiBackClient {
           }
         );
 
+        const responseTime = Date.now() - startTime;
+
+        // Record health monitoring
+        if (this.healthMonitor) {
+          this.healthMonitor.recordRequest(model, responseTime, true);
+        }
+
         this.stats.modelUsage[model]++;
         this.updateSuccessRate();
         if (keyIndex !== null && this.apiKeyRotator) {
           this.apiKeyRotator.recordSuccess(keyIndex);
         }
-        this.logger.info(`Success: ${model}`);
+        this.logger.info(`Success: ${model} (${responseTime}ms)`);
         return response;
       } catch (error) {
         const err = error as Error;
         const statusCode = getErrorStatusCode(err);
+        const responseTime = Date.now() - startTime;
+
+        // Record health monitoring for failure
+        if (this.healthMonitor) {
+          this.healthMonitor.recordRequest(model, responseTime, false, err.message);
+        }
 
         attempts.push({
           model,
@@ -173,7 +220,29 @@ export class GeminiBackClient {
         `Attempting stream: ${model}${keyIndex !== null ? ` (API Key #${keyIndex + 1})` : ''}`
       );
 
+      // Check rate limit prediction before making request
+      if (this.rateLimitTracker) {
+        const status = this.rateLimitTracker.getStatus(model);
+        if (status.willExceedSoon) {
+          this.logger.warn(
+            `Rate limit warning for ${model}: ${status.windowStats.requestsInLastMinute}/${status.maxRPM} RPM`
+          );
+        }
+        if (this.rateLimitTracker.wouldExceedLimit(model)) {
+          const waitTime = this.rateLimitTracker.getRecommendedWaitTime(model);
+          this.logger.warn(
+            `Would exceed rate limit for ${model}. Recommended wait: ${waitTime}ms`
+          );
+        }
+      }
+
+      const startTime = Date.now();
       try {
+        // Record rate limit tracking (tracked by model, not per API key)
+        if (this.rateLimitTracker) {
+          this.rateLimitTracker.recordRequest(model);
+        }
+
         const stream = this.client.generateStream(prompt, model, apiKey, options);
         let hasYielded = false;
 
@@ -193,17 +262,30 @@ export class GeminiBackClient {
             isComplete: true,
           };
 
+          const responseTime = Date.now() - startTime;
+
+          // Record health monitoring
+          if (this.healthMonitor) {
+            this.healthMonitor.recordRequest(model, responseTime, true);
+          }
+
           this.stats.modelUsage[model]++;
           this.updateSuccessRate();
           if (keyIndex !== null && this.apiKeyRotator) {
             this.apiKeyRotator.recordSuccess(keyIndex);
           }
-          this.logger.info(`Stream success: ${model}`);
+          this.logger.info(`Stream success: ${model} (${responseTime}ms)`);
           return;
         }
       } catch (error) {
         const err = error as Error;
         const statusCode = getErrorStatusCode(err);
+        const responseTime = Date.now() - startTime;
+
+        // Record health monitoring for failure
+        if (this.healthMonitor) {
+          this.healthMonitor.recordRequest(model, responseTime, false, err.message);
+        }
 
         attempts.push({
           model,
@@ -258,9 +340,54 @@ export class GeminiBackClient {
   }
 
   getFallbackStats(): FallbackStats {
-    return {
+    const stats: FallbackStats = {
       ...this.stats,
       apiKeyStats: this.apiKeyRotator ? this.apiKeyRotator.getStats() : undefined,
     };
+
+    // Add monitoring data if monitoring is enabled
+    if (this.rateLimitTracker || this.healthMonitor) {
+      const models: Array<'gemini-2.5-flash' | 'gemini-2.5-flash-lite' | 'gemini-2.0-flash' | 'gemini-2.0-flash-lite'> = [
+        'gemini-2.5-flash',
+        'gemini-2.5-flash-lite',
+        'gemini-2.0-flash',
+        'gemini-2.0-flash-lite',
+      ];
+
+      const rateLimitStatus = this.rateLimitTracker
+        ? models.map((model) => this.rateLimitTracker!.getStatus(model))
+        : undefined;
+
+      const modelHealth = this.healthMonitor
+        ? models.map((model) => this.healthMonitor!.getHealth(model))
+        : undefined;
+
+      // Calculate summary statistics
+      const healthyModels = modelHealth?.filter((h) => h.status === 'healthy').length || 0;
+      const degradedModels = modelHealth?.filter((h) => h.status === 'degraded').length || 0;
+      const unhealthyModels = modelHealth?.filter((h) => h.status === 'unhealthy').length || 0;
+
+      const overallSuccessRate = modelHealth?.length
+        ? modelHealth.reduce((sum, h) => sum + h.successRate, 0) / modelHealth.length
+        : 0;
+
+      const averageResponseTime = modelHealth?.length
+        ? modelHealth.reduce((sum, h) => sum + (h.averageResponseTime || 0), 0) / modelHealth.length
+        : 0;
+
+      stats.monitoring = {
+        rateLimitStatus,
+        modelHealth,
+        summary: {
+          healthyModels,
+          degradedModels,
+          unhealthyModels,
+          overallSuccessRate,
+          averageResponseTime,
+        },
+      };
+    }
+
+    return stats;
   }
 }
