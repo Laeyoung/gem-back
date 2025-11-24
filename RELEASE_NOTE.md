@@ -1,200 +1,217 @@
-# 🎉 Release Notes - gemback v0.1.0
+# 🎉 Release Notes - gemback v0.2.1
 
-**릴리스 날짜**: 2025-11-22
+**릴리스 날짜**: 2025-11-24
 **패키지 이름**: `gemback`
 **NPM**: https://www.npmjs.com/package/gemback
 **Repository**: https://github.com/Laeyoung/gem-back
 
 ---
 
-## 📦 첫 번째 공식 릴리스!
+## 📦 v0.2.1 - Naming Consistency Update
 
-**gemback v0.1.0**은 Google Gemini API의 RPM(분당 요청 수) 제한 문제를 자동으로 해결하는 스마트 Fallback 라이브러리의 첫 번째 안정 버전입니다.
-
----
-
-## ✨ 주요 기능
-
-### 🔄 자동 Fallback 시스템
-- **4개 Gemini 모델 지원**
-  - `gemini-2.5-flash` (최신, 최고 성능)
-  - `gemini-2.5-flash-lite` (경량 버전)
-  - `gemini-2.0-flash` (안정 버전)
-  - `gemini-2.0-flash-lite` (경량 안정 버전)
-- 한 모델이 RPM 제한에 걸리면 자동으로 다음 모델로 전환
-- 커스터마이징 가능한 Fallback 순서
-
-### 🔁 스마트 재시도 메커니즘
-- **Exponential Backoff** 전략으로 일시적 오류 처리
-- 재시도 가능/불가 에러 자동 판별
-- 설정 가능한 최대 재시도 횟수 및 대기 시간
-
-### 📡 실시간 스트리밍
-- `generateStream()` 메서드로 실시간 응답 스트리밍 지원
-- 긴 텍스트 생성 시 청크 단위로 결과 수신
-
-### 💬 대화형 인터페이스
-- `chat()` 메서드로 멀티턴 대화 지원
-- 컨텍스트를 유지하며 연속적인 대화 가능
-
-### 📊 통계 및 모니터링
-- 모델별 사용률 추적
-- Fallback 성공률 통계
-- 전체 요청 수 및 성공률 모니터링
-
-### 🛡️ 강력한 에러 처리
-- 커스텀 `GeminiBackError` 타입으로 상세한 에러 정보 제공
-- 모든 시도 내역 및 실패 원인 추적
-- 5단계 로그 레벨 (debug/info/warn/error/silent)
-
-### 🎯 TypeScript 완벽 지원
-- 100% TypeScript로 작성
-- 모든 타입 정의 포함 (.d.ts)
-- IDE 자동완성 지원
-
-### 📦 이중 모듈 지원
-- **CommonJS** (require) 지원
-- **ESM** (import) 지원
-- Node.js 18.0.0 이상 호환
+**gemback v0.2.1**은 라이브러리 이름과의 일관성을 위해 클래스 및 타입 이름을 개선한 마이너 업데이트입니다.
 
 ---
 
-## 🚀 설치
+## ✨ 주요 변경사항
+
+### 🔄 이름 일관성 개선
+
+#### 1. 클래스 이름 변경
+**`GeminiBackClient` → `GemBack`**
+
+```typescript
+// 이전 (v0.2.0)
+import { GeminiBackClient } from 'gemback';
+const client = new GeminiBackClient({ apiKey: '...' });
+
+// 변경 후 (v0.2.1)
+import { GemBack } from 'gemback';
+const client = new GemBack({ apiKey: '...' });
+```
+
+**변경 이유:**
+- 라이브러리 이름 `gemback`과의 일관성 향상
+- 더 간결하고 직관적인 클래스 이름
+- 코드 가독성 개선
+
+#### 2. 타입 이름 변경
+**`GeminiBackClientOptions` → `GemBackOptions`**
+
+```typescript
+// 이전 (v0.2.0)
+import { GeminiBackClientOptions } from 'gemback';
+const options: GeminiBackClientOptions = {
+  apiKey: process.env.GEMINI_API_KEY,
+  fallbackOrder: ['gemini-2.5-flash', 'gemini-2.0-flash']
+};
+
+// 변경 후 (v0.2.1)
+import { GemBackOptions } from 'gemback';
+const options: GemBackOptions = {
+  apiKey: process.env.GEMINI_API_KEY,
+  fallbackOrder: ['gemini-2.5-flash', 'gemini-2.0-flash']
+};
+```
+
+**변경 이유:**
+- 클래스 이름과의 일관성
+- 타입 이름의 간결성 향상
+- 사용자 혼란 최소화
+
+---
+
+## 🔙 하위 호환성
+
+기존 코드와의 호환성을 위해 **Deprecated 타입 alias**를 제공합니다:
+
+```typescript
+// src/types/config.ts
+export interface GemBackOptions { /* ... */ }
+
+// 하위 호환성을 위한 deprecated alias
+export type GeminiBackClientOptions = GemBackOptions;
+```
+
+**이는 기존 v0.2.0 사용자가 점진적으로 마이그레이션할 수 있도록 합니다.**
+
+---
+
+## 📋 마이그레이션 가이드
+
+### 권장 업데이트 방법
+
+1. **클래스 이름 변경**
+```typescript
+// 모든 GeminiBackClient를 GemBack으로 교체
+- import { GeminiBackClient } from 'gemback';
++ import { GemBack } from 'gemback';
+
+- const client = new GeminiBackClient({ ... });
++ const client = new GemBack({ ... });
+```
+
+2. **타입 이름 변경** (선택사항이지만 권장)
+```typescript
+// 모든 GeminiBackClientOptions를 GemBackOptions로 교체
+- import { GeminiBackClientOptions } from 'gemback';
++ import { GemBackOptions } from 'gemback';
+
+- const options: GeminiBackClientOptions = { ... };
++ const options: GemBackOptions = { ... };
+```
+
+### 점진적 마이그레이션
+
+Deprecated alias 덕분에 한 번에 모두 변경할 필요는 없습니다:
+
+```typescript
+// 이것도 여전히 작동합니다 (deprecated)
+import { GemBack, GeminiBackClientOptions } from 'gemback';
+const options: GeminiBackClientOptions = { apiKey: '...' };
+const client = new GemBack(options); // ✅ 작동함
+```
+
+---
+
+## 📝 업데이트된 파일
+
+### 소스 코드 (6개)
+- `src/types/config.ts` - 인터페이스 이름 변경 및 deprecated alias 추가
+- `src/client/FallbackClient.ts` - 클래스 이름 및 타입 참조 변경
+- `src/config/defaults.ts` - 타입 참조 변경
+- `src/index.ts` - export 업데이트
+
+### 문서 (27개)
+- `README.md`, `README.ko.md`
+- `CHANGELOG.md`
+- 모든 예제 파일 (7개)
+- 모든 테스트 파일
+- 통합 테스트 파일들
+
+---
+
+## 🚀 업그레이드 방법
 
 ```bash
-npm install gemback
+npm install gemback@0.2.1
 # 또는
-yarn add gemback
+yarn upgrade gemback@0.2.1
 # 또는
-pnpm add gemback
+pnpm update gemback@0.2.1
 ```
 
 ---
 
-## 💡 빠른 시작
+## ⚠️ Breaking Changes
 
-### 기본 사용법
+### 주의사항
+- **클래스 이름이 변경됨**: `GeminiBackClient`를 직접 참조하는 코드는 업데이트 필요
+- **타입 이름이 변경됨**: `GeminiBackClientOptions` 타입을 사용하는 코드는 업데이트 권장
+- **Deprecated alias 제공**: 점진적 마이그레이션을 위해 이전 이름도 계속 사용 가능
+
+### 영향 받는 코드
 ```typescript
-import { GemBack } from 'gemback';
+// ❌ 업데이트 필요
+new GeminiBackClient({ ... })
 
-const client = new GemBack({
-  apiKey: process.env.GEMINI_API_KEY
-});
+// ✅ 새로운 방식
+new GemBack({ ... })
 
-const response = await client.generate('안녕하세요, Gemini!');
-console.log(response.text);
-```
+// ⚠️ Deprecated (작동하지만 업데이트 권장)
+const options: GeminiBackClientOptions = { ... };
 
-### 스트리밍
-```typescript
-const stream = await client.generateStream('긴 이야기를 들려주세요');
-
-for await (const chunk of stream) {
-  process.stdout.write(chunk.text);
-}
-```
-
-### 대화
-```typescript
-const response = await client.chat([
-  { role: 'user', content: '안녕하세요' },
-  { role: 'assistant', content: '안녕하세요! 무엇을 도와드릴까요?' },
-  { role: 'user', content: 'TypeScript에 대해 알려주세요' }
-]);
+// ✅ 권장 방식
+const options: GemBackOptions = { ... };
 ```
 
 ---
 
-## 📋 v0.1.0에 포함된 내용
+## 📊 v0.2.1 통계
+
+- **변경된 파일**: 33개
+- **커밋 수**: 2개
+- **코드 변경**: 클래스/타입 이름 정리
+- **하위 호환성**: Deprecated alias로 유지
+- **테스트**: 모든 기존 테스트 통과 (165개)
+
+---
+
+## 🔗 v0.2.0에서 달라진 점
+
+v0.2.1은 v0.2.0의 모든 기능을 그대로 유지하면서, 이름만 개선한 버전입니다:
+
+- ✅ 멀티 API 키 로테이션 (v0.2.0 기능)
+- ✅ Rate Limit 추적 및 예측 (v0.2.0 기능)
+- ✅ Health 모니터링 (v0.2.0 기능)
+- ✅ 모든 기존 기능 유지
+- 🆕 **더 나은 이름으로 일관성 향상**
+
+---
+
+## 📖 전체 기능 목록
 
 ### 핵심 기능
-- ✅ GeminiClient - 단일 모델 API 호출
-- ✅ FallbackClient - 다중 모델 Fallback 로직
-- ✅ 자동 재시도 with Exponential Backoff
-- ✅ 스트리밍 응답 (`generateStream`)
+- ✅ **GemBack** 클래스 (이전: GeminiBackClient)
+- ✅ 4개 Gemini 모델 자동 Fallback
+- ✅ 스마트 재시도 with Exponential Backoff
+- ✅ 실시간 스트리밍 (`generateStream`)
 - ✅ 대화형 인터페이스 (`chat`)
-- ✅ Fallback 통계 추적 (`getFallbackStats`)
+- ✅ 멀티 API 키 로테이션 (v0.2.0+)
+- ✅ Rate Limit 추적 및 예측 (v0.2.0+)
+- ✅ Health 모니터링 (v0.2.0+)
 
-### 에러 처리
-- ✅ 커스텀 `GeminiBackError` 클래스
-- ✅ RPM 제한 (429) 자동 감지 및 Fallback
-- ✅ 인증 에러 즉시 실패 처리
-- ✅ 모든 시도 내역 추적
-
-### 유틸리티
-- ✅ 5단계 로깅 시스템
-- ✅ 타임아웃 설정
-- ✅ 디버그 모드
-
-### 테스트 및 품질
-- ✅ **총 66개 테스트** 작성 및 통과
-- ✅ Unit tests (client, fallback, retry, error, logger)
-- ✅ Integration tests (fallback-flow)
-- ✅ Mock API 구현
-- ✅ 높은 테스트 커버리지
-
-### 문서화
-- ✅ 포괄적인 README.md
-- ✅ API 레퍼런스
-- ✅ 5개 예제 코드
-- ✅ CHANGELOG.md
-- ✅ CONTRIBUTING.md
-- ✅ PUBLISH.md (배포 가이드)
-
-### 개발 도구
-- ✅ TypeScript 5.3+
-- ✅ ESLint + Prettier
-- ✅ Vitest (테스트 프레임워크)
-- ✅ tsup (빌드 도구)
-
----
-
-## 🔧 기술 스택
-
-| 카테고리 | 기술 |
-|---------|------|
-| **언어** | TypeScript 5.3+ |
-| **런타임** | Node.js 18.0+ |
-| **빌드** | tsup (CommonJS + ESM) |
-| **테스트** | Vitest |
-| **린팅** | ESLint + Prettier |
-| **API** | @google/generative-ai ^0.21.0 |
-
----
-
-## 📊 통계
-
-- **총 코드 라인 수**: ~2,000 라인
-- **테스트 수**: 66개
-- **지원 모델**: 4개
-- **지원 Node 버전**: 18.0.0+
-- **라이선스**: MIT
-
----
-
-## 🗺️ 향후 계획
-
-### Phase 2: Advanced Features (계획 중)
-- [ ] Rate Limiting 추적 및 예측
-- [ ] 응답 캐싱 (중복 요청 최적화)
-- [ ] 멀티 API 키 지원 및 로테이션
-- [ ] Circuit Breaker 패턴
-- [ ] Health Check 및 모델 상태 모니터링
-- [ ] Connection Pooling
-
-### Phase 3: Ecosystem (향후 계획)
-- [ ] CLI 도구
-- [ ] 웹 대시보드 (실시간 모니터링)
-- [ ] 모니터링 통합 (Prometheus, Grafana)
-- [ ] 추가 AI 모델 지원 (Claude, GPT 등)
+### 개발자 경험
+- ✅ TypeScript 완벽 지원
+- ✅ 이중 모듈 지원 (CommonJS + ESM)
+- ✅ 포괄적인 문서 및 예제
+- ✅ 165개 테스트로 검증된 안정성
 
 ---
 
 ## 🙏 감사의 말
 
-이 라이브러리는 Gemini API를 사용하는 개발자들이 RPM 제한 문제를 쉽게 해결할 수 있도록 만들어졌습니다. 첫 번째 릴리스를 성공적으로 배포하게 되어 매우 기쁩니다!
-
-버그 리포트, 기능 제안, Pull Request는 언제나 환영합니다.
+사용자 피드백을 반영하여 더 나은 네이밍으로 개선했습니다. 앞으로도 gemback이 더 사용하기 쉽고 직관적인 라이브러리가 되도록 노력하겠습니다!
 
 ---
 
@@ -203,7 +220,8 @@ const response = await client.chat([
 - **NPM 패키지**: https://www.npmjs.com/package/gemback
 - **GitHub 저장소**: https://github.com/Laeyoung/gem-back
 - **이슈 트래커**: https://github.com/Laeyoung/gem-back/issues
-- **문서**: https://github.com/Laeyoung/gem-back#readme
+- **전체 CHANGELOG**: [CHANGELOG.md](./CHANGELOG.md)
+- **문서**: [README.md](./README.md)
 - **Gemini API 문서**: https://ai.google.dev/docs
 
 ---
@@ -216,4 +234,4 @@ MIT License - 자유롭게 사용, 수정, 배포할 수 있습니다.
 
 **Made with ❤️ by Laeyoung**
 
-*gemback v0.1.0 - Smart Gemini API Fallback for Everyone!*
+*gemback v0.2.1 - Cleaner Names, Better Experience!*

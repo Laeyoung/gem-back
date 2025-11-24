@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2025-11-24
+
+### Changed
+
+#### 🔄 Naming Consistency Improvements
+- **Renamed main client class**: `GeminiBackClient` → `GemBack`
+  - Improves consistency with library name `gemback`
+  - More concise and intuitive class name
+  - Updated in all source files, examples, and tests
+
+- **Renamed options interface**: `GeminiBackClientOptions` → `GemBackOptions`
+  - Better alignment with the new class name
+  - Reduced verbosity in type annotations
+  - Added deprecated type alias for backward compatibility:
+    ```typescript
+    export type GeminiBackClientOptions = GemBackOptions;
+    ```
+
+### Documentation
+
+- Updated all documentation files:
+  - README.md (English)
+  - README.ko.md (Korean)
+  - All example files (7 files)
+  - Test files
+  - Integration test files
+
+### Migration Guide
+
+Users should update their imports:
+
+```typescript
+// Before (v0.2.0)
+import { GeminiBackClient, GeminiBackClientOptions } from 'gemback';
+const options: GeminiBackClientOptions = { apiKey: '...' };
+const client = new GeminiBackClient(options);
+
+// After (v0.2.1)
+import { GemBack, GemBackOptions } from 'gemback';
+const options: GemBackOptions = { apiKey: '...' };
+const client = new GemBack(options);
+```
+
+**Note**: The old names are still available as deprecated aliases for backward compatibility.
+
+### Breaking Changes
+
+- **Class name change**: Code directly referencing `GeminiBackClient` will need to be updated
+- **Type name change**: Code using `GeminiBackClientOptions` type should be updated
+- Deprecated aliases are provided for both to ease migration
+
 ## [0.2.0] - 2025-11-23
 
 ### Added
@@ -143,6 +194,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contribution guidelines
 - MIT License
 
-[Unreleased]: https://github.com/Laeyoung/gem-back/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Laeyoung/gem-back/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/Laeyoung/gem-back/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Laeyoung/gem-back/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Laeyoung/gem-back/releases/tag/v0.1.0
