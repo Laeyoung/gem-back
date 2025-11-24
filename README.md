@@ -290,7 +290,7 @@ console.log(stats);
 #### Constructor Options
 
 ```typescript
-interface GeminiBackClientOptions {
+interface GemBackOptions {
   apiKey?: string;                   // Gemini API key (single key)
   apiKeys?: string[];                // Multiple API keys (multi-key mode)
   fallbackOrder?: GeminiModel[];     // Optional: Fallback order

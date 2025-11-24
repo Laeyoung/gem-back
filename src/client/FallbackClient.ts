@@ -1,4 +1,4 @@
-import type { GeminiBackClientOptions, GenerateOptions, ChatMessage } from '../types/config';
+import type { GemBackOptions, GenerateOptions, ChatMessage } from '../types/config';
 import type { GeminiResponse, StreamChunk, FallbackStats } from '../types/response';
 import type { AttemptRecord } from '../types/errors';
 import { DEFAULT_CLIENT_OPTIONS } from '../config/defaults';
@@ -17,7 +17,7 @@ import {
 } from '../utils/error-handler';
 
 export class GemBack {
-  private options: Required<Omit<GeminiBackClientOptions, 'apiKey' | 'apiKeys'>> & {
+  private options: Required<Omit<GemBackOptions, 'apiKey' | 'apiKeys'>> & {
     apiKey?: string;
     apiKeys?: string[];
   };
@@ -28,13 +28,13 @@ export class GemBack {
   private rateLimitTracker: RateLimitTracker | null;
   private healthMonitor: HealthMonitor | null;
 
-  constructor(options: GeminiBackClientOptions) {
+  constructor(options: GemBackOptions) {
     if (!options.apiKey && (!options.apiKeys || options.apiKeys.length === 0)) {
       throw new Error('Either apiKey or apiKeys must be provided');
     }
 
     this.options = { ...DEFAULT_CLIENT_OPTIONS, ...options } as Required<
-      Omit<GeminiBackClientOptions, 'apiKey' | 'apiKeys'>
+      Omit<GemBackOptions, 'apiKey' | 'apiKeys'>
     > & { apiKey?: string; apiKeys?: string[] };
 
     this.logger = new Logger(this.options.debug ? 'debug' : this.options.logLevel, '[GemBack]');

@@ -288,7 +288,7 @@ console.log(stats);
 #### Constructor Options
 
 ```typescript
-interface GeminiBackClientOptions {
+interface GemBackOptions {
   apiKey?: string;                   // Gemini API 키 (단일 키)
   apiKeys?: string[];                // 여러 API 키 (멀티 키 모드)
   fallbackOrder?: GeminiModel[];     // 선택: Fallback 순서
