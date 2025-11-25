@@ -41,9 +41,10 @@ export class GemBack {
     this.client = new GeminiClient(this.options.timeout);
 
     const apiKeys = options.apiKeys || (options.apiKey ? [options.apiKey] : []);
-    this.apiKeyRotator = apiKeys.length > 1
-      ? new ApiKeyRotator(apiKeys, options.apiKeyRotationStrategy || 'round-robin')
-      : null;
+    this.apiKeyRotator =
+      apiKeys.length > 1
+        ? new ApiKeyRotator(apiKeys, options.apiKeyRotationStrategy || 'round-robin')
+        : null;
 
     const singleKey = !this.apiKeyRotator;
     this.logger.info(
@@ -104,9 +105,7 @@ export class GemBack {
         }
         if (this.rateLimitTracker.wouldExceedLimit(model)) {
           const waitTime = this.rateLimitTracker.getRecommendedWaitTime(model);
-          this.logger.warn(
-            `Would exceed rate limit for ${model}. Recommended wait: ${waitTime}ms`
-          );
+          this.logger.warn(`Would exceed rate limit for ${model}. Recommended wait: ${waitTime}ms`);
         }
       }
 
@@ -230,9 +229,7 @@ export class GemBack {
         }
         if (this.rateLimitTracker.wouldExceedLimit(model)) {
           const waitTime = this.rateLimitTracker.getRecommendedWaitTime(model);
-          this.logger.warn(
-            `Would exceed rate limit for ${model}. Recommended wait: ${waitTime}ms`
-          );
+          this.logger.warn(`Would exceed rate limit for ${model}. Recommended wait: ${waitTime}ms`);
         }
       }
 
@@ -347,7 +344,9 @@ export class GemBack {
 
     // Add monitoring data if monitoring is enabled
     if (this.rateLimitTracker || this.healthMonitor) {
-      const models: Array<'gemini-2.5-flash' | 'gemini-2.5-flash-lite' | 'gemini-2.0-flash' | 'gemini-2.0-flash-lite'> = [
+      const models: Array<
+        'gemini-2.5-flash' | 'gemini-2.5-flash-lite' | 'gemini-2.0-flash' | 'gemini-2.0-flash-lite'
+      > = [
         'gemini-2.5-flash',
         'gemini-2.5-flash-lite',
         'gemini-2.0-flash',
