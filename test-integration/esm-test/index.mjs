@@ -4,7 +4,7 @@
  * This tests the basic functionality of gemback in an ESM environment
  */
 
-import { GeminiBackClient } from 'gemback';
+import { GemBack } from 'gemback';
 
 async function main() {
   console.log('=== ESM Integration Test ===\n');
@@ -18,7 +18,7 @@ async function main() {
 
     // Test that we can create a client instance (it will fail when used without API key)
     try {
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKey: 'dummy-key-for-structure-test'
       });
       console.log('✅ Client instantiation successful');
@@ -39,7 +39,7 @@ async function main() {
   try {
     // Test 1: Basic client creation
     console.log('Test 1: Basic client creation');
-    const client = new GeminiBackClient({
+    const client = new GemBack({
       apiKey: apiKey,
       debug: true
     });

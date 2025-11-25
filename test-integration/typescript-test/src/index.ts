@@ -4,7 +4,7 @@
  * This tests the type safety and functionality of gemback in a TypeScript environment
  */
 
-import { GeminiBackClient, type GeminiBackClientOptions, type GeminiResponse } from 'gemback';
+import { GemBack, type GemBackOptions, type GeminiResponse } from 'gemback';
 
 async function main(): Promise<void> {
   console.log('=== TypeScript Integration Test ===\n');
@@ -18,11 +18,11 @@ async function main(): Promise<void> {
 
     // Test type checking with TypeScript
     try {
-      const options: GeminiBackClientOptions = {
+      const options: GemBackOptions = {
         apiKey: 'dummy-key-for-structure-test'
       };
 
-      const client = new GeminiBackClient(options);
+      const client = new GemBack(options);
       console.log('✅ Client instantiation successful');
       console.log('✅ TypeScript types: All types imported correctly');
       console.log('✅ Type checking: client is', typeof client);
@@ -48,14 +48,14 @@ async function main(): Promise<void> {
   try {
     // Test 1: Basic client creation with type checking
     console.log('Test 1: Basic client creation with strict types');
-    const options: GeminiBackClientOptions = {
+    const options: GemBackOptions = {
       apiKey: apiKey,
       debug: true,
       maxRetries: 2,
       timeout: 30000
     };
 
-    const client = new GeminiBackClient(options);
+    const client = new GemBack(options);
     console.log('✅ Client created with type-safe configuration\n');
 
     // Test 2: Simple text generation with typed response
@@ -88,7 +88,7 @@ async function main(): Promise<void> {
     console.log('Test 4: Testing type safety on options');
 
     // This should compile - valid options
-    const validOptions: GeminiBackClientOptions = {
+    const validOptions: GemBackOptions = {
       apiKey: apiKey,
       fallbackOrder: ['gemini-2.5-flash', 'gemini-2.0-flash'],
       maxRetries: 3,
@@ -98,7 +98,7 @@ async function main(): Promise<void> {
       enableRateLimitPrediction: true
     };
 
-    const typedClient = new GeminiBackClient(validOptions);
+    const typedClient = new GemBack(validOptions);
     console.log('✅ Type checking ensures only valid options are accepted\n');
 
     console.log('=== All TypeScript tests passed! ===');

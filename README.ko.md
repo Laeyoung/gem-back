@@ -64,10 +64,10 @@ pnpm add gemback
 ### 기본 사용법
 
 ```typescript
-import { GeminiBackClient } from 'gemback';
+import { GemBack } from 'gemback';
 
 // 클라이언트 생성
-const client = new GeminiBackClient({
+const client = new GemBack({
   apiKey: process.env.GEMINI_API_KEY
 });
 
@@ -80,7 +80,7 @@ console.log(response.text);
 ### 커스텀 Fallback 순서
 
 ```typescript
-const client = new GeminiBackClient({
+const client = new GemBack({
   apiKey: process.env.GEMINI_API_KEY,
   fallbackOrder: [
     'gemini-2.5-flash',
@@ -107,7 +107,7 @@ for await (const chunk of stream) {
 여러 API 키를 사용하여 RPM 제한을 효과적으로 우회할 수 있습니다:
 
 ```typescript
-const client = new GeminiBackClient({
+const client = new GemBack({
   apiKeys: [
     process.env.GEMINI_API_KEY_1,
     process.env.GEMINI_API_KEY_2,
@@ -135,7 +135,7 @@ console.log(stats.apiKeyStats); // 각 키의 사용량, 성공률 등
 실시간 Rate Limiting 추적 및 모델 Health 모니터링으로 안정성을 향상시킬 수 있습니다:
 
 ```typescript
-const client = new GeminiBackClient({
+const client = new GemBack({
   apiKey: process.env.GEMINI_API_KEY,
   enableMonitoring: true  // 모니터링 활성화
 });
@@ -220,7 +220,7 @@ const response = await client.generate('복잡한 질문');
 ### 2. 재시도 로직
 
 ```typescript
-const client = new GeminiBackClient({
+const client = new GemBack({
   apiKey: 'YOUR_KEY',
   maxRetries: 3, // 각 모델당 최대 3번 재시도
   retryDelay: 1000 // 초기 재시도 대기 시간 (ms)
@@ -283,12 +283,12 @@ console.log(stats);
 
 ## 🔧 API 레퍼런스
 
-### `GeminiBackClient`
+### `GemBack`
 
 #### Constructor Options
 
 ```typescript
-interface GeminiBackClientOptions {
+interface GemBackOptions {
   apiKey?: string;                   // Gemini API 키 (단일 키)
   apiKeys?: string[];                // 여러 API 키 (멀티 키 모드)
   fallbackOrder?: GeminiModel[];     // 선택: Fallback 순서
@@ -357,7 +357,7 @@ const stats = client.getFallbackStats();
 ### Fallback 동작 커스터마이징
 
 ```typescript
-const client = new GeminiBackClient({
+const client = new GemBack({
   apiKey: 'YOUR_KEY',
 
   // 사용할 모델만 지정
@@ -382,7 +382,7 @@ const client = new GeminiBackClient({
 ### v0.2.0 고급 설정
 
 ```typescript
-const client = new GeminiBackClient({
+const client = new GemBack({
   // 멀티 API 키 로테이션 (v0.2.0+)
   apiKeys: ['KEY_1', 'KEY_2', 'KEY_3'],
   apiKeyRotationStrategy: 'least-used',  // 또는 'round-robin'

@@ -1,4 +1,4 @@
-import type { GeminiBackClientOptions, GenerateOptions, ChatMessage } from '../types/config';
+import type { GemBackOptions, GenerateOptions, ChatMessage } from '../types/config';
 import type { GeminiResponse, StreamChunk, FallbackStats } from '../types/response';
 import type { AttemptRecord } from '../types/errors';
 import { DEFAULT_CLIENT_OPTIONS } from '../config/defaults';
@@ -16,8 +16,8 @@ import {
   getErrorStatusCode,
 } from '../utils/error-handler';
 
-export class GeminiBackClient {
-  private options: Required<Omit<GeminiBackClientOptions, 'apiKey' | 'apiKeys'>> & {
+export class GemBack {
+  private options: Required<Omit<GemBackOptions, 'apiKey' | 'apiKeys'>> & {
     apiKey?: string;
     apiKeys?: string[];
   };
@@ -28,22 +28,23 @@ export class GeminiBackClient {
   private rateLimitTracker: RateLimitTracker | null;
   private healthMonitor: HealthMonitor | null;
 
-  constructor(options: GeminiBackClientOptions) {
+  constructor(options: GemBackOptions) {
     if (!options.apiKey && (!options.apiKeys || options.apiKeys.length === 0)) {
       throw new Error('Either apiKey or apiKeys must be provided');
     }
 
     this.options = { ...DEFAULT_CLIENT_OPTIONS, ...options } as Required<
-      Omit<GeminiBackClientOptions, 'apiKey' | 'apiKeys'>
+      Omit<GemBackOptions, 'apiKey' | 'apiKeys'>
     > & { apiKey?: string; apiKeys?: string[] };
 
     this.logger = new Logger(this.options.debug ? 'debug' : this.options.logLevel, '[GemBack]');
     this.client = new GeminiClient(this.options.timeout);
 
     const apiKeys = options.apiKeys || (options.apiKey ? [options.apiKey] : []);
-    this.apiKeyRotator = apiKeys.length > 1
-      ? new ApiKeyRotator(apiKeys, options.apiKeyRotationStrategy || 'round-robin')
-      : null;
+    this.apiKeyRotator =
+      apiKeys.length > 1
+        ? new ApiKeyRotator(apiKeys, options.apiKeyRotationStrategy || 'round-robin')
+        : null;
 
     const singleKey = !this.apiKeyRotator;
     this.logger.info(
@@ -104,9 +105,7 @@ export class GeminiBackClient {
         }
         if (this.rateLimitTracker.wouldExceedLimit(model)) {
           const waitTime = this.rateLimitTracker.getRecommendedWaitTime(model);
-          this.logger.warn(
-            `Would exceed rate limit for ${model}. Recommended wait: ${waitTime}ms`
-          );
+          this.logger.warn(`Would exceed rate limit for ${model}. Recommended wait: ${waitTime}ms`);
         }
       }
 
@@ -230,9 +229,7 @@ export class GeminiBackClient {
         }
         if (this.rateLimitTracker.wouldExceedLimit(model)) {
           const waitTime = this.rateLimitTracker.getRecommendedWaitTime(model);
-          this.logger.warn(
-            `Would exceed rate limit for ${model}. Recommended wait: ${waitTime}ms`
-          );
+          this.logger.warn(`Would exceed rate limit for ${model}. Recommended wait: ${waitTime}ms`);
         }
       }
 
@@ -347,7 +344,9 @@ export class GeminiBackClient {
 
     // Add monitoring data if monitoring is enabled
     if (this.rateLimitTracker || this.healthMonitor) {
-      const models: Array<'gemini-2.5-flash' | 'gemini-2.5-flash-lite' | 'gemini-2.0-flash' | 'gemini-2.0-flash-lite'> = [
+      const models: Array<
+        'gemini-2.5-flash' | 'gemini-2.5-flash-lite' | 'gemini-2.0-flash' | 'gemini-2.0-flash-lite'
+      > = [
         'gemini-2.5-flash',
         'gemini-2.5-flash-lite',
         'gemini-2.0-flash',

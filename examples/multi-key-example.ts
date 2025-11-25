@@ -4,13 +4,13 @@
  * This file demonstrates various use cases for multiple API key rotation
  */
 
-import { GeminiBackClient } from '../src/index';
+import { GemBack } from '../src/index';
 
 // Example 1: Basic Multi-Key Setup with Round-Robin
 async function basicMultiKeyExample() {
   console.log('\n=== Example 1: Basic Multi-Key Setup ===\n');
 
-  const client = new GeminiBackClient({
+  const client = new GemBack({
     apiKeys: [
       'GEMINI_API_KEY_1', // Replace with actual keys
       'GEMINI_API_KEY_2',
@@ -42,7 +42,7 @@ async function basicMultiKeyExample() {
 async function leastUsedStrategyExample() {
   console.log('\n=== Example 2: Least-Used Strategy ===\n');
 
-  const client = new GeminiBackClient({
+  const client = new GemBack({
     apiKeys: ['KEY_1', 'KEY_2', 'KEY_3'],
     apiKeyRotationStrategy: 'least-used',
   });
@@ -63,7 +63,7 @@ async function leastUsedStrategyExample() {
 async function rpmLimitHandlingExample() {
   console.log('\n=== Example 3: RPM Limit Handling ===\n');
 
-  const client = new GeminiBackClient({
+  const client = new GemBack({
     apiKeys: ['KEY_1', 'KEY_2', 'KEY_3'],
     maxRetries: 2,
   });
@@ -97,7 +97,7 @@ async function rpmLimitHandlingExample() {
 async function streamingWithMultiKeyExample() {
   console.log('\n=== Example 4: Streaming with Multiple Keys ===\n');
 
-  const client = new GeminiBackClient({
+  const client = new GemBack({
     apiKeys: ['KEY_1', 'KEY_2'],
     apiKeyRotationStrategy: 'round-robin',
   });
@@ -129,7 +129,7 @@ async function streamingWithMultiKeyExample() {
 async function errorRecoveryExample() {
   console.log('\n=== Example 5: Error Recovery ===\n');
 
-  const client = new GeminiBackClient({
+  const client = new GemBack({
     apiKeys: ['INVALID_KEY', 'VALID_KEY_1', 'VALID_KEY_2'],
     maxRetries: 1,
   });
@@ -156,7 +156,7 @@ async function errorRecoveryExample() {
 async function monitorKeyHealthExample() {
   console.log('\n=== Example 6: Monitoring Key Health ===\n');
 
-  const client = new GeminiBackClient({
+  const client = new GemBack({
     apiKeys: ['KEY_1', 'KEY_2', 'KEY_3'],
   });
 
@@ -204,7 +204,7 @@ async function backwardCompatibilityExample() {
 async function highConcurrencyExample() {
   console.log('\n=== Example 8: High Concurrency ===\n');
 
-  const client = new GeminiBackClient({
+  const client = new GemBack({
     apiKeys: Array.from({ length: 5 }, (_, i) => `KEY_${i + 1}`),
     apiKeyRotationStrategy: 'least-used',
   });

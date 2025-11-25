@@ -128,9 +128,7 @@ export class RateLimitTracker {
       'gemini-2.0-flash-lite',
     ];
 
-    return models
-      .map((model) => this.getStatus(model))
-      .filter((status) => status.isNearLimit);
+    return models.map((model) => this.getStatus(model)).filter((status) => status.isNearLimit);
   }
 
   /**

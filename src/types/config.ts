@@ -2,7 +2,7 @@ import type { GeminiModel } from './models';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'silent';
 
-export interface GeminiBackClientOptions {
+export interface GemBackOptions {
   apiKey?: string;
   apiKeys?: string[];
   fallbackOrder?: GeminiModel[];
@@ -15,6 +15,9 @@ export interface GeminiBackClientOptions {
   enableMonitoring?: boolean; // Enable rate limit tracking and health monitoring
   enableRateLimitPrediction?: boolean; // Enable predictive rate limit warnings
 }
+
+// Deprecated: Use GemBackOptions instead
+export type GeminiBackClientOptions = GemBackOptions;
 
 export interface GenerateOptions {
   model?: GeminiModel;

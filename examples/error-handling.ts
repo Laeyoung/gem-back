@@ -6,10 +6,10 @@
  * rate limits, and complete failures.
  */
 
-import { GeminiBackClient, GeminiBackError } from 'gemback';
+import { GemBack, GeminiBackError } from 'gemback';
 
 async function demonstrateErrorHandling() {
-  const client = new GeminiBackClient({
+  const client = new GemBack({
     apiKey: process.env.GEMINI_API_KEY || 'your-api-key-here',
     debug: true,
   });
@@ -55,7 +55,7 @@ async function demonstrateErrorHandling() {
 async function demonstrateGracefulDegradation() {
   console.log('\n\n=== Graceful Degradation Example ===\n');
 
-  const client = new GeminiBackClient({
+  const client = new GemBack({
     apiKey: process.env.GEMINI_API_KEY || 'your-api-key-here',
   });
 

@@ -10,7 +10,7 @@
  * - Error handling
  */
 
-const { GeminiBackClient } = require('gemback');
+const { GemBack } = require('gemback');
 
 async function testBasicGeneration(client) {
   console.log('\n📝 Test 1: Basic Text Generation');
@@ -60,7 +60,7 @@ async function testMultiKeyRotation() {
   }
 
   // Simulate multi-key with same key (for demo)
-  const client = new GeminiBackClient({
+  const client = new GemBack({
     apiKeys: [apiKey, apiKey, apiKey],
     apiKeyRotationStrategy: 'round-robin',
     debug: false
@@ -88,7 +88,7 @@ async function testMonitoring() {
     return;
   }
 
-  const client = new GeminiBackClient({
+  const client = new GemBack({
     apiKey: apiKey,
     enableMonitoring: true,
     enableRateLimitPrediction: true,
@@ -127,7 +127,7 @@ async function testErrorHandling() {
 
   try {
     // This should fail - invalid API key
-    const client = new GeminiBackClient({
+    const client = new GemBack({
       apiKey: 'invalid-key-for-testing',
       debug: false
     });
@@ -147,7 +147,7 @@ async function testFallbackBehavior(client) {
   console.log('─'.repeat(50));
 
   // Test with custom fallback order
-  const customClient = new GeminiBackClient({
+  const customClient = new GemBack({
     apiKey: process.env.GEMINI_API_KEY || 'dummy',
     fallbackOrder: ['gemini-2.5-flash', 'gemini-2.0-flash'],
     maxRetries: 2,
@@ -177,7 +177,7 @@ async function main() {
   }
 
   try {
-    const client = new GeminiBackClient({
+    const client = new GemBack({
       apiKey: apiKey || 'dummy-key',
       debug: false
     });

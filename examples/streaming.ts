@@ -6,10 +6,10 @@
  * as they are generated.
  */
 
-import { GeminiBackClient } from 'gemback';
+import { GemBack } from 'gemback';
 
 async function main() {
-  const client = new GeminiBackClient({
+  const client = new GemBack({
     apiKey: process.env.GEMINI_API_KEY || 'your-api-key-here',
     debug: false, // Disable debug to see clean output
   });

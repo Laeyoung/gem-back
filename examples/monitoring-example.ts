@@ -5,13 +5,13 @@
  * rate limits and model health in real-time.
  */
 
-import { GeminiBackClient } from '../src';
+import { GemBack } from '../src';
 
 // Example 1: Basic Monitoring
 async function basicMonitoring() {
   console.log('\n=== Example 1: Basic Monitoring ===\n');
 
-  const client = new GeminiBackClient({
+  const client = new GemBack({
     apiKey: process.env.GEMINI_API_KEY || 'demo-key',
     enableMonitoring: true,  // Enable monitoring
   });
@@ -79,7 +79,7 @@ async function basicMonitoring() {
 async function rateLimitTracking() {
   console.log('\n=== Example 2: Rate Limit Tracking ===\n');
 
-  const client = new GeminiBackClient({
+  const client = new GemBack({
     apiKey: process.env.GEMINI_API_KEY || 'demo-key',
     enableMonitoring: true,
   });
@@ -117,7 +117,7 @@ async function rateLimitTracking() {
 async function multiKeyMonitoring() {
   console.log('\n=== Example 3: Multi-Key with Monitoring ===\n');
 
-  const client = new GeminiBackClient({
+  const client = new GemBack({
     apiKeys: [
       process.env.GEMINI_API_KEY_1 || 'demo-key-1',
       process.env.GEMINI_API_KEY_2 || 'demo-key-2',
@@ -165,7 +165,7 @@ async function multiKeyMonitoring() {
 async function healthStatusMonitoring() {
   console.log('\n=== Example 4: Health Status Monitoring ===\n');
 
-  const client = new GeminiBackClient({
+  const client = new GemBack({
     apiKey: process.env.GEMINI_API_KEY || 'demo-key',
     enableMonitoring: true,
   });
@@ -206,7 +206,7 @@ async function healthStatusMonitoring() {
 async function monitoringDashboard() {
   console.log('\n=== Example 5: Monitoring Dashboard ===\n');
 
-  const client = new GeminiBackClient({
+  const client = new GemBack({
     apiKey: process.env.GEMINI_API_KEY || 'demo-key',
     enableMonitoring: true,
   });
