@@ -45,9 +45,9 @@ export class HealthMonitor {
   };
 
   private readonly degradedThresholds = {
-    successRate: 0.80, // 80%
+    successRate: 0.8, // 80%
     responseTime: 5000, // 5 seconds
-    availability: 0.90, // 90%
+    availability: 0.9, // 90%
   };
 
   constructor() {
@@ -57,12 +57,7 @@ export class HealthMonitor {
   /**
    * Record a request result
    */
-  recordRequest(
-    model: GeminiModel,
-    responseTime: number,
-    success: boolean,
-    error?: string
-  ): void {
+  recordRequest(model: GeminiModel, responseTime: number, success: boolean, error?: string): void {
     if (!this.modelMetrics.has(model)) {
       this.modelMetrics.set(model, []);
     }

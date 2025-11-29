@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GeminiBackClient } from '../../src/client/FallbackClient';
+import { GemBack } from '../../src/client/FallbackClient';
 import { GeminiClient } from '../../src/client/GeminiClient';
 import { GeminiBackError } from '../../src/types/errors';
 
 vi.mock('../../src/client/GeminiClient');
 
-describe('GeminiBackClient', () => {
+describe('GemBack', () => {
   let mockGeminiClient: any;
 
   beforeEach(() => {
@@ -19,12 +19,12 @@ describe('GeminiBackClient', () => {
 
   describe('constructor', () => {
     it('should initialize with API key', () => {
-      const client = new GeminiBackClient({ apiKey: 'test-key' });
-      expect(client).toBeInstanceOf(GeminiBackClient);
+      const client = new GemBack({ apiKey: 'test-key' });
+      expect(client).toBeInstanceOf(GemBack);
     });
 
     it('should use default fallback order', () => {
-      const client = new GeminiBackClient({ apiKey: 'test-key' });
+      const client = new GemBack({ apiKey: 'test-key' });
       const stats = client.getFallbackStats();
       expect(stats.modelUsage).toHaveProperty('gemini-2.5-flash');
       expect(stats.modelUsage).toHaveProperty('gemini-2.5-flash-lite');
@@ -33,11 +33,11 @@ describe('GeminiBackClient', () => {
     });
 
     it('should accept custom fallback order', () => {
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKey: 'test-key',
         fallbackOrder: ['gemini-2.5-flash', 'gemini-2.0-flash'],
       });
-      expect(client).toBeInstanceOf(GeminiBackClient);
+      expect(client).toBeInstanceOf(GemBack);
     });
   });
 
@@ -50,7 +50,7 @@ describe('GeminiBackClient', () => {
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
 
-      const client = new GeminiBackClient({ apiKey: 'test-key' });
+      const client = new GemBack({ apiKey: 'test-key' });
       const response = await client.generate('Hello');
 
       expect(response).toEqual(mockResponse);
@@ -69,7 +69,7 @@ describe('GeminiBackClient', () => {
         .mockRejectedValueOnce(rateLimitError)
         .mockResolvedValueOnce(successResponse);
 
-      const client = new GeminiBackClient({ apiKey: 'test-key', maxRetries: 0 });
+      const client = new GemBack({ apiKey: 'test-key', maxRetries: 0 });
       const response = await client.generate('Hello');
 
       expect(response.model).toBe('gemini-2.5-flash-lite');
@@ -80,7 +80,7 @@ describe('GeminiBackClient', () => {
       const authError = new Error('401 Invalid API key');
       mockGeminiClient.generate.mockRejectedValue(authError);
 
-      const client = new GeminiBackClient({ apiKey: 'test-key' });
+      const client = new GemBack({ apiKey: 'test-key' });
 
       await expect(client.generate('Hello')).rejects.toThrow(GeminiBackError);
       await expect(client.generate('Hello')).rejects.toThrow('Authentication failed');
@@ -90,7 +90,7 @@ describe('GeminiBackClient', () => {
       const error = new Error('500 Internal Server Error');
       mockGeminiClient.generate.mockRejectedValue(error);
 
-      const client = new GeminiBackClient({ apiKey: 'test-key', maxRetries: 0 });
+      const client = new GemBack({ apiKey: 'test-key', maxRetries: 0 });
 
       try {
         await client.generate('Hello');
@@ -112,7 +112,7 @@ describe('GeminiBackClient', () => {
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
 
-      const client = new GeminiBackClient({ apiKey: 'test-key' });
+      const client = new GemBack({ apiKey: 'test-key' });
       await client.generate('Hello', { model: 'gemini-2.0-flash' });
 
       expect(mockGeminiClient.generate).toHaveBeenCalledWith(
@@ -137,7 +137,7 @@ describe('GeminiBackClient', () => {
         .mockRejectedValueOnce(timeoutError)
         .mockResolvedValueOnce(successResponse);
 
-      const client = new GeminiBackClient({ apiKey: 'test-key', maxRetries: 1 });
+      const client = new GemBack({ apiKey: 'test-key', maxRetries: 1 });
       const response = await client.generate('Hello');
 
       expect(response).toEqual(successResponse);
@@ -154,7 +154,7 @@ describe('GeminiBackClient', () => {
       }
       mockGeminiClient.generateStream.mockReturnValue(mockStream());
 
-      const client = new GeminiBackClient({ apiKey: 'test-key' });
+      const client = new GemBack({ apiKey: 'test-key' });
       const stream = client.generateStream('Hello');
 
       const chunks = [];
@@ -180,7 +180,7 @@ describe('GeminiBackClient', () => {
         .mockReturnValueOnce(failStream())
         .mockReturnValueOnce(successStream());
 
-      const client = new GeminiBackClient({ apiKey: 'test-key' });
+      const client = new GemBack({ apiKey: 'test-key' });
       const stream = client.generateStream('Hello');
 
       const chunks = [];
@@ -201,7 +201,7 @@ describe('GeminiBackClient', () => {
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
 
-      const client = new GeminiBackClient({ apiKey: 'test-key' });
+      const client = new GemBack({ apiKey: 'test-key' });
       const messages = [
         { role: 'user' as const, content: 'Hello' },
         { role: 'assistant' as const, content: 'Hi there' },
@@ -223,7 +223,7 @@ describe('GeminiBackClient', () => {
 
   describe('getFallbackStats', () => {
     it('should return initial stats', () => {
-      const client = new GeminiBackClient({ apiKey: 'test-key' });
+      const client = new GemBack({ apiKey: 'test-key' });
       const stats = client.getFallbackStats();
 
       expect(stats).toEqual({
@@ -248,7 +248,7 @@ describe('GeminiBackClient', () => {
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
 
-      const client = new GeminiBackClient({ apiKey: 'test-key' });
+      const client = new GemBack({ apiKey: 'test-key' });
       await client.generate('Hello');
 
       const stats = client.getFallbackStats();
@@ -262,7 +262,7 @@ describe('GeminiBackClient', () => {
       const error = new Error('500 Server error');
       mockGeminiClient.generate.mockRejectedValue(error);
 
-      const client = new GeminiBackClient({ apiKey: 'test-key', maxRetries: 0 });
+      const client = new GemBack({ apiKey: 'test-key', maxRetries: 0 });
 
       try {
         await client.generate('Hello');
@@ -294,7 +294,7 @@ describe('GeminiBackClient', () => {
         throw new Error('500 Server error');
       });
 
-      const client = new GeminiBackClient({ apiKey: 'test-key', maxRetries: 0 });
+      const client = new GemBack({ apiKey: 'test-key', maxRetries: 0 });
 
       await client.generate('Hello');
       await client.generate('Hello');
@@ -313,14 +313,14 @@ describe('GeminiBackClient', () => {
 
   describe('Multi API Key Support', () => {
     it('should initialize with multiple API keys', () => {
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKeys: ['key1', 'key2', 'key3'],
       });
-      expect(client).toBeInstanceOf(GeminiBackClient);
+      expect(client).toBeInstanceOf(GemBack);
     });
 
     it('should throw error when neither apiKey nor apiKeys provided', () => {
-      expect(() => new GeminiBackClient({} as any)).toThrow(
+      expect(() => new GemBack({} as any)).toThrow(
         'Either apiKey or apiKeys must be provided'
       );
     });
@@ -333,7 +333,7 @@ describe('GeminiBackClient', () => {
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKeys: ['key1', 'key2', 'key3'],
         apiKeyRotationStrategy: 'round-robin',
       });
@@ -356,7 +356,7 @@ describe('GeminiBackClient', () => {
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKeys: ['key1', 'key2'],
         apiKeyRotationStrategy: 'least-used',
       });
@@ -377,7 +377,7 @@ describe('GeminiBackClient', () => {
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKeys: ['key1', 'key2'],
       });
 
@@ -397,7 +397,7 @@ describe('GeminiBackClient', () => {
       const error = new Error('500 Server error');
       mockGeminiClient.generate.mockRejectedValue(error);
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKeys: ['key1', 'key2'],
         maxRetries: 0,
       });
@@ -422,7 +422,7 @@ describe('GeminiBackClient', () => {
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKey: 'single-key',
       });
 
@@ -438,7 +438,7 @@ describe('GeminiBackClient', () => {
       }
       mockGeminiClient.generateStream.mockReturnValue(mockStream());
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKeys: ['key1', 'key2'],
       });
 

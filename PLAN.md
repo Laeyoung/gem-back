@@ -113,10 +113,10 @@ gemini-2.0-flash-lite
 
 ### 기본 사용법
 ```typescript
-import { GeminiBackClient } from 'gem-back';
+import { GemBack } from 'gem-back';
 
 // 기본 사용
-const client = new GeminiBackClient({
+const client = new GemBack({
   apiKey: 'YOUR_API_KEY'
 });
 
@@ -127,7 +127,7 @@ console.log(response.text);
 ### 커스텀 설정
 ```typescript
 // 커스텀 Fallback 순서
-const client = new GeminiBackClient({
+const client = new GemBack({
   apiKey: 'YOUR_API_KEY',
   fallbackOrder: [
     'gemini-2.5-flash',

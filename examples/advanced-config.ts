@@ -8,12 +8,12 @@
  * - Log level configuration
  */
 
-import { GeminiBackClient } from 'gemback';
+import { GemBack } from 'gemback';
 
 async function chatConversation() {
   console.log('=== Chat Conversation Example ===\n');
 
-  const client = new GeminiBackClient({
+  const client = new GemBack({
     apiKey: process.env.GEMINI_API_KEY || 'your-api-key-here',
     logLevel: 'info', // Show info-level logs
   });
@@ -47,7 +47,7 @@ async function chatConversation() {
 async function statisticsMonitoring() {
   console.log('\n\n=== Statistics Monitoring Example ===\n');
 
-  const client = new GeminiBackClient({
+  const client = new GemBack({
     apiKey: process.env.GEMINI_API_KEY || 'your-api-key-here',
     debug: false,
   });
@@ -94,15 +94,15 @@ async function customLogging() {
 
   // Create clients with different log levels
   const clients = {
-    silent: new GeminiBackClient({
+    silent: new GemBack({
       apiKey: process.env.GEMINI_API_KEY || 'your-api-key-here',
       logLevel: 'silent', // No logs
     }),
-    error: new GeminiBackClient({
+    error: new GemBack({
       apiKey: process.env.GEMINI_API_KEY || 'your-api-key-here',
       logLevel: 'error', // Only errors
     }),
-    debug: new GeminiBackClient({
+    debug: new GemBack({
       apiKey: process.env.GEMINI_API_KEY || 'your-api-key-here',
       debug: true, // All logs including debug
     }),

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GeminiBackClient } from '../../src/client/FallbackClient';
+import { GemBack } from '../../src/client/FallbackClient';
 import { GeminiClient } from '../../src/client/GeminiClient';
 
 vi.mock('../../src/client/GeminiClient');
@@ -25,7 +25,7 @@ describe('Monitoring Integration Tests', () => {
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKey: 'test-key',
         enableMonitoring: true,
       });
@@ -47,7 +47,7 @@ describe('Monitoring Integration Tests', () => {
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKey: 'test-key',
         enableMonitoring: false,
       });
@@ -68,7 +68,7 @@ describe('Monitoring Integration Tests', () => {
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKey: 'test-key',
         enableMonitoring: true,
       });
@@ -97,7 +97,7 @@ describe('Monitoring Integration Tests', () => {
         return createMockStream('Response');
       });
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKey: 'test-key',
         enableMonitoring: true,
       });
@@ -127,7 +127,7 @@ describe('Monitoring Integration Tests', () => {
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKeys: ['key1', 'key2', 'key3'],
         enableMonitoring: true,
       });
@@ -155,7 +155,7 @@ describe('Monitoring Integration Tests', () => {
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKey: 'test-key',
         enableMonitoring: true,
       });
@@ -183,7 +183,7 @@ describe('Monitoring Integration Tests', () => {
         return Promise.reject(new Error('500 Server error'));
       });
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKey: 'test-key',
         enableMonitoring: true,
         maxRetries: 0,
@@ -222,7 +222,7 @@ describe('Monitoring Integration Tests', () => {
         return mockResponse;
       });
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKey: 'test-key',
         enableMonitoring: true,
       });
@@ -259,7 +259,7 @@ describe('Monitoring Integration Tests', () => {
         });
       });
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKey: 'test-key',
         enableMonitoring: true,
         maxRetries: 0,
@@ -300,7 +300,7 @@ describe('Monitoring Integration Tests', () => {
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKey: 'test-key',
         enableMonitoring: true,
       });
@@ -334,7 +334,7 @@ describe('Monitoring Integration Tests', () => {
         });
       });
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKey: 'test-key',
         enableMonitoring: true,
         maxRetries: 0,
@@ -372,7 +372,7 @@ describe('Monitoring Integration Tests', () => {
         });
       });
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKey: 'test-key',
         enableMonitoring: true,
         maxRetries: 0,
@@ -408,7 +408,7 @@ describe('Monitoring Integration Tests', () => {
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKeys: ['key1', 'key2', 'key3'],
         apiKeyRotationStrategy: 'round-robin',
         enableMonitoring: true,
@@ -449,7 +449,7 @@ describe('Monitoring Integration Tests', () => {
         return createMockStream('Response');
       });
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKey: 'test-key',
         enableMonitoring: true,
       });
@@ -478,7 +478,7 @@ describe('Monitoring Integration Tests', () => {
         throw new Error('Stream error');
       });
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKey: 'test-key',
         enableMonitoring: true,
         maxRetries: 0,

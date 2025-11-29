@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GeminiBackClient } from '../../src/client/FallbackClient';
+import { GemBack } from '../../src/client/FallbackClient';
 import { GeminiClient } from '../../src/client/GeminiClient';
 
 vi.mock('../../src/client/GeminiClient');
@@ -25,7 +25,7 @@ describe('Multi API Key Integration Tests', () => {
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKeys: ['key1', 'key2', 'key3'],
         apiKeyRotationStrategy: 'round-robin',
       });
@@ -57,7 +57,7 @@ describe('Multi API Key Integration Tests', () => {
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKeys: ['key1', 'key2', 'key3'],
         apiKeyRotationStrategy: 'least-used',
       });
@@ -94,7 +94,7 @@ describe('Multi API Key Integration Tests', () => {
         }
       );
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKeys: ['key1', 'key2'],
         maxRetries: 0,
       });
@@ -135,7 +135,7 @@ describe('Multi API Key Integration Tests', () => {
         }
       );
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKeys: ['key1', 'key2', 'key3'],
         maxRetries: 0,
       });
@@ -180,7 +180,7 @@ describe('Multi API Key Integration Tests', () => {
         return Promise.resolve(mockResponse);
       });
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKeys: ['key1', 'key2', 'key3'],
         maxRetries: 0,
       });
@@ -224,7 +224,7 @@ describe('Multi API Key Integration Tests', () => {
         return Promise.resolve(mockResponse);
       });
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKeys: ['key1', 'key2'],
         maxRetries: 0,
       });
@@ -269,11 +269,11 @@ describe('Multi API Key Integration Tests', () => {
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
 
-      const singleKeyClient = new GeminiBackClient({
+      const singleKeyClient = new GemBack({
         apiKey: 'single-key',
       });
 
-      const multiKeyClient = new GeminiBackClient({
+      const multiKeyClient = new GemBack({
         apiKeys: ['single-key'],
       });
 
@@ -300,7 +300,7 @@ describe('Multi API Key Integration Tests', () => {
         return createMockStream(`Response from ${apiKey}`);
       });
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKeys: ['key1', 'key2', 'key3'],
       });
 
@@ -344,7 +344,7 @@ describe('Multi API Key Integration Tests', () => {
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKeys: ['key1', 'key2', 'key3', 'key4', 'key5'],
         apiKeyRotationStrategy: 'round-robin',
       });
@@ -385,7 +385,7 @@ describe('Multi API Key Integration Tests', () => {
         return Promise.resolve(mockResponse);
       });
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKeys: ['key1', 'key2'],
       });
 
@@ -420,7 +420,7 @@ describe('Multi API Key Integration Tests', () => {
         return Promise.resolve(mockResponse);
       });
 
-      const client = new GeminiBackClient({
+      const client = new GemBack({
         apiKeys: ['key1', 'key2', 'key3', 'key4'],
         maxRetries: 0,
       });
