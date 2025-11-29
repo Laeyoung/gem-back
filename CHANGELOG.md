@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+#### 🌟 GitHub Projects Showcase
+
+- **Automated project discovery**: GitHub Actions workflow to find projects using gemback
+- **Projects showcase section**: New "Projects Using Gem Back" section in README
+- **Weekly updates**: Automated weekly updates (Monday 00:00 UTC) to showcase top 5 projects by stars
+- **Manual trigger**: Support for manual showcase updates via GitHub Actions
+
+#### 🛠️ Developer Tools
+
+- `scripts/update-showcase.ts`: Main script for finding and updating project showcase
+- `scripts/github-api.ts`: GitHub API client with rate limiting and retry logic
+- `scripts/project-finder.ts`: Project search, validation, and ranking
+- `scripts/readme-updater.ts`: Safe README manipulation with marker-based updates
+- `scripts/types.ts`: TypeScript interfaces for showcase system
+- `.github/workflows/update-projects-showcase.yml`: GitHub Actions automation
+
+#### 📦 New Dependencies
+
+- `@octokit/rest`: Official GitHub API client (devDependency)
+- `tsx`: TypeScript execution for scripts (devDependency)
+
+### Documentation
+
+- Added "Projects Using Gem Back" showcase section to README
+- New npm script: `npm run update-showcase`
+
 ## [0.2.1] - 2025-11-24
 
 ### Changed
