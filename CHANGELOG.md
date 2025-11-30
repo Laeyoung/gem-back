@@ -7,6 +7,117 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2025-11-30
+
+### Added
+
+#### 🎨 Multimodal Support (Images, Video, Audio)
+- **New `generateContent()` method**: Flexible API for multimodal inputs
+  - Support for text, images, video, and audio
+  - Can mix multiple content types in a single request
+  - Multi-turn conversations with images
+
+- **New `generateContentStream()` method**: Streaming support for multimodal content
+  - Real-time streaming responses for image analysis
+  - All the same features as `generateContent()` but with streaming
+
+- **New Type Definitions**:
+  - `Part`: Union type for content parts (text, inlineData, fileData)
+  - `InlineData`: Base64-encoded inline data with mimeType
+  - `FileData`: Google Cloud Storage file references
+  - `Content`: Message content with role and parts array
+  - `GenerateContentRequest`: Full request configuration for multimodal inputs
+
+- **Image Input Formats**:
+  - **Inline data**: Base64-encoded images (`inlineData`)
+  - **File references**: Google Cloud Storage URIs (`fileData`)
+  - Supported formats: JPEG, PNG, WebP, HEIC, HEIF
+
+- **Examples**:
+  - Added comprehensive `examples/multimodal.ts` with 6 usage scenarios:
+    - Single image analysis
+    - Multiple image comparison
+    - Conversation with images
+    - Streaming with images
+    - Google Cloud Storage file references
+    - Helper function for image to base64 conversion
+
+### Enhanced
+
+- **GeminiClient**:
+  - Added `generateContent()` method for multimodal requests
+  - Added `generateContentStream()` method for streaming multimodal requests
+  - Both methods support all existing options (temperature, maxTokens, etc.)
+
+- **GemBack (FallbackClient)**:
+  - Added `generateContent()` method with full fallback support
+  - Added `generateContentStream()` method with streaming fallback support
+  - Multimodal requests benefit from all existing features:
+    - Automatic model fallback
+    - Retry logic
+    - Rate limit tracking
+    - Health monitoring
+    - Multi-key rotation
+
+- **Type Exports**:
+  - Exported new types: `Part`, `Content`, `InlineData`, `FileData`, `GenerateContentRequest`
+  - Full TypeScript support with type inference
+
+### Testing
+
+- **Added 10 new unit tests for multimodal functionality**:
+  - Single image generation
+  - Multiple images generation
+  - File data (Google Cloud Storage) support
+  - Generation options with multimodal content
+  - Multi-turn conversation with images
+  - Streaming with images
+  - Streaming options with multimodal content
+- **Total tests increased from 172 to 182**
+- All 182 tests passing
+
+### Documentation
+
+- Added comprehensive multimodal examples in `examples/multimodal.ts`
+- Code examples for:
+  - Basic image analysis
+  - Multiple image comparison
+  - Conversational image understanding
+  - Streaming responses
+  - Cloud storage integration
+
+### Migration Guide
+
+New multimodal API usage:
+
+```typescript
+import { GemBack } from 'gemback';
+import * as fs from 'fs';
+
+const client = new GemBack({ apiKey: 'your-api-key' });
+
+// Single image analysis
+const imageData = fs.readFileSync('image.jpg').toString('base64');
+const response = await client.generateContent({
+  contents: [
+    {
+      role: 'user',
+      parts: [
+        { text: 'What is in this image?' },
+        { inlineData: { mimeType: 'image/jpeg', data: imageData } }
+      ]
+    }
+  ]
+});
+
+console.log(response.text);
+```
+
+### Breaking Changes
+
+- None - v0.3.0 is fully backward compatible with v0.2.x
+- Existing `generate()` and `generateStream()` methods remain unchanged
+
 ## [0.2.1] - 2025-11-24
 
 ### Changed
@@ -194,7 +305,8 @@ const client = new GemBack(options);
 - Contribution guidelines
 - MIT License
 
-[Unreleased]: https://github.com/Laeyoung/gem-back/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/Laeyoung/gem-back/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Laeyoung/gem-back/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/Laeyoung/gem-back/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Laeyoung/gem-back/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Laeyoung/gem-back/releases/tag/v0.1.0

@@ -159,4 +159,255 @@ describe('GeminiClient', () => {
       }).rejects.toThrow('Stream Error');
     });
   });
+
+  describe('generateContent (multimodal)', () => {
+    it('should generate content with image successfully', async () => {
+      const client = new GeminiClient();
+      const contents = [
+        {
+          role: 'user' as const,
+          parts: [
+            { text: 'What is in this image?' },
+            {
+              inlineData: {
+                mimeType: 'image/jpeg',
+                data: 'base64_image_data',
+              },
+            },
+          ],
+        },
+      ];
+
+      const response = await client.generateContent(
+        contents,
+        'gemini-2.5-flash',
+        'test-api-key'
+      );
+
+      expect(response).toEqual({
+        text: 'Mock response text',
+        model: 'gemini-2.5-flash',
+        finishReason: 'STOP',
+        usage: {
+          promptTokens: 10,
+          completionTokens: 20,
+          totalTokens: 30,
+        },
+      });
+
+      expect(mockGenerateContent).toHaveBeenCalledWith({
+        contents,
+        generationConfig: {
+          temperature: undefined,
+          maxOutputTokens: undefined,
+          topP: undefined,
+          topK: undefined,
+        },
+      });
+    });
+
+    it('should generate content with multiple images', async () => {
+      const client = new GeminiClient();
+      const contents = [
+        {
+          role: 'user' as const,
+          parts: [
+            { text: 'Compare these images' },
+            {
+              inlineData: {
+                mimeType: 'image/jpeg',
+                data: 'image1_base64',
+              },
+            },
+            {
+              inlineData: {
+                mimeType: 'image/jpeg',
+                data: 'image2_base64',
+              },
+            },
+          ],
+        },
+      ];
+
+      await client.generateContent(contents, 'gemini-2.5-flash', 'test-api-key');
+
+      expect(mockGenerateContent).toHaveBeenCalledWith({
+        contents,
+        generationConfig: {
+          temperature: undefined,
+          maxOutputTokens: undefined,
+          topP: undefined,
+          topK: undefined,
+        },
+      });
+    });
+
+    it('should generate content with fileData', async () => {
+      const client = new GeminiClient();
+      const contents = [
+        {
+          role: 'user' as const,
+          parts: [
+            { text: 'Analyze this file' },
+            {
+              fileData: {
+                mimeType: 'image/jpeg',
+                fileUri: 'gs://bucket/image.jpg',
+              },
+            },
+          ],
+        },
+      ];
+
+      await client.generateContent(contents, 'gemini-2.5-flash', 'test-api-key');
+
+      expect(mockGenerateContent).toHaveBeenCalledWith({
+        contents,
+        generationConfig: {
+          temperature: undefined,
+          maxOutputTokens: undefined,
+          topP: undefined,
+          topK: undefined,
+        },
+      });
+    });
+
+    it('should pass generation options for multimodal content', async () => {
+      const client = new GeminiClient();
+      const contents = [
+        {
+          role: 'user' as const,
+          parts: [
+            { text: 'What is this?' },
+            { inlineData: { mimeType: 'image/jpeg', data: 'img_data' } },
+          ],
+        },
+      ];
+
+      await client.generateContent(contents, 'gemini-2.5-flash', 'test-api-key', {
+        temperature: 0.8,
+        maxTokens: 2000,
+        topP: 0.95,
+        topK: 50,
+      });
+
+      expect(mockGenerateContent).toHaveBeenCalledWith({
+        contents,
+        generationConfig: {
+          temperature: 0.8,
+          maxOutputTokens: 2000,
+          topP: 0.95,
+          topK: 50,
+        },
+      });
+    });
+
+    it('should handle multi-turn conversation with images', async () => {
+      const client = new GeminiClient();
+      const contents = [
+        {
+          role: 'user' as const,
+          parts: [
+            { text: 'What is in this image?' },
+            { inlineData: { mimeType: 'image/jpeg', data: 'img_data' } },
+          ],
+        },
+        {
+          role: 'model' as const,
+          parts: [{ text: 'This is a cat.' }],
+        },
+        {
+          role: 'user' as const,
+          parts: [{ text: 'What color is it?' }],
+        },
+      ];
+
+      await client.generateContent(contents, 'gemini-2.5-flash', 'test-api-key');
+
+      expect(mockGenerateContent).toHaveBeenCalledWith({
+        contents,
+        generationConfig: {
+          temperature: undefined,
+          maxOutputTokens: undefined,
+          topP: undefined,
+          topK: undefined,
+        },
+      });
+    });
+  });
+
+  describe('generateContentStream (multimodal)', () => {
+    it('should stream multimodal content successfully', async () => {
+      const client = new GeminiClient();
+      const contents = [
+        {
+          role: 'user' as const,
+          parts: [
+            { text: 'Describe this image' },
+            { inlineData: { mimeType: 'image/jpeg', data: 'img_data' } },
+          ],
+        },
+      ];
+
+      const stream = client.generateContentStream(
+        contents,
+        'gemini-2.5-flash',
+        'test-api-key'
+      );
+
+      const chunks: string[] = [];
+      for await (const chunk of stream) {
+        chunks.push(chunk.text);
+      }
+
+      expect(chunks).toEqual(['Mock ', 'stream ', 'response']);
+      expect(mockGenerateContentStream).toHaveBeenCalledWith({
+        contents,
+        generationConfig: {
+          temperature: undefined,
+          maxOutputTokens: undefined,
+          topP: undefined,
+          topK: undefined,
+        },
+      });
+    });
+
+    it('should pass generation options for multimodal streaming', async () => {
+      const client = new GeminiClient();
+      const contents = [
+        {
+          role: 'user' as const,
+          parts: [
+            { text: 'Analyze' },
+            { inlineData: { mimeType: 'image/jpeg', data: 'data' } },
+          ],
+        },
+      ];
+
+      const stream = client.generateContentStream(
+        contents,
+        'gemini-2.5-flash',
+        'test-api-key',
+        {
+          temperature: 0.6,
+          maxTokens: 1500,
+        }
+      );
+
+      // Consume the stream
+      for await (const _ of stream) {
+        // Just consume
+      }
+
+      expect(mockGenerateContentStream).toHaveBeenCalledWith({
+        contents,
+        generationConfig: {
+          temperature: 0.6,
+          maxOutputTokens: 1500,
+          topP: undefined,
+          topK: undefined,
+        },
+      });
+    });
+  });
 });

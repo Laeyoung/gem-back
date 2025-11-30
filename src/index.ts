@@ -6,6 +6,11 @@ export type {
   GeminiBackClientOptions,
   GenerateOptions,
   ChatMessage,
+  Part,
+  Content,
+  InlineData,
+  FileData,
+  GenerateContentRequest,
 } from './types/config';
 export type { GeminiResponse, StreamChunk, FallbackStats, ApiKeyStats } from './types/response';
 export type { HealthStatus, ModelHealth, RateLimitStatus } from './monitoring';
