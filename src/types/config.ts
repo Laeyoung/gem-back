@@ -43,10 +43,7 @@ export interface FileData {
   fileUri: string;
 }
 
-export type Part =
-  | { text: string }
-  | { inlineData: InlineData }
-  | { fileData: FileData };
+export type Part = { text: string } | { inlineData: InlineData } | { fileData: FileData };
 
 export interface Content {
   role: 'user' | 'model';

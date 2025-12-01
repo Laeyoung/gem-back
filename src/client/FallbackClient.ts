@@ -2,7 +2,6 @@ import type {
   GemBackOptions,
   GenerateOptions,
   ChatMessage,
-  Content,
   GenerateContentRequest,
 } from '../types/config';
 import type { GeminiResponse, StreamChunk, FallbackStats } from '../types/response';
@@ -466,9 +465,7 @@ export class GemBack {
     );
   }
 
-  async *generateContentStream(
-    request: GenerateContentRequest
-  ): AsyncGenerator<StreamChunk> {
+  async *generateContentStream(request: GenerateContentRequest): AsyncGenerator<StreamChunk> {
     this.stats.totalRequests++;
 
     const attempts: AttemptRecord[] = [];
