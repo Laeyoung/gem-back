@@ -35,17 +35,10 @@ The Gemini API has **RPM (Requests Per Minute) limits** on the free tier, causin
 
 ## 🚀 Supported Models
 
-Gem Back supports automatic fallback across 4 Gemini models:
+Gem Back supports automatic fallback across 2 Gemini models:
 
-```
-gemini-2.5-flash (Latest, highest performance)
-  ↓ On failure
-gemini-2.5-flash-lite (Lightweight version)
-  ↓ On failure
-gemini-2.0-flash (Stable version)
-  ↓ On failure
-gemini-2.0-flash-lite (Lightweight stable version)
-```
+- `gemini-2.5-flash` (latest, highest performance)
+- `gemini-2.5-flash-lite` (lightweight version)
 
 ---
 
@@ -253,8 +246,7 @@ console.log(stats);
 //   failureCount: 5,
 //   modelUsage: {
 //     'gemini-2.5-flash': 70,
-//     'gemini-2.5-flash-lite': 25,
-//     'gemini-2.0-flash': 5
+//     'gemini-2.5-flash-lite': 30
 //   },
 //   apiKeyStats: [  // Only in multi-key mode
 //     {
@@ -365,7 +357,7 @@ const client = new GemBack({
   // Specify models to use
   fallbackOrder: [
     'gemini-2.5-flash',
-    'gemini-2.0-flash-lite'
+    'gemini-2.5-flash-lite'
   ],
 
   // Retry settings
@@ -394,7 +386,7 @@ const client = new GemBack({
   enableRateLimitPrediction: true,       // Rate limit prediction warnings
 
   // Base settings
-  fallbackOrder: ['gemini-2.5-flash', 'gemini-2.0-flash'],
+  fallbackOrder: ['gemini-2.5-flash', 'gemini-2.5-flash-lite'],
   maxRetries: 2,
   timeout: 30000,
   logLevel: 'info'

@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2025-12-07
+
+### Changed
+
+#### 🚀 Default Model Update
+- **Updated default fallback models**:
+  - Primary: `gemini-2.5-flash`
+  - Fallback: `gemini-2.5-flash-lite`
+- **Removed deprecated models**:
+  - `gemini-2.0-flash`
+  - `gemini-2.0-flash-lite`
+  - Removed from default fallback chain to align with new free tier quota
+
+## [0.3.0] - 2025-12-04
+ 
+### Added
+ 
+- **New Gemini Models Support**:
+  - Added support for `gemini-2.5-flash`
+  - Added support for `gemini-2.5-flash-lite`
+  - Updated internal type definitions to include new models
+ 
 ## [0.2.1] - 2025-11-24
 
 ### Changed

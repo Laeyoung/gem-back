@@ -39,10 +39,6 @@ Gem Back은 다음 4개 모델의 Fallback 체인을 지원합니다:
 gemini-2.5-flash (최신, 최고 성능)
   ↓ 실패 시
 gemini-2.5-flash-lite (경량 버전)
-  ↓ 실패 시
-gemini-2.0-flash (안정 버전)
-  ↓ 실패 시
-gemini-2.0-flash-lite (경량 안정 버전)
 ```
 
 ---
@@ -251,8 +247,7 @@ console.log(stats);
 //   failureCount: 5,
 //   modelUsage: {
 //     'gemini-2.5-flash': 70,
-//     'gemini-2.5-flash-lite': 25,
-//     'gemini-2.0-flash': 5
+//     'gemini-2.5-flash-lite': 30
 //   },
 //   apiKeyStats: [  // 멀티 키 모드일 때만 제공
 //     {
@@ -363,7 +358,7 @@ const client = new GemBack({
   // 사용할 모델만 지정
   fallbackOrder: [
     'gemini-2.5-flash',
-    'gemini-2.0-flash-lite'
+    'gemini-2.5-flash-lite'
   ],
 
   // 재시도 설정
@@ -392,7 +387,7 @@ const client = new GemBack({
   enableRateLimitPrediction: true,       // Rate limit 예측 경고
 
   // 기본 설정
-  fallbackOrder: ['gemini-2.5-flash', 'gemini-2.0-flash'],
+  fallbackOrder: ['gemini-2.5-flash', 'gemini-2.5-flash-lite'],
   maxRetries: 2,
   timeout: 30000,
   logLevel: 'info'

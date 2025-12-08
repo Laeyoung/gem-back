@@ -248,8 +248,8 @@ describe('Monitoring Integration Tests', () => {
       mockGeminiClient.generate.mockImplementation(() => {
         callCount++;
         // Fail first 3 attempts, then succeed
-        if (callCount <= 12) {
-          // 3 requests * 4 models
+        if (callCount <= 6) {
+          // 3 requests * 2 models
           return Promise.reject(new Error('500 Server error'));
         }
         return Promise.resolve({
@@ -360,7 +360,7 @@ describe('Monitoring Integration Tests', () => {
 
   describe('Fallback Behavior with Monitoring', () => {
     it('should track health across fallback chain', async () => {
-      mockGeminiClient.generate.mockImplementation((_prompt, model) => {
+      mockGeminiClient.generate.mockImplementation((_prompt: string, model: string) => {
         // First model fails, second succeeds
         if (model === 'gemini-2.5-flash') {
           return Promise.reject(new Error('500 Server error'));
