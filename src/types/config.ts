@@ -32,4 +32,31 @@ export interface ChatMessage {
   content: string;
 }
 
+// Multimodal support types
+export interface InlineData {
+  mimeType: string;
+  data: string; // Base64 encoded data
+}
+
+export interface FileData {
+  mimeType: string;
+  fileUri: string;
+}
+
+export type Part = { text: string } | { inlineData: InlineData } | { fileData: FileData };
+
+export interface Content {
+  role: 'user' | 'model';
+  parts: Part[];
+}
+
+export interface GenerateContentRequest {
+  contents: Content[];
+  model?: GeminiModel;
+  temperature?: number;
+  maxTokens?: number;
+  topP?: number;
+  topK?: number;
+}
+
 export { GeminiModel };

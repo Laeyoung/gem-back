@@ -1,4 +1,9 @@
-import type { GemBackOptions, GenerateOptions, ChatMessage } from '../types/config';
+import type {
+  GemBackOptions,
+  GenerateOptions,
+  ChatMessage,
+  GenerateContentRequest,
+} from '../types/config';
 import type { GeminiResponse, StreamChunk, FallbackStats } from '../types/response';
 import type { AttemptRecord } from '../types/errors';
 import { DEFAULT_CLIENT_OPTIONS } from '../config/defaults';
@@ -334,6 +339,254 @@ export class GemBack {
     const finalPrompt = `${conversationPrompt}\n\nAssistant:`;
 
     return this.generate(finalPrompt, options);
+  }
+
+  async generateContent(request: GenerateContentRequest): Promise<GeminiResponse> {
+    this.stats.totalRequests++;
+
+    const attempts: AttemptRecord[] = [];
+    const modelsToTry = request.model ? [request.model] : this.options.fallbackOrder;
+    const { key: apiKey, index: keyIndex } = this.getApiKey();
+
+    for (const model of modelsToTry) {
+      this.logger.debug(
+        `Attempting multimodal: ${model}${keyIndex !== null ? ` (API Key #${keyIndex + 1})` : ''}`
+      );
+
+      // Check rate limit prediction before making request
+      if (this.rateLimitTracker) {
+        const status = this.rateLimitTracker.getStatus(model);
+        if (status.willExceedSoon) {
+          this.logger.warn(
+            `Rate limit warning for ${model}: ${status.windowStats.requestsInLastMinute}/${status.maxRPM} RPM`
+          );
+        }
+        if (this.rateLimitTracker.wouldExceedLimit(model)) {
+          const waitTime = this.rateLimitTracker.getRecommendedWaitTime(model);
+          this.logger.warn(`Would exceed rate limit for ${model}. Recommended wait: ${waitTime}ms`);
+        }
+      }
+
+      const startTime = Date.now();
+      try {
+        // Record rate limit tracking (tracked by model, not per API key)
+        if (this.rateLimitTracker) {
+          this.rateLimitTracker.recordRequest(model);
+        }
+
+        const response = await retryWithBackoff(
+          () =>
+            this.client.generateContent(request.contents, model, apiKey, {
+              temperature: request.temperature,
+              maxTokens: request.maxTokens,
+              topP: request.topP,
+              topK: request.topK,
+            }),
+          {
+            maxRetries: this.options.maxRetries,
+            delay: this.options.retryDelay,
+            shouldRetry: (error: Error) => {
+              if (isAuthError(error)) {
+                this.logger.error(`Authentication error for ${model}: ${error.message}`);
+                return false;
+              }
+              if (isRateLimitError(error)) {
+                this.logger.warn(`Rate limit hit for ${model}: ${error.message}`);
+                return false;
+              }
+              return isRetryableError(error);
+            },
+          }
+        );
+
+        const responseTime = Date.now() - startTime;
+
+        // Record health monitoring
+        if (this.healthMonitor) {
+          this.healthMonitor.recordRequest(model, responseTime, true);
+        }
+
+        this.stats.modelUsage[model]++;
+        this.updateSuccessRate();
+        if (keyIndex !== null && this.apiKeyRotator) {
+          this.apiKeyRotator.recordSuccess(keyIndex);
+        }
+        this.logger.info(`Success: ${model} (${responseTime}ms)`);
+        return response;
+      } catch (error) {
+        const err = error as Error;
+        const statusCode = getErrorStatusCode(err);
+        const responseTime = Date.now() - startTime;
+
+        // Record health monitoring for failure
+        if (this.healthMonitor) {
+          this.healthMonitor.recordRequest(model, responseTime, false, err.message);
+        }
+
+        attempts.push({
+          model,
+          error: err.message,
+          timestamp: new Date(),
+          statusCode,
+        });
+
+        this.logger.warn(`Failed (${statusCode || 'unknown'}): ${model} - ${err.message}`);
+
+        if (isAuthError(err)) {
+          this.stats.failureCount++;
+          this.updateSuccessRate();
+          if (keyIndex !== null && this.apiKeyRotator) {
+            this.apiKeyRotator.recordFailure(keyIndex);
+          }
+          throw new GeminiBackError(
+            'Authentication failed. Please check your API key.',
+            'AUTH_ERROR',
+            attempts,
+            statusCode,
+            model
+          );
+        }
+
+        if (modelsToTry.indexOf(model) < modelsToTry.length - 1) {
+          this.logger.info(`Fallback to: ${modelsToTry[modelsToTry.indexOf(model) + 1]}`);
+        }
+      }
+    }
+
+    this.stats.failureCount++;
+    this.updateSuccessRate();
+    if (keyIndex !== null && this.apiKeyRotator) {
+      this.apiKeyRotator.recordFailure(keyIndex);
+    }
+    throw new GeminiBackError(
+      'All models failed. Please try again later.',
+      'ALL_MODELS_FAILED',
+      attempts
+    );
+  }
+
+  async *generateContentStream(request: GenerateContentRequest): AsyncGenerator<StreamChunk> {
+    this.stats.totalRequests++;
+
+    const attempts: AttemptRecord[] = [];
+    const modelsToTry = request.model ? [request.model] : this.options.fallbackOrder;
+    const { key: apiKey, index: keyIndex } = this.getApiKey();
+
+    for (const model of modelsToTry) {
+      this.logger.debug(
+        `Attempting multimodal stream: ${model}${keyIndex !== null ? ` (API Key #${keyIndex + 1})` : ''}`
+      );
+
+      // Check rate limit prediction before making request
+      if (this.rateLimitTracker) {
+        const status = this.rateLimitTracker.getStatus(model);
+        if (status.willExceedSoon) {
+          this.logger.warn(
+            `Rate limit warning for ${model}: ${status.windowStats.requestsInLastMinute}/${status.maxRPM} RPM`
+          );
+        }
+        if (this.rateLimitTracker.wouldExceedLimit(model)) {
+          const waitTime = this.rateLimitTracker.getRecommendedWaitTime(model);
+          this.logger.warn(`Would exceed rate limit for ${model}. Recommended wait: ${waitTime}ms`);
+        }
+      }
+
+      const startTime = Date.now();
+      try {
+        // Record rate limit tracking (tracked by model, not per API key)
+        if (this.rateLimitTracker) {
+          this.rateLimitTracker.recordRequest(model);
+        }
+
+        const stream = this.client.generateContentStream(request.contents, model, apiKey, {
+          temperature: request.temperature,
+          maxTokens: request.maxTokens,
+          topP: request.topP,
+          topK: request.topK,
+        });
+        let hasYielded = false;
+
+        for await (const chunk of stream) {
+          hasYielded = true;
+          yield {
+            text: chunk.text,
+            model,
+            isComplete: false,
+          };
+        }
+
+        if (hasYielded) {
+          yield {
+            text: '',
+            model,
+            isComplete: true,
+          };
+
+          const responseTime = Date.now() - startTime;
+
+          // Record health monitoring
+          if (this.healthMonitor) {
+            this.healthMonitor.recordRequest(model, responseTime, true);
+          }
+
+          this.stats.modelUsage[model]++;
+          this.updateSuccessRate();
+          if (keyIndex !== null && this.apiKeyRotator) {
+            this.apiKeyRotator.recordSuccess(keyIndex);
+          }
+          this.logger.info(`Stream success: ${model} (${responseTime}ms)`);
+          return;
+        }
+      } catch (error) {
+        const err = error as Error;
+        const statusCode = getErrorStatusCode(err);
+        const responseTime = Date.now() - startTime;
+
+        // Record health monitoring for failure
+        if (this.healthMonitor) {
+          this.healthMonitor.recordRequest(model, responseTime, false, err.message);
+        }
+
+        attempts.push({
+          model,
+          error: err.message,
+          timestamp: new Date(),
+          statusCode,
+        });
+
+        this.logger.warn(`Stream failed (${statusCode || 'unknown'}): ${model}`);
+
+        if (isAuthError(err)) {
+          this.stats.failureCount++;
+          this.updateSuccessRate();
+          if (keyIndex !== null && this.apiKeyRotator) {
+            this.apiKeyRotator.recordFailure(keyIndex);
+          }
+          throw new GeminiBackError(
+            'Authentication failed. Please check your API key.',
+            'AUTH_ERROR',
+            attempts,
+            statusCode,
+            model
+          );
+        }
+
+        if (modelsToTry.indexOf(model) < modelsToTry.length - 1) {
+          this.logger.info(`Fallback to: ${modelsToTry[modelsToTry.indexOf(model) + 1]}`);
+        }
+      }
+    }
+
+    this.stats.failureCount++;
+    this.updateSuccessRate();
+    if (keyIndex !== null && this.apiKeyRotator) {
+      this.apiKeyRotator.recordFailure(keyIndex);
+    }
+    throw new GeminiBackError(
+      'All models failed for streaming. Please try again later.',
+      'ALL_MODELS_FAILED',
+      attempts
+    );
   }
 
   getFallbackStats(): FallbackStats {
