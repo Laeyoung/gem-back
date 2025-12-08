@@ -246,25 +246,21 @@ describe('HealthMonitor', () => {
         monitor.recordRequest('gemini-2.5-flash', 1500, false);
       }
 
-      // Model 2: 95% success, 2000ms avg
       for (let i = 0; i < 95; i++) {
-        monitor.recordRequest('gemini-2.0-flash', 2000, true);
+        monitor.recordRequest('gemini-2.5-flash-lite', 2000, true);
       }
       for (let i = 0; i < 5; i++) {
-        monitor.recordRequest('gemini-2.0-flash', 2000, false);
+        monitor.recordRequest('gemini-2.5-flash-lite', 2000, false);
       }
 
       // Model 3: 98% success, 1000ms avg (best)
-      for (let i = 0; i < 98; i++) {
-        monitor.recordRequest('gemini-2.5-flash-lite', 1000, true);
-      }
-      for (let i = 0; i < 2; i++) {
-        monitor.recordRequest('gemini-2.5-flash-lite', 1000, false);
-      }
+      /* 
+       * Can't test 3 valid models since we only have 2 now. 
+       * Just testing with 2 models is sufficient for logic check.
+       */
 
       const healthiest = monitor.getHealthiestModel([
         'gemini-2.5-flash',
-        'gemini-2.0-flash',
         'gemini-2.5-flash-lite',
       ]);
 
@@ -277,12 +273,12 @@ describe('HealthMonitor', () => {
         monitor.recordRequest('gemini-2.5-flash', 1000, false);
       }
       for (let i = 0; i < 30; i++) {
-        monitor.recordRequest('gemini-2.0-flash', 1000, false);
+        monitor.recordRequest('gemini-2.5-flash-lite', 1000, false);
       }
 
       const healthiest = monitor.getHealthiestModel([
         'gemini-2.5-flash',
-        'gemini-2.0-flash',
+        'gemini-2.5-flash-lite',
       ]);
 
       expect(healthiest).toBeNull();
@@ -331,15 +327,11 @@ describe('HealthMonitor', () => {
   describe('Get All Health', () => {
     it('should return health for all models', () => {
       monitor.recordRequest('gemini-2.5-flash', 1000, true);
-      monitor.recordRequest('gemini-2.0-flash', 1000, true);
-
       const allHealth = monitor.getAllHealth();
 
-      expect(allHealth.length).toBe(4); // All 4 supported models
+      expect(allHealth.length).toBe(2); // All 2 supported models
       expect(allHealth.map((h) => h.model)).toContain('gemini-2.5-flash');
       expect(allHealth.map((h) => h.model)).toContain('gemini-2.5-flash-lite');
-      expect(allHealth.map((h) => h.model)).toContain('gemini-2.0-flash');
-      expect(allHealth.map((h) => h.model)).toContain('gemini-2.0-flash-lite');
     });
   });
 
@@ -355,22 +347,24 @@ describe('HealthMonitor', () => {
 
       // Degraded model
       for (let i = 0; i < 85; i++) {
-        monitor.recordRequest('gemini-2.0-flash', 2000, true);
+        monitor.recordRequest('gemini-2.5-flash-lite', 2000, true);
       }
       for (let i = 0; i < 15; i++) {
-        monitor.recordRequest('gemini-2.0-flash', 2000, false);
+        monitor.recordRequest('gemini-2.5-flash-lite', 2000, false);
       }
 
       // Unhealthy model
+      // Unhealthy model - reusing 2.5-flash to make it unhealthy now
+      // This will overwrite previous healthy stats for 2.5-flash
       for (let i = 0; i < 30; i++) {
-        monitor.recordRequest('gemini-2.5-flash-lite', 3000, false);
+        monitor.recordRequest('gemini-2.5-flash', 3000, false);
       }
 
       const summary = monitor.getSummary();
 
-      expect(summary.healthyModels).toBe(1);
-      expect(summary.degradedModels).toBe(1);
-      expect(summary.unhealthyModels).toBeGreaterThan(0);
+      expect(summary.healthyModels).toBe(0); // 2.5-flash became unhealthy
+      expect(summary.degradedModels).toBe(1); // 2.5-flash-lite is degraded
+      expect(summary.unhealthyModels).toBe(1); // 2.5-flash is unhealthy
       expect(summary.overallSuccessRate).toBeGreaterThan(0);
       expect(summary.averageResponseTime).toBeGreaterThan(0);
     });
@@ -379,12 +373,12 @@ describe('HealthMonitor', () => {
   describe('Reset', () => {
     it('should reset specific model metrics', () => {
       monitor.recordRequest('gemini-2.5-flash', 1000, true);
-      monitor.recordRequest('gemini-2.0-flash', 1000, true);
+      monitor.recordRequest('gemini-2.5-flash-lite', 1000, true);
 
       monitor.reset('gemini-2.5-flash');
 
       const health1 = monitor.getHealth('gemini-2.5-flash');
-      const health2 = monitor.getHealth('gemini-2.0-flash');
+      const health2 = monitor.getHealth('gemini-2.5-flash-lite');
 
       expect(health1.metrics.totalRequests).toBe(0);
       expect(health2.metrics.totalRequests).toBe(1);
@@ -392,12 +386,12 @@ describe('HealthMonitor', () => {
 
     it('should reset all metrics', () => {
       monitor.recordRequest('gemini-2.5-flash', 1000, true);
-      monitor.recordRequest('gemini-2.0-flash', 1000, true);
+      monitor.recordRequest('gemini-2.5-flash-lite', 1000, true);
 
       monitor.reset();
 
       const health1 = monitor.getHealth('gemini-2.5-flash');
-      const health2 = monitor.getHealth('gemini-2.0-flash');
+      const health2 = monitor.getHealth('gemini-2.5-flash-lite');
 
       expect(health1.metrics.totalRequests).toBe(0);
       expect(health2.metrics.totalRequests).toBe(0);

@@ -34,8 +34,6 @@ export class RateLimitTracker {
   private readonly defaultLimits: Record<GeminiModel, RateLimitConfig> = {
     'gemini-2.5-flash': { rpm: 15, rpd: 1500 },
     'gemini-2.5-flash-lite': { rpm: 15, rpd: 1500 },
-    'gemini-2.0-flash': { rpm: 15, rpd: 1500 },
-    'gemini-2.0-flash-lite': { rpm: 15, rpd: 1500 },
   };
 
   private requestHistory: Map<string, Date[]> = new Map();
@@ -121,12 +119,7 @@ export class RateLimitTracker {
    * Get all models that are near their rate limit
    */
   getModelsNearLimit(): RateLimitStatus[] {
-    const models: GeminiModel[] = [
-      'gemini-2.5-flash',
-      'gemini-2.5-flash-lite',
-      'gemini-2.0-flash',
-      'gemini-2.0-flash-lite',
-    ];
+    const models: GeminiModel[] = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 
     return models.map((model) => this.getStatus(model)).filter((status) => status.isNearLimit);
   }
@@ -187,8 +180,6 @@ export class RateLimitTracker {
     const requestsByModel: Record<GeminiModel, number> = {
       'gemini-2.5-flash': 0,
       'gemini-2.5-flash-lite': 0,
-      'gemini-2.0-flash': 0,
-      'gemini-2.0-flash-lite': 0,
     };
 
     let requestsInLastMinute = 0;

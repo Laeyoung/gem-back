@@ -149,12 +149,7 @@ export class HealthMonitor {
    * Get health status for all models
    */
   getAllHealth(): ModelHealth[] {
-    const models: GeminiModel[] = [
-      'gemini-2.5-flash',
-      'gemini-2.5-flash-lite',
-      'gemini-2.0-flash',
-      'gemini-2.0-flash-lite',
-    ];
+    const models: GeminiModel[] = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 
     return models.map((model) => this.getHealth(model));
   }
@@ -243,12 +238,7 @@ export class HealthMonitor {
   }
 
   private initializeModels(): void {
-    const models: GeminiModel[] = [
-      'gemini-2.5-flash',
-      'gemini-2.5-flash-lite',
-      'gemini-2.0-flash',
-      'gemini-2.0-flash-lite',
-    ];
+    const models: GeminiModel[] = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 
     models.forEach((model) => {
       if (!this.modelMetrics.has(model)) {

@@ -113,7 +113,7 @@ describe('Fallback Flow Integration Tests', () => {
       const calls: string[] = [];
       mockGeminiClient.generate.mockImplementation((prompt: string, model: string) => {
         calls.push(model);
-        if (model === 'gemini-2.0-flash') {
+        if (model === 'gemini-2.5-flash-lite') {
           return Promise.resolve({
             text: 'Success',
             model,
@@ -125,14 +125,14 @@ describe('Fallback Flow Integration Tests', () => {
 
       const client = new GemBack({
         apiKey: 'test-key',
-        fallbackOrder: ['gemini-2.5-flash', 'gemini-2.0-flash'],
+        fallbackOrder: ['gemini-2.5-flash', 'gemini-2.5-flash-lite'],
         maxRetries: 0,
         debug: false,
       });
 
       await client.generate('Hello');
 
-      expect(calls).toEqual(['gemini-2.5-flash', 'gemini-2.0-flash']);
+      expect(calls).toEqual(['gemini-2.5-flash', 'gemini-2.5-flash-lite']);
     });
   });
 
@@ -252,12 +252,6 @@ describe('Fallback Flow Integration Tests', () => {
         }
         if (model === 'gemini-2.5-flash-lite') {
           throw new Error('500 Server error');
-        }
-        if (model === 'gemini-2.0-flash') {
-          throw new Error('503 Service unavailable');
-        }
-        if (model === 'gemini-2.0-flash-lite') {
-          throw new Error('Request timeout');
         }
         throw new Error('Unexpected');
       });
