@@ -33,7 +33,7 @@ describe('GemBack', () => {
     it('should accept custom fallback order', () => {
       const client = new GemBack({
         apiKey: 'test-key',
-        fallbackOrder: ['gemini-2.5-flash', 'gemini-2.0-flash'],
+        fallbackOrder: ['gemini-2.5-flash', 'gemini-2.5-flash-lite'],
       });
       expect(client).toBeInstanceOf(GemBack);
     });
@@ -105,20 +105,19 @@ describe('GemBack', () => {
     it('should use specified model when provided in options', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-2.0-flash' as const,
+        model: 'gemini-2.5-flash-lite' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
 
       const client = new GemBack({ apiKey: 'test-key' });
-      await client.generate('Hello', { model: 'gemini-2.0-flash' });
-
+      await client.generate('Hello', { model: 'gemini-2.5-flash-lite' });
       expect(mockGeminiClient.generate).toHaveBeenCalledWith(
         'Hello',
-        'gemini-2.0-flash',
+        'gemini-2.5-flash-lite',
         'test-key',
         {
-          model: 'gemini-2.0-flash',
+          model: 'gemini-2.5-flash-lite',
         }
       );
     });
@@ -230,8 +229,6 @@ describe('GemBack', () => {
         modelUsage: {
           'gemini-2.5-flash': 0,
           'gemini-2.5-flash-lite': 0,
-          'gemini-2.0-flash': 0,
-          'gemini-2.0-flash-lite': 0,
         },
         failureCount: 0,
         apiKeyStats: undefined,

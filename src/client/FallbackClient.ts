@@ -72,8 +72,6 @@ export class GemBack {
       modelUsage: {
         'gemini-2.5-flash': 0,
         'gemini-2.5-flash-lite': 0,
-        'gemini-2.0-flash': 0,
-        'gemini-2.0-flash-lite': 0,
       },
       failureCount: 0,
       apiKeyStats: this.apiKeyRotator ? this.apiKeyRotator.getStats() : undefined,
@@ -597,13 +595,9 @@ export class GemBack {
 
     // Add monitoring data if monitoring is enabled
     if (this.rateLimitTracker || this.healthMonitor) {
-      const models: Array<
-        'gemini-2.5-flash' | 'gemini-2.5-flash-lite' | 'gemini-2.0-flash' | 'gemini-2.0-flash-lite'
-      > = [
+      const models: Array<'gemini-2.5-flash' | 'gemini-2.5-flash-lite'> = [
         'gemini-2.5-flash',
         'gemini-2.5-flash-lite',
-        'gemini-2.0-flash',
-        'gemini-2.0-flash-lite',
       ];
 
       const rateLimitStatus = this.rateLimitTracker

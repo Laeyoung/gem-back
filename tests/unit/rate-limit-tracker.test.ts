@@ -26,10 +26,10 @@ describe('RateLimitTracker', () => {
     it('should record requests separately for different models', () => {
       tracker.recordRequest('gemini-2.5-flash');
       tracker.recordRequest('gemini-2.5-flash');
-      tracker.recordRequest('gemini-2.0-flash');
+      tracker.recordRequest('gemini-2.5-flash-lite');
 
       const status1 = tracker.getStatus('gemini-2.5-flash');
-      const status2 = tracker.getStatus('gemini-2.0-flash');
+      const status2 = tracker.getStatus('gemini-2.5-flash-lite');
 
       expect(status1.currentRPM).toBe(2);
       expect(status2.currentRPM).toBe(1);
@@ -233,13 +233,13 @@ describe('RateLimitTracker', () => {
     it('should return comprehensive statistics', () => {
       tracker.recordRequest('gemini-2.5-flash');
       tracker.recordRequest('gemini-2.5-flash');
-      tracker.recordRequest('gemini-2.0-flash');
+      tracker.recordRequest('gemini-2.5-flash-lite');
 
       const stats = tracker.getStatistics();
 
       expect(stats.totalRequests).toBe(3);
       expect(stats.requestsByModel['gemini-2.5-flash']).toBe(2);
-      expect(stats.requestsByModel['gemini-2.0-flash']).toBe(1);
+      expect(stats.requestsByModel['gemini-2.5-flash-lite']).toBe(1);
       expect(stats.peakRPM).toBe(3);
     });
 
@@ -267,12 +267,12 @@ describe('RateLimitTracker', () => {
   describe('Reset', () => {
     it('should reset specific model tracking', () => {
       tracker.recordRequest('gemini-2.5-flash');
-      tracker.recordRequest('gemini-2.0-flash');
+      tracker.recordRequest('gemini-2.5-flash-lite');
 
       tracker.reset('gemini-2.5-flash');
 
       const status1 = tracker.getStatus('gemini-2.5-flash');
-      const status2 = tracker.getStatus('gemini-2.0-flash');
+      const status2 = tracker.getStatus('gemini-2.5-flash-lite');
 
       expect(status1.currentRPM).toBe(0);
       expect(status2.currentRPM).toBe(1);
@@ -280,12 +280,12 @@ describe('RateLimitTracker', () => {
 
     it('should reset all tracking', () => {
       tracker.recordRequest('gemini-2.5-flash');
-      tracker.recordRequest('gemini-2.0-flash');
+      tracker.recordRequest('gemini-2.5-flash-lite');
 
       tracker.reset();
 
       const status1 = tracker.getStatus('gemini-2.5-flash');
-      const status2 = tracker.getStatus('gemini-2.0-flash');
+      const status2 = tracker.getStatus('gemini-2.5-flash-lite');
 
       expect(status1.currentRPM).toBe(0);
       expect(status2.currentRPM).toBe(0);
@@ -315,8 +315,8 @@ describe('RateLimitTracker', () => {
       }
 
       // Model 2: not near limit
-      tracker.recordRequest('gemini-2.0-flash');
-      tracker.recordRequest('gemini-2.0-flash');
+      tracker.recordRequest('gemini-2.5-flash-lite');
+      tracker.recordRequest('gemini-2.5-flash-lite');
 
       const nearLimit = tracker.getModelsNearLimit();
 
