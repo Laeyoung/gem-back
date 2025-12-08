@@ -1,6 +1,6 @@
 {
   "name": "gemback",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Smart Gemini API Fallback Library for Node.js & TypeScript",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

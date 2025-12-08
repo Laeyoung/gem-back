@@ -22,7 +22,7 @@ describe('Fallback Flow Integration Tests', () => {
       const calls: string[] = [];
       mockGeminiClient.generate.mockImplementation((prompt: string, model: string) => {
         calls.push(model);
-        if (model === 'gemini-2.0-flash-lite') {
+        if (model === 'gemini-2.5-flash-lite') {
           return Promise.resolve({
             text: 'Success from last model',
             model,
@@ -43,11 +43,9 @@ describe('Fallback Flow Integration Tests', () => {
       expect(calls).toEqual([
         'gemini-2.5-flash',
         'gemini-2.5-flash-lite',
-        'gemini-2.0-flash',
-        'gemini-2.0-flash-lite',
       ]);
       expect(response.text).toBe('Success from last model');
-      expect(response.model).toBe('gemini-2.0-flash-lite');
+      expect(response.model).toBe('gemini-2.5-flash-lite');
     });
 
     it('should stop fallback on auth error', async () => {
@@ -277,13 +275,11 @@ describe('Fallback Flow Integration Tests', () => {
         expect(error).toBeInstanceOf(GeminiBackError);
         const geminiError = error as GeminiBackError;
 
-        expect(geminiError.allAttempts).toHaveLength(4);
+        expect(geminiError.allAttempts).toHaveLength(2);
         expect(geminiError.allAttempts[0].model).toBe('gemini-2.5-flash');
         expect(geminiError.allAttempts[0].error).toContain('429');
         expect(geminiError.allAttempts[1].model).toBe('gemini-2.5-flash-lite');
         expect(geminiError.allAttempts[1].error).toContain('500');
-        expect(geminiError.allAttempts[2].model).toBe('gemini-2.0-flash');
-        expect(geminiError.allAttempts[3].model).toBe('gemini-2.0-flash-lite');
       }
     });
   });

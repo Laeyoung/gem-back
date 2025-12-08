@@ -28,8 +28,6 @@ describe('GemBack', () => {
       const stats = client.getFallbackStats();
       expect(stats.modelUsage).toHaveProperty('gemini-2.5-flash');
       expect(stats.modelUsage).toHaveProperty('gemini-2.5-flash-lite');
-      expect(stats.modelUsage).toHaveProperty('gemini-2.0-flash');
-      expect(stats.modelUsage).toHaveProperty('gemini-2.0-flash-lite');
     });
 
     it('should accept custom fallback order', () => {
@@ -100,8 +98,8 @@ describe('GemBack', () => {
         expect((err as GeminiBackError).message).toContain('All models failed');
       }
 
-      // Should have tried all 4 models
-      expect(mockGeminiClient.generate).toHaveBeenCalledTimes(4);
+      // Should have tried all 2 models
+      expect(mockGeminiClient.generate).toHaveBeenCalledTimes(2);
     });
 
     it('should use specified model when provided in options', async () => {
