@@ -1,4 +1,5 @@
 import type { GeminiModel } from '../types/models';
+import { ALL_MODELS } from '../types/models';
 
 export type HealthStatus = 'healthy' | 'degraded' | 'unhealthy' | 'unknown';
 
@@ -149,7 +150,7 @@ export class HealthMonitor {
    * Get health status for all models
    */
   getAllHealth(): ModelHealth[] {
-    const models: GeminiModel[] = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+    const models: GeminiModel[] = ALL_MODELS;
 
     return models.map((model) => this.getHealth(model));
   }
@@ -238,7 +239,7 @@ export class HealthMonitor {
   }
 
   private initializeModels(): void {
-    const models: GeminiModel[] = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+    const models: GeminiModel[] = ALL_MODELS;
 
     models.forEach((model) => {
       if (!this.modelMetrics.has(model)) {

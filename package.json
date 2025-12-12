@@ -29,6 +29,9 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
     "typecheck": "tsc --noEmit",
+    "fetch-models": "tsx scripts/fetch-models.ts",
+    "generate-models": "tsx scripts/generate-models.ts",
+    "update-models": "npm run fetch-models && npm run generate-models && npm run lint:fix",
     "prepublishOnly": "npm run build && npm test"
   },
   "keywords": [

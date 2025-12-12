@@ -35,10 +35,18 @@ The Gemini API has **RPM (Requests Per Minute) limits** on the free tier, causin
 
 ## 🚀 Supported Models
 
-Gem Back supports automatic fallback across 2 Gemini models:
+Gem Back supports automatic fallback across Gemini models:
 
+**Stable Models** (Default Fallback Chain):
 - `gemini-2.5-flash` (latest, highest performance)
 - `gemini-2.5-flash-lite` (lightweight version)
+
+**Preview Models** (Optional - Not in Default Fallback):
+- `gemini-3-pro-preview` ⚠️ (most advanced, preview stability)
+
+**Note**: Preview models like `gemini-3-pro-preview` are not included in the default fallback order. Users must explicitly specify them in their `fallbackOrder` configuration if desired.
+
+**Model Auto-Update System**: The library includes automation scripts to keep the model list current with Google's API updates. See [Contributing Guide](./CONTRIBUTING.md) for details on updating models.
 
 ---
 
@@ -78,8 +86,9 @@ console.log(response.text);
 const client = new GemBack({
   apiKey: process.env.GEMINI_API_KEY,
   fallbackOrder: [
+    'gemini-3-pro-preview',  // Optional: Include preview models explicitly
     'gemini-2.5-flash',
-    'gemini-2.0-flash'
+    'gemini-2.5-flash-lite'
   ],
   maxRetries: 3,
   timeout: 30000,
