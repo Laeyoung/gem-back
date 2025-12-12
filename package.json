@@ -1,6 +1,6 @@
 {
   "name": "gemback",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Smart Gemini API Fallback Library for Node.js & TypeScript",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -23,6 +23,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:staging": "tsx tests/staging/sdk-migration-test.ts",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\"",
@@ -64,6 +65,7 @@
     "eslint-plugin-prettier": "^5.1.0",
     "prettier": "^3.2.0",
     "tsup": "^8.0.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.3.0",
     "vitest": "^1.2.0"
   },
