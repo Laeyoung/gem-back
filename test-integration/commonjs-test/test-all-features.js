@@ -151,7 +151,7 @@ async function testFallbackBehavior(client) {
   // Test with custom fallback order
   const customClient = new GemBack({
     apiKey: process.env.GEMINI_API_KEY || 'dummy',
-    fallbackOrder: ['gemini-2.5-flash', 'gemini-2.0-flash'],
+    fallbackOrder: ['gemini-2.5-flash', 'gemini-2.5-flash-lite'],
     maxRetries: 2,
     debug: true
   });
