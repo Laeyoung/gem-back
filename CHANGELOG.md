@@ -70,6 +70,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated `initializeModels()` to use `ALL_MODELS`
   - Automatic health tracking for new models
 
+### Infrastructure
+
+#### 🧪 Integration Test Improvements
+
+**Enhanced E2E testing reliability**:
+- **Dynamic Package Detection**: Updated `run-all-tests.sh` to auto-detect the packed tarball version, removing the need for manual script updates when versions change.
+- **Rate Limit Mitigation**: Implemented inter-test delays (2s) in CommonJS, ESM, and TypeScript test suites to prevent `429 Too Many Requests` errors during full execution.
+
 ### Testing
 
 - **All 172 tests passing** (100% success rate)

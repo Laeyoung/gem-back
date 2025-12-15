@@ -11,13 +11,15 @@ echo "╚═══════════════════════�
 echo ""
 
 # Check if package is built
-if [ ! -f "../gemback-0.2.0.tgz" ]; then
-    echo "❌ Package not found: gemback-0.2.0.tgz"
+PACKAGE_FILE=$(find .. -maxdepth 1 -name "gemback-*.tgz" | head -n 1)
+
+if [ -z "$PACKAGE_FILE" ]; then
+    echo "❌ Package not found: gemback-*.tgz"
     echo "Please run 'npm run build && npm pack' in the root directory first"
     exit 1
 fi
 
-echo "✅ Package found: gemback-0.2.0.tgz"
+echo "✅ Package found: $PACKAGE_FILE"
 echo ""
 
 # Function to run test in a directory
@@ -37,7 +39,7 @@ run_test() {
 
     # Install gemback package
     echo "Installing gemback package..."
-    npm install ../../gemback-0.2.0.tgz > /dev/null 2>&1
+    npm install ../$PACKAGE_FILE > /dev/null 2>&1
 
     # Run basic test
     echo "Running basic test..."

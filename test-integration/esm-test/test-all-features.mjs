@@ -12,6 +12,8 @@
 
 import { GemBack } from 'gemback';
 
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 async function testBasicGeneration(client) {
   console.log('\n📝 Test 1: Basic Text Generation');
   console.log('─'.repeat(50));
@@ -184,10 +186,15 @@ async function main() {
 
     if (apiKey) {
       await testBasicGeneration(client);
+      await delay(2000);
       await testStreaming(client);
+      await delay(2000);
       await testChatInterface(client);
+      await delay(2000);
       await testMultiKeyRotation();
+      await delay(2000);
       await testMonitoring();
+      await delay(2000);
       await testFallbackBehavior(client);
     }
 
