@@ -1,6 +1,6 @@
 {
   "name": "gemback",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Smart Gemini API Fallback Library for Node.js & TypeScript",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -23,12 +23,16 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:staging": "tsx tests/staging/sdk-migration-test.ts",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
     "typecheck": "tsc --noEmit",
     "update-showcase": "tsx scripts/update-showcase.ts",
+    "fetch-models": "tsx scripts/fetch-models.ts",
+    "generate-models": "tsx scripts/generate-models.ts",
+    "update-models": "npm run fetch-models && npm run generate-models && npm run lint:fix",
     "prepublishOnly": "npm run build && npm test"
   },
   "keywords": [
@@ -53,7 +57,7 @@
   },
   "homepage": "https://github.com/Laeyoung/gem-back#readme",
   "dependencies": {
-    "@google/generative-ai": "^0.21.0"
+    "@google/genai": "^1.33.0"
   },
   "devDependencies": {
     "@octokit/rest": "^20.0.0",
@@ -66,7 +70,7 @@
     "eslint-plugin-prettier": "^5.1.0",
     "prettier": "^3.2.0",
     "tsup": "^8.0.0",
-    "tsx": "^4.7.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.3.0",
     "vitest": "^1.2.0"
   },

@@ -1,20 +1,18 @@
 import { vi } from 'vitest';
 
-export const createMockGenerativeModel = (shouldFail = false, errorMessage = '') => {
+export const createMockModels = (shouldFail = false, errorMessage = '') => {
   return {
     generateContent: vi.fn().mockImplementation(() => {
       if (shouldFail) {
         throw new Error(errorMessage);
       }
       return Promise.resolve({
-        response: {
-          text: () => 'Mock response text',
-          candidates: [{ finishReason: 'STOP' }],
-          usageMetadata: {
-            promptTokenCount: 10,
-            candidatesTokenCount: 20,
-            totalTokenCount: 30,
-          },
+        text: 'Mock response text',
+        candidates: [{ finishReason: 'STOP' }],
+        usageMetadata: {
+          promptTokenCount: 10,
+          candidatesTokenCount: 20,
+          totalTokenCount: 30,
         },
       });
     }),
@@ -22,29 +20,27 @@ export const createMockGenerativeModel = (shouldFail = false, errorMessage = '')
       if (shouldFail) {
         throw new Error(errorMessage);
       }
-      yield { text: () => 'Mock ' };
-      yield { text: () => 'stream ' };
-      yield { text: () => 'response' };
+      yield { text: 'Mock ' };
+      yield { text: 'stream ' };
+      yield { text: 'response' };
     }),
   };
 };
 
-export const createMockGoogleGenerativeAI = (shouldFail = false, errorMessage = '') => {
+export const createMockGoogleGenAI = (shouldFail = false, errorMessage = '') => {
   return {
-    getGenerativeModel: vi.fn(() => createMockGenerativeModel(shouldFail, errorMessage)),
+    models: createMockModels(shouldFail, errorMessage),
   };
 };
 
 export const mockApiResponses = {
   success: {
-    response: {
-      text: () => 'Success response',
-      candidates: [{ finishReason: 'STOP' }],
-      usageMetadata: {
-        promptTokenCount: 5,
-        candidatesTokenCount: 15,
-        totalTokenCount: 20,
-      },
+    text: 'Success response',
+    candidates: [{ finishReason: 'STOP' }],
+    usageMetadata: {
+      promptTokenCount: 5,
+      candidatesTokenCount: 15,
+      totalTokenCount: 20,
     },
   },
   rateLimitError: new Error('429 Rate limit exceeded'),

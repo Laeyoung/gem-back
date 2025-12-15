@@ -329,7 +329,8 @@ describe('HealthMonitor', () => {
       monitor.recordRequest('gemini-2.5-flash', 1000, true);
       const allHealth = monitor.getAllHealth();
 
-      expect(allHealth.length).toBe(2); // All 2 supported models
+      expect(allHealth.length).toBe(3); // All 3 supported models
+      expect(allHealth.map((h) => h.model)).toContain('gemini-3-pro-preview');
       expect(allHealth.map((h) => h.model)).toContain('gemini-2.5-flash');
       expect(allHealth.map((h) => h.model)).toContain('gemini-2.5-flash-lite');
     });

@@ -227,6 +227,7 @@ describe('GemBack', () => {
         totalRequests: 0,
         successRate: 0,
         modelUsage: {
+          'gemini-3-pro-preview': 0,
           'gemini-2.5-flash': 0,
           'gemini-2.5-flash-lite': 0,
         },
