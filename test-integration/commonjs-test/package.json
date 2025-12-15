@@ -6,7 +6,7 @@
   "type": "commonjs",
   "scripts": {
     "test": "node index.js",
-    "test:all": "node test-all-features.js"
+    "test:all": "GEMINI_API_KEY=$GEMINI_API_KEY node test-all-features.js"
   },
   "keywords": [],
   "author": "",
