@@ -1,40 +1,34 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GeminiClient } from '../../src/client/GeminiClient';
 
-const mockGenerateContent = vi.fn();
-const mockGenerateContentStream = vi.fn();
-const mockGetGenerativeModel = vi.fn(() => ({
-  generateContent: mockGenerateContent,
-  generateContentStream: mockGenerateContentStream,
-}));
+const mockModels = {
+  generateContent: vi.fn(),
+  generateContentStream: vi.fn(),
+};
 
-vi.mock('@google/generative-ai', () => ({
-  GoogleGenerativeAI: vi.fn(() => ({
-    getGenerativeModel: mockGetGenerativeModel,
+vi.mock('@google/genai', () => ({
+  GoogleGenAI: vi.fn(() => ({
+    models: mockModels,
   })),
 }));
 
 describe('GeminiClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGenerateContent.mockResolvedValue({
-      response: {
-        text: () => 'Mock response text',
-        candidates: [{ finishReason: 'STOP' }],
-        usageMetadata: {
-          promptTokenCount: 10,
-          candidatesTokenCount: 20,
-          totalTokenCount: 30,
-        },
+    mockModels.generateContent.mockResolvedValue({
+      text: 'Mock response text',
+      candidates: [{ finishReason: 'STOP' }],
+      usageMetadata: {
+        promptTokenCount: 10,
+        candidatesTokenCount: 20,
+        totalTokenCount: 30,
       },
     });
 
-    mockGenerateContentStream.mockResolvedValue({
-      stream: (async function* () {
-        yield { text: () => 'Mock ' };
-        yield { text: () => 'stream ' };
-        yield { text: () => 'response' };
-      })(),
+    mockModels.generateContentStream.mockImplementation(async function* () {
+      yield { text: 'Mock ' };
+      yield { text: 'stream ' };
+      yield { text: 'response' };
     });
   });
 
@@ -66,8 +60,15 @@ describe('GeminiClient', () => {
         },
       });
 
-      expect(mockGetGenerativeModel).toHaveBeenCalledWith({
+      expect(mockModels.generateContent).toHaveBeenCalledWith({
         model: 'gemini-2.5-flash',
+        contents: [{ role: 'user', parts: [{ text: 'Hello' }] }],
+        config: {
+          temperature: undefined,
+          maxOutputTokens: undefined,
+          topP: undefined,
+          topK: undefined,
+        },
       });
     });
 
@@ -80,9 +81,10 @@ describe('GeminiClient', () => {
         topK: 40,
       });
 
-      expect(mockGenerateContent).toHaveBeenCalledWith({
+      expect(mockModels.generateContent).toHaveBeenCalledWith({
+        model: 'gemini-2.5-flash',
         contents: [{ role: 'user', parts: [{ text: 'Hello' }] }],
-        generationConfig: {
+        config: {
           temperature: 0.7,
           maxOutputTokens: 1000,
           topP: 0.9,
@@ -92,7 +94,7 @@ describe('GeminiClient', () => {
     });
 
     it('should throw error on API failure', async () => {
-      mockGenerateContent.mockRejectedValue(new Error('API Error'));
+      mockModels.generateContent.mockRejectedValue(new Error('API Error'));
 
       const client = new GeminiClient();
       await expect(client.generate('Hello', 'gemini-2.5-flash', 'test-api-key')).rejects.toThrow(
@@ -101,7 +103,7 @@ describe('GeminiClient', () => {
     });
 
     it('should timeout after specified duration', async () => {
-      mockGenerateContent.mockImplementation(() => new Promise(() => {})); // Never resolves
+      mockModels.generateContent.mockImplementation(() => new Promise(() => {})); // Never resolves
 
       const client = new GeminiClient(100);
       await expect(client.generate('Hello', 'gemini-2.5-flash', 'test-api-key')).rejects.toThrow(
@@ -135,9 +137,10 @@ describe('GeminiClient', () => {
         // Just consume
       }
 
-      expect(mockGenerateContentStream).toHaveBeenCalledWith({
+      expect(mockModels.generateContentStream).toHaveBeenCalledWith({
+        model: 'gemini-2.5-flash',
         contents: [{ role: 'user', parts: [{ text: 'Hello' }] }],
-        generationConfig: {
+        config: {
           temperature: 0.5,
           maxOutputTokens: 500,
           topP: undefined,
@@ -147,7 +150,7 @@ describe('GeminiClient', () => {
     });
 
     it('should throw error on stream failure', async () => {
-      mockGenerateContentStream.mockRejectedValue(new Error('Stream Error'));
+      mockModels.generateContentStream.mockRejectedValue(new Error('Stream Error'));
 
       const client = new GeminiClient();
       const stream = client.generateStream('Hello', 'gemini-2.5-flash', 'test-api-key');
@@ -195,9 +198,10 @@ describe('GeminiClient', () => {
         },
       });
 
-      expect(mockGenerateContent).toHaveBeenCalledWith({
+      expect(mockModels.generateContent).toHaveBeenCalledWith({
+        model: 'gemini-2.5-flash',
         contents,
-        generationConfig: {
+        config: {
           temperature: undefined,
           maxOutputTokens: undefined,
           topP: undefined,
@@ -231,9 +235,10 @@ describe('GeminiClient', () => {
 
       await client.generateContent(contents, 'gemini-2.5-flash', 'test-api-key');
 
-      expect(mockGenerateContent).toHaveBeenCalledWith({
+      expect(mockModels.generateContent).toHaveBeenCalledWith({
+        model: 'gemini-2.5-flash',
         contents,
-        generationConfig: {
+        config: {
           temperature: undefined,
           maxOutputTokens: undefined,
           topP: undefined,
@@ -261,9 +266,10 @@ describe('GeminiClient', () => {
 
       await client.generateContent(contents, 'gemini-2.5-flash', 'test-api-key');
 
-      expect(mockGenerateContent).toHaveBeenCalledWith({
+      expect(mockModels.generateContent).toHaveBeenCalledWith({
+        model: 'gemini-2.5-flash',
         contents,
-        generationConfig: {
+        config: {
           temperature: undefined,
           maxOutputTokens: undefined,
           topP: undefined,
@@ -291,9 +297,10 @@ describe('GeminiClient', () => {
         topK: 50,
       });
 
-      expect(mockGenerateContent).toHaveBeenCalledWith({
+      expect(mockModels.generateContent).toHaveBeenCalledWith({
+        model: 'gemini-2.5-flash',
         contents,
-        generationConfig: {
+        config: {
           temperature: 0.8,
           maxOutputTokens: 2000,
           topP: 0.95,
@@ -324,9 +331,10 @@ describe('GeminiClient', () => {
 
       await client.generateContent(contents, 'gemini-2.5-flash', 'test-api-key');
 
-      expect(mockGenerateContent).toHaveBeenCalledWith({
+      expect(mockModels.generateContent).toHaveBeenCalledWith({
+        model: 'gemini-2.5-flash',
         contents,
-        generationConfig: {
+        config: {
           temperature: undefined,
           maxOutputTokens: undefined,
           topP: undefined,
@@ -361,9 +369,10 @@ describe('GeminiClient', () => {
       }
 
       expect(chunks).toEqual(['Mock ', 'stream ', 'response']);
-      expect(mockGenerateContentStream).toHaveBeenCalledWith({
+      expect(mockModels.generateContentStream).toHaveBeenCalledWith({
+        model: 'gemini-2.5-flash',
         contents,
-        generationConfig: {
+        config: {
           temperature: undefined,
           maxOutputTokens: undefined,
           topP: undefined,
@@ -399,9 +408,10 @@ describe('GeminiClient', () => {
         // Just consume
       }
 
-      expect(mockGenerateContentStream).toHaveBeenCalledWith({
+      expect(mockModels.generateContentStream).toHaveBeenCalledWith({
+        model: 'gemini-2.5-flash',
         contents,
-        generationConfig: {
+        config: {
           temperature: 0.6,
           maxOutputTokens: 1500,
           topP: undefined,

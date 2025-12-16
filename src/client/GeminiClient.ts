@@ -1,13 +1,25 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import type { GeminiModel } from '../types/models';
 import type { GenerateOptions, GenerateContentRequest, Content } from '../types/config';
 import type { GeminiResponse } from '../types/response';
 
 export class GeminiClient {
   private timeout: number;
+  private clientCache: Map<string, GoogleGenAI> = new Map();
 
   constructor(timeout = 30000) {
     this.timeout = timeout;
+  }
+
+  private getClient(apiKey: string): GoogleGenAI {
+    if (!this.clientCache.has(apiKey)) {
+      this.clientCache.set(apiKey, new GoogleGenAI({ apiKey }));
+    }
+    return this.clientCache.get(apiKey)!;
+  }
+
+  clearCache(): void {
+    this.clientCache.clear();
   }
 
   async generate(
@@ -16,12 +28,9 @@ export class GeminiClient {
     apiKey: string,
     options?: GenerateOptions
   ): Promise<GeminiResponse> {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: modelName,
-    });
+    const ai = this.getClient(apiKey);
 
-    const generationConfig = {
+    const config = {
       temperature: options?.temperature,
       maxOutputTokens: options?.maxTokens,
       topP: options?.topP,
@@ -32,24 +41,24 @@ export class GeminiClient {
       setTimeout(() => reject(new Error('Request timeout')), this.timeout);
     });
 
-    const generatePromise = model.generateContent({
+    const generatePromise = ai.models.generateContent({
+      model: modelName,
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig,
+      config,
     });
 
     const result = await Promise.race([generatePromise, timeoutPromise]);
-    const response = result.response;
-    const text = response.text();
+    const text = result.text ?? '';
 
     return {
       text,
       model: modelName,
-      finishReason: response.candidates?.[0]?.finishReason,
-      usage: response.usageMetadata
+      finishReason: result.candidates?.[0]?.finishReason,
+      usage: result.usageMetadata
         ? {
-            promptTokens: response.usageMetadata.promptTokenCount || 0,
-            completionTokens: response.usageMetadata.candidatesTokenCount || 0,
-            totalTokens: response.usageMetadata.totalTokenCount || 0,
+            promptTokens: result.usageMetadata.promptTokenCount || 0,
+            completionTokens: result.usageMetadata.candidatesTokenCount || 0,
+            totalTokens: result.usageMetadata.totalTokenCount || 0,
           }
         : undefined,
     };
@@ -61,25 +70,23 @@ export class GeminiClient {
     apiKey: string,
     options?: GenerateOptions
   ): AsyncGenerator<{ text: string }> {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: modelName,
-    });
+    const ai = this.getClient(apiKey);
 
-    const generationConfig = {
+    const config = {
       temperature: options?.temperature,
       maxOutputTokens: options?.maxTokens,
       topP: options?.topP,
       topK: options?.topK,
     };
 
-    const result = await model.generateContentStream({
+    const response = await ai.models.generateContentStream({
+      model: modelName,
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig,
+      config,
     });
 
-    for await (const chunk of result.stream) {
-      const chunkText = chunk.text();
+    for await (const chunk of response) {
+      const chunkText = chunk.text ?? '';
       if (chunkText) {
         yield { text: chunkText };
       }
@@ -92,12 +99,9 @@ export class GeminiClient {
     apiKey: string,
     options?: Omit<GenerateContentRequest, 'contents' | 'model'>
   ): Promise<GeminiResponse> {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: modelName,
-    });
+    const ai = this.getClient(apiKey);
 
-    const generationConfig = {
+    const config = {
       temperature: options?.temperature,
       maxOutputTokens: options?.maxTokens,
       topP: options?.topP,
@@ -108,24 +112,24 @@ export class GeminiClient {
       setTimeout(() => reject(new Error('Request timeout')), this.timeout);
     });
 
-    const generatePromise = model.generateContent({
+    const generatePromise = ai.models.generateContent({
+      model: modelName,
       contents,
-      generationConfig,
+      config,
     });
 
     const result = await Promise.race([generatePromise, timeoutPromise]);
-    const response = result.response;
-    const text = response.text();
+    const text = result.text ?? '';
 
     return {
       text,
       model: modelName,
-      finishReason: response.candidates?.[0]?.finishReason,
-      usage: response.usageMetadata
+      finishReason: result.candidates?.[0]?.finishReason,
+      usage: result.usageMetadata
         ? {
-            promptTokens: response.usageMetadata.promptTokenCount || 0,
-            completionTokens: response.usageMetadata.candidatesTokenCount || 0,
-            totalTokens: response.usageMetadata.totalTokenCount || 0,
+            promptTokens: result.usageMetadata.promptTokenCount || 0,
+            completionTokens: result.usageMetadata.candidatesTokenCount || 0,
+            totalTokens: result.usageMetadata.totalTokenCount || 0,
           }
         : undefined,
     };
@@ -137,25 +141,23 @@ export class GeminiClient {
     apiKey: string,
     options?: Omit<GenerateContentRequest, 'contents' | 'model'>
   ): AsyncGenerator<{ text: string }> {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: modelName,
-    });
+    const ai = this.getClient(apiKey);
 
-    const generationConfig = {
+    const config = {
       temperature: options?.temperature,
       maxOutputTokens: options?.maxTokens,
       topP: options?.topP,
       topK: options?.topK,
     };
 
-    const result = await model.generateContentStream({
+    const response = await ai.models.generateContentStream({
+      model: modelName,
       contents,
-      generationConfig,
+      config,
     });
 
-    for await (const chunk of result.stream) {
-      const chunkText = chunk.text();
+    for await (const chunk of response) {
+      const chunkText = chunk.text ?? '';
       if (chunkText) {
         yield { text: chunkText };
       }

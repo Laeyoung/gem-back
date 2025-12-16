@@ -12,6 +12,8 @@
 
 import { GemBack } from 'gemback';
 
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 async function testBasicGeneration(client) {
   console.log('\n📝 Test 1: Basic Text Generation');
   console.log('─'.repeat(50));
@@ -149,7 +151,7 @@ async function testFallbackBehavior(client) {
   // Test with custom fallback order
   const customClient = new GemBack({
     apiKey: process.env.GEMINI_API_KEY || 'dummy',
-    fallbackOrder: ['gemini-2.5-flash', 'gemini-2.0-flash'],
+    fallbackOrder: ['gemini-2.5-flash', 'gemini-2.5-flash-lite'],
     maxRetries: 2,
     debug: true
   });
@@ -184,10 +186,15 @@ async function main() {
 
     if (apiKey) {
       await testBasicGeneration(client);
+      await delay(2000);
       await testStreaming(client);
+      await delay(2000);
       await testChatInterface(client);
+      await delay(2000);
       await testMultiKeyRotation();
+      await delay(2000);
       await testMonitoring();
+      await delay(2000);
       await testFallbackBehavior(client);
     }
 
