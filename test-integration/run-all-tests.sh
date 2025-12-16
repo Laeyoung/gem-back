@@ -11,15 +11,13 @@ echo "╚═══════════════════════�
 echo ""
 
 # Check if package is built
-PACKAGE_FILE=$(find .. -maxdepth 1 -name "gemback-*.tgz" | head -n 1)
-
-if [ -z "$PACKAGE_FILE" ]; then
-    echo "❌ Package not found: gemback-*.tgz"
+if [ ! -f "../gemback-0.2.0.tgz" ]; then
+    echo "❌ Package not found: gemback-0.2.0.tgz"
     echo "Please run 'npm run build && npm pack' in the root directory first"
     exit 1
 fi
 
-echo "✅ Package found: $PACKAGE_FILE"
+echo "✅ Package found: gemback-0.2.0.tgz"
 echo ""
 
 # Function to run test in a directory
@@ -39,7 +37,7 @@ run_test() {
 
     # Install gemback package
     echo "Installing gemback package..."
-    npm install ../$PACKAGE_FILE > /dev/null 2>&1
+    npm install ../../gemback-0.2.0.tgz > /dev/null 2>&1
 
     # Run basic test
     echo "Running basic test..."
@@ -49,8 +47,7 @@ run_test() {
     if [ -n "$GEMINI_API_KEY" ]; then
         echo ""
         echo "Running full feature test with API key..."
-        # Use dotenv-cli to load .env.local for the npm run test:all command
-        dotenv -f ../../.env.local -- npm run test:all
+        npm run test:all
     else
         echo ""
         echo "⚠️  GEMINI_API_KEY not set - skipping full feature tests"

@@ -1,5 +1,4 @@
 import type { GeminiModel } from '../types/models';
-import { ALL_MODELS } from '../types/models';
 
 export interface RateLimitConfig {
   rpm: number; // Requests per minute
@@ -32,9 +31,10 @@ export interface RateLimitStatus {
  * Provides predictions and warnings before hitting limits
  */
 export class RateLimitTracker {
-  private readonly defaultLimits: Record<GeminiModel, RateLimitConfig> = Object.fromEntries(
-    ALL_MODELS.map((model) => [model, { rpm: 15, rpd: 1500 }])
-  ) as Record<GeminiModel, RateLimitConfig>;
+  private readonly defaultLimits: Record<GeminiModel, RateLimitConfig> = {
+    'gemini-2.5-flash': { rpm: 15, rpd: 1500 },
+    'gemini-2.5-flash-lite': { rpm: 15, rpd: 1500 },
+  };
 
   private requestHistory: Map<string, Date[]> = new Map();
   private warningThreshold = 0.8; // Warn at 80% capacity
@@ -119,7 +119,7 @@ export class RateLimitTracker {
    * Get all models that are near their rate limit
    */
   getModelsNearLimit(): RateLimitStatus[] {
-    const models: GeminiModel[] = ALL_MODELS;
+    const models: GeminiModel[] = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 
     return models.map((model) => this.getStatus(model)).filter((status) => status.isNearLimit);
   }
@@ -177,9 +177,10 @@ export class RateLimitTracker {
     const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
 
     let totalRequests = 0;
-    const requestsByModel: Record<GeminiModel, number> = Object.fromEntries(
-      ALL_MODELS.map((model) => [model, 0])
-    ) as Record<GeminiModel, number>;
+    const requestsByModel: Record<GeminiModel, number> = {
+      'gemini-2.5-flash': 0,
+      'gemini-2.5-flash-lite': 0,
+    };
 
     let requestsInLastMinute = 0;
     let requestsInLast5Minutes = 0;

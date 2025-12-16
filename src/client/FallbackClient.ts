@@ -6,9 +6,7 @@ import type {
 } from '../types/config';
 import type { GeminiResponse, StreamChunk, FallbackStats } from '../types/response';
 import type { AttemptRecord } from '../types/errors';
-import type { GeminiModel } from '../types/models';
 import { DEFAULT_CLIENT_OPTIONS } from '../config/defaults';
-import { ALL_MODELS } from '../types/models';
 import { Logger } from '../utils/logger';
 import { GeminiClient } from './GeminiClient';
 import { GeminiBackError } from '../types/errors';
@@ -71,7 +69,10 @@ export class GemBack {
     this.stats = {
       totalRequests: 0,
       successRate: 0,
-      modelUsage: Object.fromEntries(ALL_MODELS.map((m) => [m, 0])) as Record<GeminiModel, number>,
+      modelUsage: {
+        'gemini-2.5-flash': 0,
+        'gemini-2.5-flash-lite': 0,
+      },
       failureCount: 0,
       apiKeyStats: this.apiKeyRotator ? this.apiKeyRotator.getStats() : undefined,
     };
@@ -594,7 +595,10 @@ export class GemBack {
 
     // Add monitoring data if monitoring is enabled
     if (this.rateLimitTracker || this.healthMonitor) {
-      const models: GeminiModel[] = ALL_MODELS;
+      const models: Array<'gemini-2.5-flash' | 'gemini-2.5-flash-lite'> = [
+        'gemini-2.5-flash',
+        'gemini-2.5-flash-lite',
+      ];
 
       const rateLimitStatus = this.rateLimitTracker
         ? models.map((model) => this.rateLimitTracker!.getStatus(model))
