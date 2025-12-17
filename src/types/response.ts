@@ -1,4 +1,4 @@
-import type { GeminiModel } from './models';
+import type { GeminiModel, EmbeddingModel } from './models';
 
 export interface GeminiResponse {
   text: string;
@@ -7,6 +7,14 @@ export interface GeminiResponse {
   usage?: {
     promptTokens: number;
     completionTokens: number;
+    totalTokens: number;
+  };
+}
+
+export interface EmbedResponse {
+  embeddings: number[][];
+  model: EmbeddingModel;
+  usage?: {
     totalTokens: number;
   };
 }
@@ -29,7 +37,7 @@ export interface ApiKeyStats {
 export interface FallbackStats {
   totalRequests: number;
   successRate: number;
-  modelUsage: Record<GeminiModel, number>;
+  modelUsage: Record<GeminiModel | EmbeddingModel, number>;
   failureCount: number;
   apiKeyStats?: ApiKeyStats[];
   monitoring?: {

@@ -1,7 +1,12 @@
 import { GoogleGenAI } from '@google/genai';
-import type { GeminiModel } from '../types/models';
-import type { GenerateOptions, GenerateContentRequest, Content } from '../types/config';
-import type { GeminiResponse } from '../types/response';
+import type { GeminiModel, EmbeddingModel } from '../types/models';
+import type {
+  GenerateOptions,
+  GenerateContentRequest,
+  Content,
+  EmbedOptions,
+} from '../types/config';
+import type { GeminiResponse, EmbedResponse } from '../types/response';
 
 export class GeminiClient {
   private timeout: number;
@@ -162,5 +167,46 @@ export class GeminiClient {
         yield { text: chunkText };
       }
     }
+  }
+
+  async embedContent(
+    content: string | string[],
+    modelName: EmbeddingModel,
+    apiKey: string,
+    options?: EmbedOptions
+  ): Promise<EmbedResponse> {
+    const ai = this.getClient(apiKey);
+
+    const config = {
+      title: options?.title,
+      taskType: options?.taskType,
+      outputDimensionality: options?.outputDimensionality,
+    };
+
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Request timeout')), this.timeout);
+    });
+
+    const embedPromise = ai.models.embedContent({
+      model: modelName,
+      contents: Array.isArray(content) ? content : [content],
+      config,
+    });
+
+    const result = await Promise.race([embedPromise, timeoutPromise]);
+
+    // The SDK returns embeddings as an array of objects with 'values' property
+    // We map it to just an array of number[]
+    const embeddings = result.embeddings?.map((e) => e.values || []) || [];
+
+    // Calculate approx token count if not provided (SDK might not return usage for embeddings yet)
+    // For now we just return undefined for usage if not available
+    const usage = undefined;
+
+    return {
+      embeddings,
+      model: modelName,
+      usage,
+    };
   }
 }

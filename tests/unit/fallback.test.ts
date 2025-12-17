@@ -230,6 +230,8 @@ describe('GemBack', () => {
           'gemini-3-pro-preview': 0,
           'gemini-2.5-flash': 0,
           'gemini-2.5-flash-lite': 0,
+          'gemini-embedding-001': 0,
+          'text-embedding-004': 0,
         },
         failureCount: 0,
         apiKeyStats: undefined,
