@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-12-12
+
 ### Added
 
 #### 🤖 Model Auto-Update System
@@ -50,6 +52,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+#### 🔄 SDK Migration: @google/generative-ai → @google/genai
+
+**Major internal SDK upgrade** with improved performance and architecture.
+
+- **New SDK**: Migrated from `@google/generative-ai` v0.21.0 to `@google/genai` v1.33.0
+- **Client Caching**: Implemented per-API-key client caching for improved performance
+  - ~5-10ms performance improvement per request (cached clients)
+  - Minimal memory overhead (~1KB for typical 2-5 key configurations)
+  - Maintains full compatibility with multi-key rotation
+- **New Public Method**: Added `clearCache()` to GeminiClient for manual cache invalidation
+
+**Architecture Improvements**:
+- Centralized API calls through `ai.models.*` namespace (cleaner, more maintainable)
+- Simplified response structure (removed nested wrappers)
+- Property-based text access instead of method calls
+
+**Internal Changes** (No impact on public API):
+- Updated response handling: `response.text()` → `response.text`
+- Updated config parameter: `generationConfig` → `config`
+- Updated streaming: Direct async iteration (no `.stream` property)
+- All 172 tests passing with 97.59% coverage on GeminiClient
+
 #### 🔧 Internal Refactoring
 
 **Eliminated hardcoded model references** for easier maintenance:
@@ -78,93 +102,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Dynamic Package Detection**: Updated `run-all-tests.sh` to auto-detect the packed tarball version, removing the need for manual script updates when versions change.
 - **Rate Limit Mitigation**: Implemented inter-test delays (2s) in CommonJS, ESM, and TypeScript test suites to prevent `429 Too Many Requests` errors during full execution.
 
+### Performance
+
+- **Request Latency**: 5-10ms improvement on cached client reuse
+- **Throughput**: Better performance in high-volume scenarios (1000+ requests)
+- **Memory**: Negligible overhead (<1KB for typical usage)
+- **Maintenance Time Reduction**: Model updates now take <5 minutes (was 30+ minutes)
+- **Type Safety**: Maintained strict TypeScript union types
+- **Runtime Performance**: No performance impact (constants resolved at compile time)
+
 ### Testing
 
 - **All 172 tests passing** (100% success rate)
+- **GeminiClient coverage**: 97.59% statements
 - **Updated test fixtures** for 3 models (was 2):
   - `tests/unit/fallback.test.ts` - Updated model expectations
   - `tests/unit/health-monitor.test.ts` - Updated model count assertions
 - **Coverage maintained**: >90% for core library code
 - **Zero TypeScript errors**
 - **Zero linting errors**
-
-### Documentation
-
-- **README.md**:
-  - Added gemini-3-pro-preview to supported models section
-  - Updated fallback order examples to show preview model usage
-  - Added note about model auto-update system
-
-- **IMPROVEMENT_PLAN.md**:
-  - Marked Phase 1 `list()` feature as infrastructure complete
-  - Updated implementation status for model discovery
-
-### Performance
-
-- **Maintenance Time Reduction**: Model updates now take <5 minutes (was 30+ minutes)
-- **Type Safety**: Maintained strict TypeScript union types
-- **Runtime Performance**: No performance impact (constants resolved at compile time)
-
-### Developer Experience
-
-- **Single Source of Truth**: `ALL_MODELS` constant eliminates sync issues
-- **Automated Workflow**: Simple `npm run update-models` command
-- **Future-Ready**: Infrastructure prepared for CI/CD integration (Phase 4)
-
-### Breaking Changes
-
-**None** - All changes are internal refactorings:
-- ✅ Public API unchanged
-- ✅ Existing code continues to work
-- ✅ New `ALL_MODELS` export is purely additive
-- ✅ gemini-3-pro-preview is optional (not in default fallback)
-
-## [0.4.0] - 2025-12-12
-
-### Changed
-
-#### 🔄 SDK Migration: @google/generative-ai → @google/genai
-
-**Major internal SDK upgrade** with improved performance and architecture.
-
-- **New SDK**: Migrated from `@google/generative-ai` v0.21.0 to `@google/genai` v1.33.0
-- **Client Caching**: Implemented per-API-key client caching for improved performance
-  - ~5-10ms performance improvement per request (cached clients)
-  - Minimal memory overhead (~1KB for typical 2-5 key configurations)
-  - Maintains full compatibility with multi-key rotation
-- **New Public Method**: Added `clearCache()` to GeminiClient for manual cache invalidation
-
-**Architecture Improvements**:
-- Centralized API calls through `ai.models.*` namespace (cleaner, more maintainable)
-- Simplified response structure (removed nested wrappers)
-- Property-based text access instead of method calls
-
-**Internal Changes** (No impact on public API):
-- Updated response handling: `response.text()` → `response.text`
-- Updated config parameter: `generationConfig` → `config`
-- Updated streaming: Direct async iteration (no `.stream` property)
-- All 172 tests passing with 97.59% coverage on GeminiClient
-
-### Performance
-
-- **Request Latency**: 5-10ms improvement on cached client reuse
-- **Throughput**: Better performance in high-volume scenarios (1000+ requests)
-- **Memory**: Negligible overhead (<1KB for typical usage)
-
-### Testing
-
-- **All 172 tests passing** (100% success rate)
-- **GeminiClient coverage**: 97.59% statements
-- **Zero TypeScript errors**
-- **Zero linting errors**
 - Updated test mocks to reflect new SDK structure
 
 ### Breaking Changes
 
-**None** - This is a fully backward-compatible internal migration:
+**None** - This is a fully backward-compatible update:
 - ✅ Public API unchanged (all methods, parameters, return types identical)
 - ✅ Existing code continues to work without modifications
-- ✅ All features maintained (fallback, retry, monitoring, multi-key rotation)
+- ✅ New `ALL_MODELS` export is purely additive
+- ✅ gemini-3-pro-preview is optional (not in default fallback)
 - ✅ Type definitions unchanged
 
 ### Migration Notes
