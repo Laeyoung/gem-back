@@ -14,6 +14,8 @@ import {
   type HealthStatus
 } from 'gemback';
 
+const delay = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
+
 async function testBasicGeneration(client: GemBack): Promise<void> {
   console.log('\n📝 Test 1: Type-Safe Text Generation');
   console.log('─'.repeat(50));
@@ -236,11 +238,17 @@ async function main(): Promise<void> {
 
     if (apiKey) {
       await testBasicGeneration(client);
+      await delay(2000);
       await testGenerationWithOptions(client);
+      await delay(2000);
       await testStreaming(client);
+      await delay(2000);
       await testChatInterface(client);
+      await delay(2000);
       await testMultiKeyRotation();
+      await delay(2000);
       await testMonitoring();
+      await delay(2000);
       await testTypeInference();
     }
 
