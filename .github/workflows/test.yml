@@ -31,7 +31,7 @@ jobs:
         run: npm ci
 
       - name: Run Unit Tests
-        run: npm test
+        run: npm test -- --no-color
 
       - name: Build and Pack for E2E
         run: |
