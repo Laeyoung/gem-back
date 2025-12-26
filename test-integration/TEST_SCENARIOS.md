@@ -1,4 +1,4 @@
-# v0.2.0 출시 전 테스트 시나리오
+# v0.4.0 출시 전 테스트 시나리오
 
 실제 유저 관점에서 gemback 라이브러리를 테스트하기 위한 종합 시나리오입니다.
 
@@ -26,13 +26,13 @@ npm pack
 
 **확인 사항:**
 - ✅ `dist/` 디렉토리에 파일 생성 (index.js, index.mjs, index.d.ts, index.d.mts)
-- ✅ `gemback-0.2.0.tgz` 파일 생성
+- ✅ `gemback-0.4.0.tgz` 파일 생성
 - ✅ 빌드 에러 없음
 
 ### 2. 패키지 내용 검증
 
 ```bash
-tar -tzf gemback-0.2.0.tgz
+tar -tzf gemback-0.4.0.tgz
 ```
 
 **확인 사항:**
@@ -48,11 +48,11 @@ tar -tzf gemback-0.2.0.tgz
 ### 테스트 1: 패키지 정보 확인
 
 ```bash
-npm info ./gemback-0.2.0.tgz
+npm info ./gemback-0.4.0.tgz
 ```
 
 **확인 사항:**
-- ✅ 버전: 0.2.0
+- ✅ 버전: 0.4.0
 - ✅ main: dist/index.js
 - ✅ module: dist/index.mjs
 - ✅ types: dist/index.d.ts
@@ -74,7 +74,7 @@ npm info ./gemback-0.2.0.tgz
 ```bash
 cd test-integration/commonjs-test
 npm install
-npm install ../../gemback-0.2.0.tgz
+npm install ../../gemback-0.4.0.tgz
 npm test
 npm run test:all  # API 키가 있는 경우
 ```
@@ -90,7 +90,7 @@ npm run test:all  # API 키가 있는 경우
 ```bash
 cd test-integration/esm-test
 npm install
-npm install ../../gemback-0.2.0.tgz
+npm install ../../gemback-0.4.0.tgz
 npm test
 npm run test:all  # API 키가 있는 경우
 ```
@@ -106,7 +106,7 @@ npm run test:all  # API 키가 있는 경우
 ```bash
 cd test-integration/typescript-test
 npm install
-npm install ../../gemback-0.2.0.tgz
+npm install ../../gemback-0.4.0.tgz
 npm run build  # TypeScript 컴파일 확인
 npm test
 npm run test:all  # API 키가 있는 경우
@@ -140,7 +140,7 @@ const response = await client.generate('Hello');
 ```typescript
 const client = new GemBack({
   apiKey: 'YOUR_KEY',
-  fallbackOrder: ['gemini-2.5-flash', 'gemini-2.0-flash']
+  fallbackOrder: ['gemini-3-flash-preview', 'gemini-2.5-flash']
 });
 ```
 
@@ -187,7 +187,7 @@ console.log(stats);
 - ✅ successRate 계산
 - ✅ modelUsage 추적
 
-### Phase 2 기능 (v0.2.0)
+### Phase 2 기능 (v0.4.0)
 
 #### 6. Multi-Key Rotation
 ```typescript
@@ -220,16 +220,40 @@ const client = new GemBack({
 - ✅ p50, p95, p99 응답 시간 계산
 
 #### 8. Health Monitoring
+...
+---
+
+### Phase 3 기능 (v0.3.0)
+
+#### 9. Multimodal Support
 ```typescript
-const stats = client.getFallbackStats();
-console.log(stats.monitoring.modelHealth);
+const response = await client.generateContent({
+  contents: [{
+    role: 'user',
+    parts: [
+      { text: 'What is this?' },
+      { inlineData: { mimeType: 'image/jpeg', data: '...' } }
+    ]
+  }]
+});
 ```
 
 **확인 사항:**
-- ✅ healthy/degraded/unhealthy 상태 판정
-- ✅ successRate 계산
-- ✅ averageResponseTime 계산
-- ✅ consecutiveFailures 추적
+- ✅ 이미지 포함 요청 정상 처리
+- ✅ 멀티턴 이미지 대화 동작
+- ✅ generateContentStream 스트리밍 지원
+
+### Phase 4 기능 (v0.4.0)
+
+#### 10. SDK Migration & Caching
+- ✅ `@google/genai` 정상 작동 확인
+- ✅ API Key별 클라이언트 캐싱 (성능 향상)
+- ✅ `clearCache()` 메서드 동작
+
+#### 11. Model Auto-Update System
+- ✅ `npm run update-models` 명령어 성공
+- ✅ `src/types/models.ts` 자동 생성 확인
+- ✅ 최신 모델 (Gemini 3.0) 감지 및 포함
 
 ---
 
@@ -285,7 +309,7 @@ await Promise.all(promises);
 - ✅ 설치 방법 정확
 - ✅ 코드 예제 실행 가능
 - ✅ API 문서 정확
-- ✅ 버전 정보 (0.2.0) 표시
+- ✅ 버전 정보 (0.4.0) 표시
 - ✅ 한글 문서(README.ko.md)와 동기화
 
 ### Examples 확인
@@ -360,7 +384,7 @@ cd examples
 - [ ] 메모리 누수 없음
 
 ### 배포 준비
-- [ ] package.json 버전 0.2.0
+- [ ] package.json 버전 0.4.0
 - [ ] LICENSE 파일 포함
 - [ ] .npmignore 적절
 - [ ] Repository 링크 정확
@@ -434,4 +458,4 @@ cd examples
 ✅ **성능 문제 없음**
 ✅ **에러 핸들링 완벽**
 
-이 모든 조건이 충족되면 **v0.2.0 출시 준비 완료**입니다!
+이 모든 조건이 충족되면 **v0.4.0 출시 준비 완료**입니다!

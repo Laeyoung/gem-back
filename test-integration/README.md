@@ -1,6 +1,6 @@
 # Gem Back - Integration Testing Guide
 
-v0.2.0 출시 전 실제 유저 관점에서 라이브러리를 테스트하기 위한 통합 테스트 환경입니다.
+v0.4.0 출시 전 실제 유저 관점에서 라이브러리를 테스트하기 위한 통합 테스트 환경입니다.
 
 ## 📁 디렉토리 구조
 
@@ -33,7 +33,7 @@ npm run build
 npm pack
 ```
 
-이렇게 하면 `gemback-0.2.0.tgz` 파일이 생성됩니다.
+이렇게 하면 `gemback-0.4.0.tgz` 파일이 생성됩니다.
 
 ### 2. 전체 테스트 실행 (API 키 없이)
 
@@ -48,19 +48,19 @@ npm pack
 # CommonJS 테스트
 cd commonjs-test
 npm install
-npm install ../../gemback-0.2.0.tgz
+npm install ../../gemback-0.4.0.tgz
 npm test
 
 # ESM 테스트
 cd ../esm-test
 npm install
-npm install ../../gemback-0.2.0.tgz
+npm install ../../gemback-0.4.0.tgz
 npm test
 
 # TypeScript 테스트
 cd ../typescript-test
 npm install
-npm install ../../gemback-0.2.0.tgz
+npm install ../../gemback-0.4.0.tgz
 npm test
 ```
 
@@ -107,6 +107,12 @@ cd ../typescript-test && npm run test:all
 - ✅ Rate limit tracking
 - ✅ Health monitoring
 - ✅ Predictive warnings
+
+#### Phase 3 기능 (v0.3.0+)
+- ✅ Multimodal 지원 (이미지, 오디오, 비디오)
+- ✅ `generateContent()` 지원
+- ✅ `generateContentStream()` 지원
+- ✅ SDK 마이그레이션 및 클라이언트 캐싱 (v0.4.0)
 
 ## 🔍 각 테스트 환경 설명
 
@@ -162,7 +168,7 @@ cd ../typescript-test && npm run test:all
 ✅ Import test passed - gemback is correctly loaded in CommonJS
 ✅ Client instantiation successful
 ✅ Type checking: client is object
-✅ Methods available: generate, generateStream, chat, getFallbackStats
+✅ Methods available: generate, generateStream, chat, generateContent, generateContentStream, getFallbackStats
 ```
 
 ### ❌ 실패 케이스 예시
@@ -172,7 +178,7 @@ cd ../typescript-test && npm run test:all
 ```
 
 이런 경우:
-1. `npm install ../../gemback-0.2.0.tgz` 실행했는지 확인
+1. `npm install ../../gemback-0.4.0.tgz` 실행했는지 확인
 2. `package.json`의 exports 필드 확인
 3. Node.js 버전 확인 (18+ 필요)
 
@@ -181,7 +187,7 @@ cd ../typescript-test && npm run test:all
 ### "Cannot find module 'gemback'"
 
 ```bash
-npm install ../../gemback-0.2.0.tgz
+npm install ../../gemback-0.4.0.tgz
 ```
 
 ### "Module not found: Error: Package path . is not exported"
@@ -214,7 +220,7 @@ export GEMINI_API_KEY=your_api_key
 - [ ] `npm run build` 성공
 - [ ] `npm pack` 성공
 - [ ] dist/ 파일들 생성됨
-- [ ] gemback-0.2.0.tgz 생성됨
+- [ ] gemback-0.4.0.tgz 생성됨
 
 ### CommonJS 환경
 - [ ] 패키지 설치 성공
@@ -263,7 +269,7 @@ export GEMINI_API_KEY=your_api_key
 5. ✅ 에러 핸들링 완벽
 6. ✅ 성능 이슈 없음
 
-모든 조건 충족 시 **v0.2.0 출시 가능**! 🚀
+모든 조건 충족 시 **v0.4.0 출시 가능**! 🚀
 
 ## 💡 팁
 
@@ -276,7 +282,7 @@ export GEMINI_API_KEY=your_api_key
 npm run build && npm pack
 
 # 테스트 디렉토리에서
-npm install ../../gemback-0.2.0.tgz --force
+npm install ../../gemback-0.4.0.tgz --force
 npm test
 ```
 

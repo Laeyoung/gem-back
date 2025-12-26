@@ -51,6 +51,22 @@ async function testChatInterface(client) {
   console.log('   Model:', response.model);
 }
 
+async function testMultimodal(client) {
+  console.log('\n📝 Test 4: Multimodal Content Generation');
+  console.log('─'.repeat(50));
+
+  const response = await client.generateContent({
+    contents: [
+      {
+        role: 'user',
+        parts: [{ text: 'What are the main features of Gemini 3.0? Answer in one sentence.' }]
+      }
+    ]
+  });
+  console.log('✅ Multimodal response:', response.text);
+  console.log('   Model:', response.model);
+}
+
 async function testMultiKeyRotation() {
   console.log('\n📝 Test 4: Multi-Key Rotation');
   console.log('─'.repeat(50));
@@ -151,7 +167,7 @@ async function testFallbackBehavior(client) {
   // Test with custom fallback order
   const customClient = new GemBack({
     apiKey: process.env.GEMINI_API_KEY || 'dummy',
-    fallbackOrder: ['gemini-2.5-flash', 'gemini-2.5-flash-lite'],
+    fallbackOrder: ['gemini-3-flash-preview', 'gemini-2.5-flash'],
     maxRetries: 2,
     debug: true
   });
@@ -190,6 +206,8 @@ async function main() {
       await testStreaming(client);
       await delay(2000);
       await testChatInterface(client);
+      await delay(2000);
+      await testMultimodal(client);
       await delay(2000);
       await testMultiKeyRotation();
       await delay(2000);

@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# v0.2.0 Integration Tests Runner
+# v0.4.0 Integration Tests Runner
 # This script runs all integration tests for gemback
 
 set -e  # Exit on error
 
 echo "╔════════════════════════════════════════════════════════════╗"
-echo "║  Gem Back v0.2.0 - Integration Tests Runner               ║"
+echo "║  Gem Back v0.4.0 - Integration Tests Runner               ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 

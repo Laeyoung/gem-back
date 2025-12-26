@@ -1,4 +1,4 @@
-# v0.2.0 출시 전 빠른 테스트 가이드
+# v0.4.0 출시 전 빠른 테스트 가이드
 
 ## ⚡ 5분 안에 테스트하기
 
@@ -10,7 +10,7 @@ npm run build
 npm pack
 ```
 
-**결과**: `gemback-0.2.0.tgz` 파일이 생성됩니다.
+**결과**: `gemback-0.4.0.tgz` 파일이 생성됩니다.
 
 ---
 
@@ -49,7 +49,7 @@ cd test-integration
 ```bash
 cd test-integration/commonjs-test
 npm install
-npm install ../../gemback-0.2.0.tgz
+npm install ../../gemback-0.4.0.tgz
 npm test
 ```
 
@@ -58,7 +58,7 @@ npm test
 ```bash
 cd test-integration/esm-test
 npm install
-npm install ../../gemback-0.2.0.tgz
+npm install ../../gemback-0.4.0.tgz
 npm test
 ```
 
@@ -67,7 +67,7 @@ npm test
 ```bash
 cd test-integration/typescript-test
 npm install
-npm install ../../gemback-0.2.0.tgz
+npm install ../../gemback-0.4.0.tgz
 npm test
 ```
 
@@ -81,7 +81,7 @@ npm test
 ✅ Import test passed
 ✅ Client instantiation successful
 ✅ Type checking: client is object
-✅ Methods available: generate, generateStream, chat, getFallbackStats
+✅ Methods available: generate, generateStream, chat, generateContent, generateContentStream, getFallbackStats
 ```
 
 ---
