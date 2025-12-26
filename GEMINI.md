@@ -48,6 +48,7 @@
 
 1.  **Fallback Chain**:
     *   Requests attempt models in a defined `fallbackOrder`.
+    *   **Default Order**: `gemini-3-flash-preview` -> `gemini-2.5-flash` -> `gemini-2.5-flash-lite`.
     *   **429 (Rate Limit)** -> Immediate fallback to next model.
     *   **5xx (Server Error)** -> Retry with backoff, then fallback.
     *   **401/403 (Auth)** -> Fatal error, stops chain.
@@ -101,9 +102,9 @@
 ## Common Tasks
 
 ### Adding a New Model
-1.  Update `GeminiModel` type in `src/types/models.ts`.
+1.  Update `GeminiModel` type in `src/types/models.ts` (or use `npm run update-models`).
 2.  Add to `SUPPORTED_MODELS` list.
-3.  Update `DEFAULT_FALLBACK_ORDER` in `src/config/defaults.ts`.
+3.  `DEFAULT_FALLBACK_ORDER` in `src/types/models.ts` is auto-generated.
 4.  Add unit tests ensuring the new model is attempted in the chain.
 
 ### Modifying Fallback Logic

@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE - DO NOT EDIT MANUALLY
-// Generated at: 2025-12-26T13:58:40.489Z
+// Generated at: 2025-12-26T14:07:46.178Z
 // Source: Gemini API v1beta/models
 // Generator: scripts/generate-models.ts
 
@@ -32,8 +32,7 @@ export const MODEL_INFO: Record<
 > = {
   'gemini-2.5-flash': {
     name: 'Gemini 2.5 Flash',
-    description:
-      'Stable version of Gemini 2.5 Flash, our mid-size multimodal model that supports up to 1 million tokens, released in June of 2025.',
+    description: 'Stable version of Gemini 2.5 Flash, our mid-size multimodal model that supports up to 1 million tokens, released in June of 2025.',
     maxTokens: 65536,
   },
   'gemini-2.5-pro': {

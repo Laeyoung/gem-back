@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE - DO NOT EDIT MANUALLY
-// Generated at: 2025-12-26T13:58:40.488Z
+// Generated at: 2025-12-26T14:07:46.178Z
 // Source: Gemini API v1beta/models
 // Generator: scripts/generate-models.ts
 
