@@ -41,6 +41,7 @@ describe('Fallback Flow Integration Tests', () => {
       const response = await client.generate('Hello');
 
       expect(calls).toEqual([
+        'gemini-3-flash-preview',
         'gemini-2.5-flash',
         'gemini-2.5-flash-lite',
       ]);
@@ -52,7 +53,7 @@ describe('Fallback Flow Integration Tests', () => {
       const calls: string[] = [];
       mockGeminiClient.generate.mockImplementation((prompt: string, model: string) => {
         calls.push(model);
-        if (model === 'gemini-2.5-flash-lite') {
+        if (model === 'gemini-2.5-flash') {
           throw new Error('401 Invalid API key');
         }
         throw new Error('429 Rate limit exceeded');
@@ -66,8 +67,8 @@ describe('Fallback Flow Integration Tests', () => {
 
       await expect(client.generate('Hello')).rejects.toThrow(GeminiBackError);
 
-      // Should stop at gemini-2.5-flash-lite (second model) due to auth error
-      expect(calls).toEqual(['gemini-2.5-flash', 'gemini-2.5-flash-lite']);
+      // Should stop at gemini-2.5-flash (second model) due to auth error
+      expect(calls).toEqual(['gemini-3-flash-preview', 'gemini-2.5-flash']);
     });
 
     it('should retry transient errors before fallback', async () => {
@@ -80,7 +81,7 @@ describe('Fallback Flow Integration Tests', () => {
         calls.push({ model, attempt: currentAttempt });
 
         // First model: fail with timeout twice, then succeed
-        if (model === 'gemini-2.5-flash') {
+        if (model === 'gemini-3-flash-preview') {
           if (currentAttempt <= 2) {
             throw new Error('Request timeout');
           }
@@ -104,7 +105,7 @@ describe('Fallback Flow Integration Tests', () => {
 
       expect(response.text).toBe('Success after retries');
       expect(calls).toHaveLength(3);
-      expect(calls.every((c) => c.model === 'gemini-2.5-flash')).toBe(true);
+      expect(calls.every((c) => c.model === 'gemini-3-flash-preview')).toBe(true);
     });
   });
 
@@ -146,7 +147,7 @@ describe('Fallback Flow Integration Tests', () => {
         if (callCount === 1) {
           return Promise.resolve({
             text: 'Success 1',
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3-flash-preview',
             finishReason: 'STOP',
           });
         }
@@ -158,17 +159,17 @@ describe('Fallback Flow Integration Tests', () => {
         if (callCount === 3) {
           return Promise.resolve({
             text: 'Success 2',
-            model: 'gemini-2.5-flash-lite',
+            model: 'gemini-2.5-flash',
             finishReason: 'STOP',
           });
         }
 
-        // Request 3: all models fail
-        if (callCount >= 4 && callCount <= 7) {
+        // Request 3: all models fail (3 default models)
+        if (callCount >= 4 && callCount <= 6) {
           throw new Error('500 Server error');
         }
 
-        throw new Error('Unexpected call');
+        throw new Error(`Unexpected call at count ${callCount} for model ${model}`);
       });
 
       const client = new GemBack({
@@ -195,8 +196,8 @@ describe('Fallback Flow Integration Tests', () => {
       expect(stats.totalRequests).toBe(3);
       expect(stats.successRate).toBeCloseTo(0.6667, 2);
       expect(stats.failureCount).toBe(1);
+      expect(stats.modelUsage['gemini-3-flash-preview']).toBe(1);
       expect(stats.modelUsage['gemini-2.5-flash']).toBe(1);
-      expect(stats.modelUsage['gemini-2.5-flash-lite']).toBe(1);
     });
   });
 
@@ -210,12 +211,12 @@ describe('Fallback Flow Integration Tests', () => {
         calls.push(model);
 
         // First model: rate limit (no retry for 429)
-        if (model === 'gemini-2.5-flash') {
+        if (model === 'gemini-3-flash-preview') {
           throw new Error('429 Too many requests');
         }
 
         // Second model: timeout on first attempt, success on retry
-        if (model === 'gemini-2.5-flash-lite') {
+        if (model === 'gemini-2.5-flash') {
           if (callCount === 2) {
             throw new Error('Request timeout');
           }
@@ -239,19 +240,22 @@ describe('Fallback Flow Integration Tests', () => {
       const response = await client.generate('Hello');
 
       expect(response.text).toBe('Success after fallback and retry');
-      expect(response.model).toBe('gemini-2.5-flash-lite');
-      expect(calls).toEqual(['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-flash-lite']);
+      expect(response.model).toBe('gemini-2.5-flash');
+      expect(calls).toEqual(['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-2.5-flash']);
     });
   });
 
   describe('Error context', () => {
     it('should include all attempt records in final error', async () => {
       mockGeminiClient.generate.mockImplementation((prompt: string, model: string) => {
-        if (model === 'gemini-2.5-flash') {
+        if (model === 'gemini-3-flash-preview') {
           throw new Error('429 Rate limit');
         }
-        if (model === 'gemini-2.5-flash-lite') {
+        if (model === 'gemini-2.5-flash') {
           throw new Error('500 Server error');
+        }
+        if (model === 'gemini-2.5-flash-lite') {
+          throw new Error('503 Service Unavailable');
         }
         throw new Error('Unexpected');
       });
@@ -269,11 +273,13 @@ describe('Fallback Flow Integration Tests', () => {
         expect(error).toBeInstanceOf(GeminiBackError);
         const geminiError = error as GeminiBackError;
 
-        expect(geminiError.allAttempts).toHaveLength(2);
-        expect(geminiError.allAttempts[0].model).toBe('gemini-2.5-flash');
+        expect(geminiError.allAttempts).toHaveLength(3);
+        expect(geminiError.allAttempts[0].model).toBe('gemini-3-flash-preview');
         expect(geminiError.allAttempts[0].error).toContain('429');
-        expect(geminiError.allAttempts[1].model).toBe('gemini-2.5-flash-lite');
+        expect(geminiError.allAttempts[1].model).toBe('gemini-2.5-flash');
         expect(geminiError.allAttempts[1].error).toContain('500');
+        expect(geminiError.allAttempts[2].model).toBe('gemini-2.5-flash-lite');
+        expect(geminiError.allAttempts[2].error).toContain('503');
       }
     });
   });
