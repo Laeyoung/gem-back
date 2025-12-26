@@ -3,12 +3,18 @@ import type {
   GenerateOptions,
   ChatMessage,
   GenerateContentRequest,
+  EmbedOptions,
 } from '../types/config';
-import type { GeminiResponse, StreamChunk, FallbackStats } from '../types/response';
+import type {
+  GeminiResponse,
+  StreamChunk,
+  FallbackStats,
+  EmbedResponse,
+} from '../types/response';
 import type { AttemptRecord } from '../types/errors';
-import type { GeminiModel } from '../types/models';
+import type { GeminiModel, EmbeddingModel } from '../types/models';
 import { DEFAULT_CLIENT_OPTIONS } from '../config/defaults';
-import { ALL_MODELS } from '../types/models';
+import { ALL_MODELS, ALL_EMBEDDING_MODELS, DEFAULT_EMBEDDING_FALLBACK_ORDER } from '../types/models';
 import { Logger } from '../utils/logger';
 import { GeminiClient } from './GeminiClient';
 import { GeminiBackError } from '../types/errors';
@@ -68,10 +74,18 @@ export class GemBack {
       this.logger.info('Monitoring enabled: Rate limit tracking and health monitoring');
     }
 
+    const allModels: (GeminiModel | EmbeddingModel)[] = [
+      ...ALL_MODELS,
+      ...ALL_EMBEDDING_MODELS,
+    ];
+
     this.stats = {
       totalRequests: 0,
       successRate: 0,
-      modelUsage: Object.fromEntries(ALL_MODELS.map((m) => [m, 0])) as Record<GeminiModel, number>,
+      modelUsage: Object.fromEntries(allModels.map((m) => [m, 0])) as Record<
+        GeminiModel | EmbeddingModel,
+        number
+      >,
       failureCount: 0,
       apiKeyStats: this.apiKeyRotator ? this.apiKeyRotator.getStats() : undefined,
     };
@@ -581,6 +595,129 @@ export class GemBack {
     }
     throw new GeminiBackError(
       'All models failed for streaming. Please try again later.',
+      'ALL_MODELS_FAILED',
+      attempts
+    );
+  }
+
+  async embed(
+    content: string | string[],
+    options?: EmbedOptions
+  ): Promise<EmbedResponse> {
+    this.stats.totalRequests++;
+
+    const attempts: AttemptRecord[] = [];
+    const modelsToTry = options?.model
+      ? [options.model]
+      : this.options.embeddingFallbackOrder || DEFAULT_EMBEDDING_FALLBACK_ORDER;
+    const { key: apiKey, index: keyIndex } = this.getApiKey();
+
+    for (const model of modelsToTry) {
+      this.logger.debug(
+        `Attempting embed: ${model}${keyIndex !== null ? ` (API Key #${keyIndex + 1})` : ''}`
+      );
+
+      // Check rate limit prediction before making request
+      if (this.rateLimitTracker) {
+        const status = this.rateLimitTracker.getStatus(model as unknown as GeminiModel); // TODO: Fix type safety for embedding models in tracker
+        if (status.willExceedSoon) {
+          this.logger.warn(
+            `Rate limit warning for ${model}: ${status.windowStats.requestsInLastMinute}/${status.maxRPM} RPM`
+          );
+        }
+        if (this.rateLimitTracker.wouldExceedLimit(model as unknown as GeminiModel)) {
+          const waitTime = this.rateLimitTracker.getRecommendedWaitTime(model as unknown as GeminiModel);
+          this.logger.warn(`Would exceed rate limit for ${model}. Recommended wait: ${waitTime}ms`);
+        }
+      }
+
+      const startTime = Date.now();
+      try {
+        // Record rate limit tracking (tracked by model, not per API key)
+        if (this.rateLimitTracker) {
+          this.rateLimitTracker.recordRequest(model as unknown as GeminiModel);
+        }
+
+        const response = await retryWithBackoff(
+          () => this.client.embedContent(content, model, apiKey, options),
+          {
+            maxRetries: this.options.maxRetries,
+            delay: this.options.retryDelay,
+            shouldRetry: (error: Error) => {
+              if (isAuthError(error)) {
+                this.logger.error(`Authentication error for ${model}: ${error.message}`);
+                return false;
+              }
+              if (isRateLimitError(error)) {
+                this.logger.warn(`Rate limit hit for ${model}: ${error.message}`);
+                return false;
+              }
+              return isRetryableError(error);
+            },
+          }
+        );
+
+        const responseTime = Date.now() - startTime;
+
+        // Record health monitoring
+        if (this.healthMonitor) {
+          this.healthMonitor.recordRequest(model as unknown as GeminiModel, responseTime, true);
+        }
+
+        this.stats.modelUsage[model]++;
+        this.updateSuccessRate();
+        if (keyIndex !== null && this.apiKeyRotator) {
+          this.apiKeyRotator.recordSuccess(keyIndex);
+        }
+        this.logger.info(`Embed success: ${model} (${responseTime}ms)`);
+        return response;
+      } catch (error) {
+        const err = error as Error;
+        const statusCode = getErrorStatusCode(err);
+        const responseTime = Date.now() - startTime;
+
+        // Record health monitoring for failure
+        if (this.healthMonitor) {
+          this.healthMonitor.recordRequest(model as unknown as GeminiModel, responseTime, false, err.message);
+        }
+
+        attempts.push({
+          model,
+          error: err.message,
+          timestamp: new Date(),
+          statusCode,
+        });
+
+        this.logger.warn(`Embed failed (${statusCode || 'unknown'}): ${model} - ${err.message}`);
+
+        if (isAuthError(err)) {
+          this.stats.failureCount++;
+          this.updateSuccessRate();
+          if (keyIndex !== null && this.apiKeyRotator) {
+            this.apiKeyRotator.recordFailure(keyIndex);
+          }
+          throw new GeminiBackError(
+            'Authentication failed. Please check your API key.',
+            'AUTH_ERROR',
+            attempts,
+            statusCode,
+            model
+          );
+        }
+
+        if (modelsToTry.indexOf(model) < modelsToTry.length - 1) {
+          this.logger.info(`Fallback to: ${modelsToTry[modelsToTry.indexOf(model) + 1]}`);
+        }
+      }
+    }
+
+    this.stats.failureCount++;
+    this.updateSuccessRate();
+    if (keyIndex !== null && this.apiKeyRotator) {
+      this.apiKeyRotator.recordFailure(keyIndex);
+    }
+    throw new GeminiBackError(
+      'All models failed for embedding. Please try again later.',
       'ALL_MODELS_FAILED',
       attempts
     );

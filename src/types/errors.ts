@@ -1,7 +1,7 @@
-import type { GeminiModel } from './models';
+import type { GeminiModel, EmbeddingModel } from './models';
 
 export interface AttemptRecord {
-  model: GeminiModel;
+  model: GeminiModel | EmbeddingModel;
   error: string;
   timestamp: Date;
   statusCode?: number;
@@ -10,7 +10,7 @@ export interface AttemptRecord {
 export class GeminiBackError extends Error {
   public readonly code: string;
   public readonly statusCode?: number;
-  public readonly modelAttempted?: GeminiModel;
+  public readonly modelAttempted?: GeminiModel | EmbeddingModel;
   public readonly allAttempts: AttemptRecord[];
 
   constructor(
@@ -18,7 +18,7 @@ export class GeminiBackError extends Error {
     code: string,
     allAttempts: AttemptRecord[] = [],
     statusCode?: number,
-    modelAttempted?: GeminiModel
+    modelAttempted?: GeminiModel | EmbeddingModel
   ) {
     super(message);
     this.name = 'GeminiBackError';

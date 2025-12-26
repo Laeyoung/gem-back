@@ -1,4 +1,4 @@
-import type { GeminiModel } from './models';
+import type { GeminiModel, EmbeddingModel } from './models';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'silent';
 
@@ -6,6 +6,7 @@ export interface GemBackOptions {
   apiKey?: string;
   apiKeys?: string[];
   fallbackOrder?: GeminiModel[];
+  embeddingFallbackOrder?: EmbeddingModel[];
   maxRetries?: number;
   timeout?: number;
   retryDelay?: number;
@@ -25,6 +26,13 @@ export interface GenerateOptions {
   maxTokens?: number;
   topP?: number;
   topK?: number;
+}
+
+export interface EmbedOptions {
+  model?: EmbeddingModel;
+  taskType?: 'RETRIEVAL_QUERY' | 'RETRIEVAL_DOCUMENT' | 'SEMANTIC_SIMILARITY' | 'CLASSIFICATION' | 'CLUSTERING' | 'QUESTION_ANSWERING' | 'FACT_VERIFICATION';
+  title?: string;
+  outputDimensionality?: number;
 }
 
 export interface ChatMessage {
