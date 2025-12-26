@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.4.0] - 2025-12-12
+## [0.4.0] - 2025-12-26
 
 ### Added
 
@@ -17,10 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Model Fetcher Script** (`scripts/fetch-models.ts`):
   - Fetches available models from Gemini API endpoint (`v1beta/models`)
-  - Filters for generative models only (excludes embeddings)
+  - **Smart version detection**: Automatically detects latest major version (e.g., Gemini 3.0) and includes its preview/experimental variants
+  - **Advanced filtering**: Automatically excludes aliases (`-latest`), snapshots (`-001`), date-based versions (`-09-2025`), and embedding models
+  - Supports `--all` flag to bypass filters and fetch everything
   - Retry logic with exponential backoff for API failures
   - Caching system for fallback during API outages
-  - 181 lines of production-grade code
 
 - **Code Generator Script** (`scripts/generate-models.ts`):
   - Generates TypeScript union types from API data
@@ -28,7 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Smart priority calculation (Gemini 3 = 0, 2.5 = 100, 2.0 = 200+)
   - Auto-generates model metadata and rate limit defaults
   - Change detection to avoid unnecessary updates
-  - 294 lines of code generation logic
 
 - **New npm Scripts**:
   ```bash
@@ -45,12 +45,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **gemini-3-pro-preview Support** ⚠️:
   - Added to type system as optional model
-  - Not included in `DEFAULT_FALLBACK_ORDER` (preview stability)
-  - Users can explicitly add to custom fallback orders
+  - Included in `ALL_MODELS` but not in default fallback
   - Model metadata includes warning badge
-  - Priority: 0 (highest performance, preview stability)
 
 ### Changed
+
+#### 🚀 Default Model Update
+
+**Updated default fallback chain** to prioritize models with free quota and higher performance:
+
+1. **`gemini-3-flash-preview`** (Primary - Free quota available)
+2. **`gemini-2.5-flash`** (Secondary - Stable, High performance)
+3. **`gemini-2.5-flash-lite`** (Tertiary - Lightweight fallback)
 
 #### 🔄 SDK Migration: @google/generative-ai → @google/genai
 
