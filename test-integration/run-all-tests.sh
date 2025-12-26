@@ -49,8 +49,17 @@ run_test() {
     if [ -n "$GEMINI_API_KEY" ]; then
         echo ""
         echo "Running full feature test with API key..."
-        # Use dotenv-cli to load .env.local for the npm run test:all command
-        dotenv -f ../../.env.local -- npm run test:all
+        # Run with .env.local if it exists, otherwise run directly (CI)
+        if [ -f "../../.env.local" ]; then
+            if [ -f "../../node_modules/.bin/dotenv" ]; then
+                ../../node_modules/.bin/dotenv -f ../../.env.local -- npm run test:all
+            else
+                # Fallback for when node_modules location might differ or global install
+                npx dotenv -f ../../.env.local -- npm run test:all
+            fi
+        else
+            npm run test:all
+        fi
     else
         echo ""
         echo "⚠️  GEMINI_API_KEY not set - skipping full feature tests"
