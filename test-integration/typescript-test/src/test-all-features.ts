@@ -254,19 +254,19 @@ async function main(): Promise<void> {
 
     if (apiKey) {
       await testBasicGeneration(client);
-      await delay(2000);
+      await delay(5000);
       await testGenerationWithOptions(client);
-      await delay(2000);
+      await delay(5000);
       await testStreaming(client);
-      await delay(2000);
+      await delay(5000);
       await testChatInterface(client);
-      await delay(2000);
+      await delay(5000);
       await testMultimodal(client);
-      await delay(2000);
+      await delay(5000);
       await testMultiKeyRotation();
-      await delay(2000);
+      await delay(5000);
       await testMonitoring();
-      await delay(2000);
+      await delay(5000);
       await testTypeInference();
     }
 
