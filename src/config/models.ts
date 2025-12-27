@@ -32,7 +32,8 @@ export const MODEL_INFO: Record<
 > = {
   'gemini-2.5-flash': {
     name: 'Gemini 2.5 Flash',
-    description: 'Stable version of Gemini 2.5 Flash, our mid-size multimodal model that supports up to 1 million tokens, released in June of 2025.',
+    description:
+      'Stable version of Gemini 2.5 Flash, our mid-size multimodal model that supports up to 1 million tokens, released in June of 2025.',
     maxTokens: 65536,
   },
   'gemini-2.5-pro': {

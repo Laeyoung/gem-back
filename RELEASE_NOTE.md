@@ -1,6 +1,6 @@
 # 🎉 Release Notes - gemback v0.4.0
 
-**릴리스 날짜**: 2025-12-12
+**릴리스 날짜**: 2025-12-27
 **패키지 이름**: `gemback`
 **NPM**: https://www.npmjs.com/package/gemback
 **Repository**: https://github.com/Laeyoung/gem-back
