@@ -1,7 +1,7 @@
 # 🎉 Release Notes - gemback v0.4.0
 
-**릴리스 날짜**: 2025-12-27
-**패키지 이름**: `gemback`
+**Release Date**: 2025-12-27
+**Package Name**: `gemback`
 **NPM**: https://www.npmjs.com/package/gemback
 **Repository**: https://github.com/Laeyoung/gem-back
 
@@ -9,66 +9,66 @@
 
 ## 📦 v0.4.0 - Gemini 3.0 Support & Auto-Update System
 
-**gemback v0.4.0**은 Google Gemini 3.0 Preview 모델 지원을 추가하고, 내부 SDK를 전면 업그레이드하여 성능과 유지보수성을 대폭 향상시킨 메이저 업데이트입니다.
+**gemback v0.4.0** is a major update that adds support for Google Gemini 3.0 Preview models and fully upgrades the internal SDK to significantly improve performance and maintainability.
 
 ---
 
-## ✨ 주요 변경사항
+## ✨ Key Changes
 
-### 🚀 Gemini 3.0 Flash Preview 지원 및 기본 모델 변경
+### 🚀 Gemini 3.0 Flash Preview Support & Default Model Change
 
-무료 Quota가 제공되는 **Gemini 3.0 Flash Preview**를 기본 Fallback 체인의 최우선 모델로 변경하여 비용 효율성과 성능을 동시에 개선했습니다.
+We have changed the primary model in the default fallback chain to **Gemini 3.0 Flash Preview**, which offers a free quota, to improve both cost-efficiency and performance.
 
-#### 변경된 기본 Fallback 순서:
-1. **`gemini-3-flash-preview`** (Primary - 무료 Quota 제공) ⚠️
-2. **`gemini-2.5-flash`** (Secondary - 안정적, 고성능)
-3. **`gemini-2.5-flash-lite`** (Tertiary - 경량 Fallback)
+#### New Default Fallback Order:
+1. **`gemini-3-flash-preview`** (Primary - Free Quota Available) ⚠️
+2. **`gemini-2.5-flash`** (Secondary - Stable, High Performance)
+3. **`gemini-2.5-flash-lite`** (Tertiary - Lightweight Fallback)
 
-> **참고**: Preview 모델이지만 무료 사용량이 제공되므로 기본값으로 채택되었습니다. 안정성이 최우선인 경우 `fallbackOrder`를 커스텀하여 사용하세요.
+> **Note**: Although it is a Preview model, it was adopted as the default because it provides free usage. If stability is your top priority, please customize the `fallbackOrder`.
 
-### 🤖 모델 자동 업데이트 시스템 (Model Auto-Update System)
+### 🤖 Model Auto-Update System
 
-Google API 업데이트에 맞춰 지원 모델 목록을 자동으로 최신화하는 시스템이 도입되었습니다.
+We introduced a system to automatically keep the supported model list up-to-date with Google API updates.
 
-- **스마트 버전 감지**: Gemini 3.0과 같은 최신 메이저 버전이 출시되면 자동으로 감지하여 목록에 포함합니다.
-- **지능형 필터링**: `-latest` 별칭이나 `-001` 같은 특정 스냅샷 버전을 자동으로 제외하고 대표 모델만 깔끔하게 관리합니다.
-- **npm scripts**: `npm run update-models` 명령어로 누구나 쉽게 최신 모델 정보를 라이브러리에 반영할 수 있습니다.
+- **Smart Version Detection**: Automatically detects and includes the latest major versions (e.g., Gemini 3.0) when released.
+- **Intelligent Filtering**: Automatically excludes aliases like `-latest` or specific snapshot versions like `-001` to keep the list clean with representative models only.
+- **npm scripts**: Anyone can easily update the latest model information in the library using the `npm run update-models` command.
 
-### 🔄 SDK 마이그레이션 & 성능 최적화
+### 🔄 SDK Migration & Performance Optimization
 
-Google의 공식 Node.js SDK가 변경됨에 따라 내부 구현을 전면 업그레이드했습니다.
+We fully upgraded the internal implementation following the change in Google's official Node.js SDK.
 
 - **Migration**: `@google/generative-ai` → **`@google/genai` (v1.33.0)**
-- **Client Caching**: API 키별로 클라이언트를 캐싱하여 요청당 **5-10ms**의 지연 시간을 단축했습니다.
-- **구조 개선**: 응답 처리 및 스트리밍 로직을 간소화하여 안정성을 높였습니다.
+- **Client Caching**: Reduced latency by **5-10ms** per request by caching clients per API key.
+- **Structure Improvement**: Simplified response handling and streaming logic to improve stability.
 
 ---
 
-## 📋 마이그레이션 가이드
+## 📋 Migration Guide
 
-### v0.4.0으로 업데이트
+### Update to v0.4.0
 
 ```bash
 npm install gemback@0.4.0
-# 또는
+# or
 yarn upgrade gemback@0.4.0
-# 또는
+# or
 pnpm update gemback@0.4.0
 ```
 
-### 주의사항 (Breaking Changes 없음)
+### Notices (No Breaking Changes)
 
-이번 업데이트는 **완전한 하위 호환성**을 보장합니다. 기존 코드를 수정할 필요가 없습니다.
-단, 기본 Fallback 모델 순서가 변경되었으므로 `gemini-3-flash-preview`가 먼저 호출된다는 점만 인지하시면 됩니다.
+This update guarantees **full backward compatibility**. No code changes are required.
+However, please be aware that `gemini-3-flash-preview` is now called first due to the change in the default fallback model order.
 
 ---
 
-## 🔗 링크
+## 🔗 Links
 
-- **NPM 패키지**: https://www.npmjs.com/package/gemback
-- **GitHub 저장소**: https://github.com/Laeyoung/gem-back
-- **전체 CHANGELOG**: [CHANGELOG.md](./CHANGELOG.md)
-- **문서**: [README.md](./README.md)
+- **NPM Package**: https://www.npmjs.com/package/gemback
+- **GitHub Repository**: https://github.com/Laeyoung/gem-back
+- **Full CHANGELOG**: [CHANGELOG.md](./CHANGELOG.md)
+- **Documentation**: [README.md](./README.md)
 
 ---
 
