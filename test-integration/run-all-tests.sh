@@ -33,13 +33,16 @@ run_test() {
 
     cd "$dir"
 
+    # Clean up previous installs to avoid integrity mismatches
+    rm -rf node_modules package-lock.json
+
     # Install dependencies
     echo "Installing dependencies..."
-    npm install > /dev/null 2>&1
+    npm install
 
     # Install gemback package
     echo "Installing gemback package..."
-    npm install ../$PACKAGE_FILE > /dev/null 2>&1
+    npm install ../$PACKAGE_FILE
 
     # Run basic test
     echo "Running basic test..."
