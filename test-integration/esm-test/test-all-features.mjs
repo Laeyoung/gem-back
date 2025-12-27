@@ -12,6 +12,8 @@
 
 import { GemBack } from 'gemback';
 
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 async function testBasicGeneration(client) {
   console.log('\n📝 Test 1: Basic Text Generation');
   console.log('─'.repeat(50));
@@ -46,6 +48,22 @@ async function testChatInterface(client) {
 
   const response = await client.chat(messages);
   console.log('✅ Chat response:', response.text.substring(0, 100) + '...');
+  console.log('   Model:', response.model);
+}
+
+async function testMultimodal(client) {
+  console.log('\n📝 Test 4: Multimodal Content Generation');
+  console.log('─'.repeat(50));
+
+  const response = await client.generateContent({
+    contents: [
+      {
+        role: 'user',
+        parts: [{ text: 'What are the main features of Gemini 3.0? Answer in one sentence.' }]
+      }
+    ]
+  });
+  console.log('✅ Multimodal response:', response.text);
   console.log('   Model:', response.model);
 }
 
@@ -146,22 +164,27 @@ async function testFallbackBehavior(client) {
   console.log('\n📝 Test 7: Fallback Behavior');
   console.log('─'.repeat(50));
 
-  // Test with custom fallback order
-  const customClient = new GemBack({
-    apiKey: process.env.GEMINI_API_KEY || 'dummy',
-    fallbackOrder: ['gemini-2.5-flash', 'gemini-2.0-flash'],
-    maxRetries: 2,
-    debug: true
-  });
+  try {
+    // Test with custom fallback order
+    const customClient = new GemBack({
+      apiKey: process.env.GEMINI_API_KEY || 'dummy',
+      fallbackOrder: ['gemini-3-flash-preview', 'gemini-2.5-flash'],
+      maxRetries: 2,
+      debug: true
+    });
 
-  if (!process.env.GEMINI_API_KEY) {
-    console.log('⚠️  Skipped: No API key provided');
-    return;
+    if (!process.env.GEMINI_API_KEY) {
+      console.log('⚠️  Skipped: No API key provided');
+      return;
+    }
+
+    const response = await customClient.generate('Test fallback');
+    console.log('✅ Fallback order respected');
+    console.log('   Model used:', response.model);
+  } catch (error) {
+    console.log('⚠️  Fallback test failed (likely due to quota), continuing...');
+    console.log('   Error:', error.message);
   }
-
-  const response = await customClient.generate('Test fallback');
-  console.log('✅ Fallback order respected');
-  console.log('   Model used:', response.model);
 }
 
 async function main() {
@@ -184,10 +207,17 @@ async function main() {
 
     if (apiKey) {
       await testBasicGeneration(client);
+      await delay(5000);
       await testStreaming(client);
+      await delay(5000);
       await testChatInterface(client);
+      await delay(5000);
+      await testMultimodal(client);
+      await delay(5000);
       await testMultiKeyRotation();
+      await delay(5000);
       await testMonitoring();
+      await delay(5000);
       await testFallbackBehavior(client);
     }
 

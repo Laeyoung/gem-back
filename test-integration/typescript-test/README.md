@@ -11,7 +11,7 @@ npm install
 
 2. Install the local package:
 ```bash
-npm install ../../gemback-0.2.0.tgz
+npm install ../../gemback-0.4.0.tgz
 ```
 
 3. Set your API key (optional for basic tests):
@@ -50,8 +50,9 @@ npm run build
 - ✅ Basic text generation
 - ✅ Generation with options
 - ✅ Streaming responses
-- ✅ Chat interface
-- ✅ Multi-key rotation
+- ✅ Chat interface (with API key)
+- ✅ Multimodal support (with API key)
+- ✅ Multi-key rotation (with API key)
 - ✅ Monitoring features
 - ✅ Error handling
 

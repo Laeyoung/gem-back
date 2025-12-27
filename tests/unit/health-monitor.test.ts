@@ -246,6 +246,7 @@ describe('HealthMonitor', () => {
         monitor.recordRequest('gemini-2.5-flash', 1500, false);
       }
 
+      // Model 2: 95% success, 2000ms avg
       for (let i = 0; i < 95; i++) {
         monitor.recordRequest('gemini-2.5-flash-lite', 2000, true);
       }
@@ -254,17 +255,20 @@ describe('HealthMonitor', () => {
       }
 
       // Model 3: 98% success, 1000ms avg (best)
-      /* 
-       * Can't test 3 valid models since we only have 2 now. 
-       * Just testing with 2 models is sufficient for logic check.
-       */
+      for (let i = 0; i < 98; i++) {
+        monitor.recordRequest('gemini-3-flash-preview', 1000, true);
+      }
+      for (let i = 0; i < 2; i++) {
+        monitor.recordRequest('gemini-3-flash-preview', 1000, false);
+      }
 
       const healthiest = monitor.getHealthiestModel([
         'gemini-2.5-flash',
         'gemini-2.5-flash-lite',
+        'gemini-3-flash-preview',
       ]);
 
-      expect(healthiest).toBe('gemini-2.5-flash-lite');
+      expect(healthiest).toBe('gemini-3-flash-preview');
     });
 
     it('should return null when no models are healthy', () => {
@@ -329,7 +333,9 @@ describe('HealthMonitor', () => {
       monitor.recordRequest('gemini-2.5-flash', 1000, true);
       const allHealth = monitor.getAllHealth();
 
-      expect(allHealth.length).toBe(2); // All 2 supported models
+      expect(allHealth.length).toBeGreaterThanOrEqual(7);
+      expect(allHealth.map((h) => h.model)).toContain('gemini-3-pro-preview');
+      expect(allHealth.map((h) => h.model)).toContain('gemini-3-flash-preview');
       expect(allHealth.map((h) => h.model)).toContain('gemini-2.5-flash');
       expect(allHealth.map((h) => h.model)).toContain('gemini-2.5-flash-lite');
     });

@@ -26,6 +26,7 @@ describe('GemBack', () => {
     it('should use default fallback order', () => {
       const client = new GemBack({ apiKey: 'test-key' });
       const stats = client.getFallbackStats();
+      expect(stats.modelUsage).toHaveProperty('gemini-3-flash-preview');
       expect(stats.modelUsage).toHaveProperty('gemini-2.5-flash');
       expect(stats.modelUsage).toHaveProperty('gemini-2.5-flash-lite');
     });
@@ -43,7 +44,7 @@ describe('GemBack', () => {
     it('should succeed on first model', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-2.5-flash' as const,
+        model: 'gemini-3-flash-preview' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -59,7 +60,7 @@ describe('GemBack', () => {
       const rateLimitError = new Error('429 Rate limit exceeded');
       const successResponse = {
         text: 'Success',
-        model: 'gemini-2.5-flash-lite' as const,
+        model: 'gemini-2.5-flash' as const,
         finishReason: 'STOP',
       };
 
@@ -70,7 +71,7 @@ describe('GemBack', () => {
       const client = new GemBack({ apiKey: 'test-key', maxRetries: 0 });
       const response = await client.generate('Hello');
 
-      expect(response.model).toBe('gemini-2.5-flash-lite');
+      expect(response.model).toBe('gemini-2.5-flash');
       expect(mockGeminiClient.generate).toHaveBeenCalledTimes(2);
     });
 
@@ -98,8 +99,8 @@ describe('GemBack', () => {
         expect((err as GeminiBackError).message).toContain('All models failed');
       }
 
-      // Should have tried all 2 models
-      expect(mockGeminiClient.generate).toHaveBeenCalledTimes(2);
+      // Should have tried all default fallback models (currently 3: gemini-3-flash-preview, gemini-2.5-flash, gemini-2.5-flash-lite)
+      expect(mockGeminiClient.generate).toHaveBeenCalledTimes(3);
     });
 
     it('should use specified model when provided in options', async () => {
@@ -126,7 +127,7 @@ describe('GemBack', () => {
       const timeoutError = new Error('Request timeout');
       const successResponse = {
         text: 'Success',
-        model: 'gemini-2.5-flash' as const,
+        model: 'gemini-3-flash-preview' as const,
         finishReason: 'STOP',
       };
 
@@ -160,9 +161,9 @@ describe('GemBack', () => {
       }
 
       expect(chunks).toHaveLength(3); // 2 text chunks + 1 complete
-      expect(chunks[0]).toEqual({ text: 'Hello ', model: 'gemini-2.5-flash', isComplete: false });
-      expect(chunks[1]).toEqual({ text: 'World', model: 'gemini-2.5-flash', isComplete: false });
-      expect(chunks[2]).toEqual({ text: '', model: 'gemini-2.5-flash', isComplete: true });
+      expect(chunks[0]).toEqual({ text: 'Hello ', model: 'gemini-3-flash-preview', isComplete: false });
+      expect(chunks[1]).toEqual({ text: 'World', model: 'gemini-3-flash-preview', isComplete: false });
+      expect(chunks[2]).toEqual({ text: '', model: 'gemini-3-flash-preview', isComplete: true });
     });
 
     it('should fallback on stream error', async () => {
@@ -185,7 +186,7 @@ describe('GemBack', () => {
         chunks.push(chunk);
       }
 
-      expect(chunks[0].model).toBe('gemini-2.5-flash-lite');
+      expect(chunks[0].model).toBe('gemini-2.5-flash');
     });
   });
 
@@ -193,7 +194,7 @@ describe('GemBack', () => {
     it('should format chat messages correctly', async () => {
       const mockResponse = {
         text: 'Chat response',
-        model: 'gemini-2.5-flash' as const,
+        model: 'gemini-3-flash-preview' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -211,7 +212,7 @@ describe('GemBack', () => {
         'User: Hello\n\nAssistant: Hi there\n\nUser: How are you?\n\nAssistant:';
       expect(mockGeminiClient.generate).toHaveBeenCalledWith(
         expectedPrompt,
-        'gemini-2.5-flash',
+        'gemini-3-flash-preview',
         'test-key',
         undefined
       );
@@ -223,22 +224,20 @@ describe('GemBack', () => {
       const client = new GemBack({ apiKey: 'test-key' });
       const stats = client.getFallbackStats();
 
-      expect(stats).toEqual({
-        totalRequests: 0,
-        successRate: 0,
-        modelUsage: {
-          'gemini-2.5-flash': 0,
-          'gemini-2.5-flash-lite': 0,
-        },
-        failureCount: 0,
-        apiKeyStats: undefined,
-      });
+      expect(stats.totalRequests).toBe(0);
+      expect(stats.successRate).toBe(0);
+      // Verify some key models are present in usage stats
+      expect(stats.modelUsage).toHaveProperty('gemini-3-flash-preview', 0);
+      expect(stats.modelUsage).toHaveProperty('gemini-2.5-flash', 0);
+      expect(stats.modelUsage).toHaveProperty('gemini-2.5-flash-lite', 0);
+      expect(stats.failureCount).toBe(0);
+      expect(stats.apiKeyStats).toBeUndefined();
     });
 
     it('should track successful requests', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-2.5-flash' as const,
+        model: 'gemini-3-flash-preview' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -249,7 +248,7 @@ describe('GemBack', () => {
       const stats = client.getFallbackStats();
       expect(stats.totalRequests).toBe(1);
       expect(stats.successRate).toBe(1);
-      expect(stats.modelUsage['gemini-2.5-flash']).toBe(1);
+      expect(stats.modelUsage['gemini-3-flash-preview']).toBe(1);
       expect(stats.failureCount).toBe(0);
     });
 
@@ -275,7 +274,7 @@ describe('GemBack', () => {
       let callCount = 0;
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-2.5-flash' as const,
+        model: 'gemini-3-flash-preview' as const,
         finishReason: 'STOP',
       };
 
@@ -323,7 +322,7 @@ describe('GemBack', () => {
     it('should rotate through API keys with round-robin', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-2.5-flash' as const,
+        model: 'gemini-3-flash-preview' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -346,7 +345,7 @@ describe('GemBack', () => {
     it('should use least-used strategy when specified', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-2.5-flash' as const,
+        model: 'gemini-3-flash-preview' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -367,7 +366,7 @@ describe('GemBack', () => {
     it('should track API key usage in stats', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-2.5-flash' as const,
+        model: 'gemini-3-flash-preview' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -412,7 +411,7 @@ describe('GemBack', () => {
     it('should work with single apiKey in backward compatibility mode', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-2.5-flash' as const,
+        model: 'gemini-3-flash-preview' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);

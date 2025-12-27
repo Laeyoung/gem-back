@@ -6,12 +6,12 @@
   "type": "module",
   "scripts": {
     "test": "node index.mjs",
-    "test:all": "node test-all-features.mjs"
+    "test:all": "GEMINI_API_KEY=$GEMINI_API_KEY node test-all-features.mjs"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "gemback": "file:../../gemback-0.2.0.tgz"
+    "gemback": "file:../../gemback-0.4.0.tgz"
   }
 }

@@ -14,6 +14,8 @@ import {
   type HealthStatus
 } from 'gemback';
 
+const delay = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
+
 async function testBasicGeneration(client: GemBack): Promise<void> {
   console.log('\n📝 Test 1: Type-Safe Text Generation');
   console.log('─'.repeat(50));
@@ -62,12 +64,28 @@ async function testChatInterface(client: GemBack): Promise<void> {
   const messages: ChatMessage[] = [
     { role: 'user', content: 'Hello! What is your name?' },
     { role: 'assistant', content: 'I am Gemini, an AI assistant.' },
-    { role: 'user', content: 'Can you help me with TypeScript?' }
+    { role: 'user', content: 'Can you help me with programming?' }
   ];
 
   const response: GeminiResponse = await client.chat(messages);
   console.log('✅ Chat response:', response.text.substring(0, 100) + '...');
   console.log('   Messages type-checked at compile time');
+}
+
+async function testMultimodal(client: GemBack): Promise<void> {
+  console.log('\n📝 Test 5: Multimodal Content Generation');
+  console.log('─'.repeat(50));
+
+  const response = await client.generateContent({
+    contents: [
+      {
+        role: 'user',
+        parts: [{ text: 'What are the main features of Gemini 3.0? Answer in one sentence.' }]
+      }
+    ]
+  });
+  console.log('✅ Multimodal response:', response.text);
+  console.log('   Model:', response.model);
 }
 
 async function testMultiKeyRotation(): Promise<void> {
@@ -236,11 +254,19 @@ async function main(): Promise<void> {
 
     if (apiKey) {
       await testBasicGeneration(client);
+      await delay(5000);
       await testGenerationWithOptions(client);
+      await delay(5000);
       await testStreaming(client);
+      await delay(5000);
       await testChatInterface(client);
+      await delay(5000);
+      await testMultimodal(client);
+      await delay(5000);
       await testMultiKeyRotation();
+      await delay(5000);
       await testMonitoring();
+      await delay(5000);
       await testTypeInference();
     }
 

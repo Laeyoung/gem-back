@@ -1,23 +1,25 @@
 #!/bin/bash
 
-# v0.2.0 Integration Tests Runner
+# v0.4.0 Integration Tests Runner
 # This script runs all integration tests for gemback
 
 set -e  # Exit on error
 
 echo "╔════════════════════════════════════════════════════════════╗"
-echo "║  Gem Back v0.2.0 - Integration Tests Runner               ║"
+echo "║  Gem Back v0.4.0 - Integration Tests Runner               ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 
 # Check if package is built
-if [ ! -f "../gemback-0.2.0.tgz" ]; then
-    echo "❌ Package not found: gemback-0.2.0.tgz"
+PACKAGE_FILE=$(find .. -maxdepth 1 -name "gemback-*.tgz" | head -n 1)
+
+if [ -z "$PACKAGE_FILE" ]; then
+    echo "❌ Package not found: gemback-*.tgz"
     echo "Please run 'npm run build && npm pack' in the root directory first"
     exit 1
 fi
 
-echo "✅ Package found: gemback-0.2.0.tgz"
+echo "✅ Package found: $PACKAGE_FILE"
 echo ""
 
 # Function to run test in a directory
@@ -31,13 +33,16 @@ run_test() {
 
     cd "$dir"
 
+    # Clean up previous installs to avoid integrity mismatches
+    rm -rf node_modules package-lock.json
+
     # Install dependencies
     echo "Installing dependencies..."
-    npm install > /dev/null 2>&1
+    npm install
 
     # Install gemback package
     echo "Installing gemback package..."
-    npm install ../../gemback-0.2.0.tgz > /dev/null 2>&1
+    npm install ../$PACKAGE_FILE
 
     # Run basic test
     echo "Running basic test..."
@@ -47,7 +52,17 @@ run_test() {
     if [ -n "$GEMINI_API_KEY" ]; then
         echo ""
         echo "Running full feature test with API key..."
-        npm run test:all
+        # Run with .env.local if it exists, otherwise run directly (CI)
+        if [ -f "../../.env.local" ]; then
+            if [ -f "../../node_modules/.bin/dotenv" ]; then
+                ../../node_modules/.bin/dotenv -f ../../.env.local -- npm run test:all
+            else
+                # Fallback for when node_modules location might differ or global install
+                npx dotenv -f ../../.env.local -- npm run test:all
+            fi
+        else
+            npm run test:all
+        fi
     else
         echo ""
         echo "⚠️  GEMINI_API_KEY not set - skipping full feature tests"

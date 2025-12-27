@@ -5,7 +5,7 @@
 [![npm version](https://badge.fury.io/js/gemback.svg)](https://www.npmjs.com/package/gemback)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/tests-165%20passing-brightgreen.svg)](https://github.com/Laeyoung/gem-back)
+[![Tests](https://img.shields.io/badge/tests-180%20passing-brightgreen.svg)](https://github.com/Laeyoung/gem-back)
 
 **Gem Back** is an NPM library that provides an intelligent fallback system and production-grade monitoring for Google Gemini API, automatically handling RPM (Requests Per Minute) rate limits.
 
@@ -35,10 +35,20 @@ The Gemini API has **RPM (Requests Per Minute) limits** on the free tier, causin
 
 ## 🚀 Supported Models
 
-Gem Back supports automatic fallback across 2 Gemini models:
+Gem Back supports automatic fallback across Gemini models:
 
-- `gemini-2.5-flash` (latest, highest performance)
-- `gemini-2.5-flash-lite` (lightweight version)
+**Default Fallback Chain** (Optimized for Free Tier):
+1. `gemini-3-flash-preview` (Free quota available) ⚠️
+2. `gemini-2.5-flash` (Stable, high performance)
+3. `gemini-2.5-flash-lite` (Lightweight fallback)
+
+**Other Supported Models**:
+- `gemini-3-pro-preview`
+- `gemini-2.5-pro`
+- `gemini-2.0-flash`
+- `gemini-2.0-flash-lite`
+
+**Model Auto-Update System**: The library includes automation scripts to keep the model list current with Google's API updates. See [Contributing Guide](./CONTRIBUTING.md) for details on updating models.
 
 ---
 
@@ -78,8 +88,9 @@ console.log(response.text);
 const client = new GemBack({
   apiKey: process.env.GEMINI_API_KEY,
   fallbackOrder: [
+    'gemini-3-pro-preview',  // Optional: Include preview models explicitly
     'gemini-2.5-flash',
-    'gemini-2.0-flash'
+    'gemini-2.5-flash-lite'
   ],
   maxRetries: 3,
   timeout: 30000,
@@ -550,6 +561,19 @@ A: Yes, pass your preferred models in the `fallbackOrder` option.
 
 ### Q: What are the costs?
 A: Only Gemini API costs apply. Gem Back is free and open-source.
+
+---
+
+<!-- PROJECTS_SHOWCASE_START -->
+## 🌟 Projects Using Gem Back
+
+**Be the first to showcase your project using Gem Back!**
+
+If you're using Gem Back in your project, we'd love to feature it here.
+Your project could be the first one listed!
+
+*Updated: 2025-11-29*
+<!-- PROJECTS_SHOWCASE_END -->
 
 ---
 
