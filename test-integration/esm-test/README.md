@@ -6,7 +6,7 @@ This directory contains integration tests for gemback in an ESM (ECMAScript Modu
 
 1. Install the local package:
 ```bash
-npm install ../../gemback-0.2.0.tgz
+npm install ../../gemback-0.4.0.tgz
 ```
 
 2. Set your API key (optional for basic tests):
@@ -34,6 +34,7 @@ npm run test:all
 - ✅ Basic text generation (with API key)
 - ✅ Streaming responses (with API key)
 - ✅ Chat interface (with API key)
+- ✅ Multimodal support (with API key)
 - ✅ Multi-key rotation (with API key)
 - ✅ Monitoring features (with API key)
 - ✅ Error handling

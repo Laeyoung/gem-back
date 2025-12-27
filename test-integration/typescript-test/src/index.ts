@@ -90,7 +90,7 @@ async function main(): Promise<void> {
     // This should compile - valid options
     const validOptions: GemBackOptions = {
       apiKey: apiKey,
-      fallbackOrder: ['gemini-2.5-flash', 'gemini-2.5-flash-lite'],
+      fallbackOrder: ['gemini-3-flash-preview', 'gemini-2.5-flash'],
       maxRetries: 3,
       timeout: 60000,
       debug: false,

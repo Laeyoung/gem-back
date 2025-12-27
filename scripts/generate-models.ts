@@ -103,7 +103,17 @@ function processModels(models: ModelMetadata[]): ProcessedModel[] {
  * Generate src/types/models.ts content
  */
 function generateTypesFile(models: ProcessedModel[]): string {
-  const stableModels = models.filter((m) => m.classification === 'stable');
+  // Define strict default fallback order per user request
+  // Priority: gemini-3-flash-preview -> gemini-2.5-flash -> gemini-2.5-flash-lite
+  const targetFallbackOrder = [
+    'gemini-3-flash-preview',
+    'gemini-2.5-flash',
+    'gemini-2.5-flash-lite'
+  ];
+
+  const fallbackList = targetFallbackOrder
+    .map(name => models.find(m => m.name === name))
+    .filter((m): m is ProcessedModel => !!m);
 
   // Generate union type
   const unionType = models
@@ -114,8 +124,8 @@ function generateTypesFile(models: ProcessedModel[]): string {
     })
     .join('\n');
 
-  // Generate DEFAULT_FALLBACK_ORDER (stable models only)
-  const defaultFallback = stableModels.map((m) => `  '${m.name}',`).join('\n');
+  // Generate DEFAULT_FALLBACK_ORDER
+  const defaultFallback = fallbackList.map((m) => `  '${m.name}',`).join('\n');
 
   // Generate ALL_MODELS
   const allModels = models.map((m) => `  '${m.name}',`).join('\n');

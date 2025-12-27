@@ -33,13 +33,20 @@ Gemini API는 무료 티어에서 **RPM(분당 요청 수) 제한**이 있어, �
 
 ## 🚀 지원 모델
 
-Gem Back은 다음 4개 모델의 Fallback 체인을 지원합니다:
+Gem Back은 다음 모델들의 자동 Fallback을 지원합니다:
 
-```
-gemini-2.5-flash (최신, 최고 성능)
-  ↓ 실패 시
-gemini-2.5-flash-lite (경량 버전)
-```
+**기본 Fallback 체인** (무료 티어 최적화):
+1. `gemini-3-flash-preview` (무료 쿼터 제공) ⚠️
+2. `gemini-2.5-flash` (안정적, 고성능)
+3. `gemini-2.5-flash-lite` (경량 Fallback)
+
+**기타 지원 모델**:
+- `gemini-3-pro-preview`
+- `gemini-2.5-pro`
+- `gemini-2.0-flash`
+- `gemini-2.0-flash-lite`
+
+**모델 자동 업데이트**: 이 라이브러리는 Google API 업데이트에 맞춰 모델 목록을 최신화하는 자동화 스크립트를 포함하고 있습니다. 상세 내용은 [Contributing Guide](./CONTRIBUTING.md)를 참조하세요.
 
 ---
 
