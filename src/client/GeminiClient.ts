@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import { isAuthError } from '../utils/error-handler';
 import type { GeminiModel } from '../types/models';
 import type { GenerateOptions, GenerateContentRequest, Content } from '../types/config';
 import type { GeminiResponse } from '../types/response';
@@ -32,10 +33,11 @@ export class GeminiClient {
       return true;
     } catch (error) {
       // If it's an auth error, return false.
-      // Otherwise, we assume the key is valid but something else is wrong (e.g. network),
-      // so we might still want to return false or throw.
-      // For validation purposes, if we can't connect, it's invalid.
-      return false;
+      if (isAuthError(error as Error)) {
+        return false;
+      }
+      // For other errors (e.g. network), we rethrow so the user knows something else is wrong
+      throw error;
     }
   }
 
