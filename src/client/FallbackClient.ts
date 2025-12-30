@@ -77,6 +77,45 @@ export class GemBack {
     };
   }
 
+  /**
+   * Validates the configured API key(s).
+   * Throws an error if any of the keys are invalid.
+   */
+  async initialize(): Promise<void> {
+    const keysToCheck: string[] = [];
+    if (this.options.apiKeys && this.options.apiKeys.length > 0) {
+      keysToCheck.push(...this.options.apiKeys);
+    } else if (this.options.apiKey) {
+      keysToCheck.push(this.options.apiKey);
+    }
+
+    this.logger.debug(`Validating ${keysToCheck.length} API key(s)...`);
+
+    for (const [index, key] of keysToCheck.entries()) {
+      try {
+        const isValid = await this.client.validateApiKey(key);
+        if (!isValid) {
+          throw new Error(
+            `Invalid API Key${keysToCheck.length > 1 ? ` at index ${index}` : ''}. Please check your configuration.`
+          );
+        }
+      } catch (error) {
+        // Re-throw if it's the specific invalid key error we just created
+        if (error instanceof Error && error.message.includes('Invalid API Key')) {
+          throw error;
+        }
+        // If it's another error (network, etc), we might want to warn but not fail?
+        // Or fail because initialization failed?
+        // Let's assume strict initialization: if we can't verify, we fail, but with the original error.
+        this.logger.error(
+          `Failed to validate API Key${keysToCheck.length > 1 ? ` at index ${index}` : ''}: ${(error as Error).message}`
+        );
+        throw error;
+      }
+    }
+    this.logger.info('API key validation successful.');
+  }
+
   private getApiKey(): { key: string; index: number | null } {
     if (this.apiKeyRotator) {
       const result = this.apiKeyRotator.getNextKey();

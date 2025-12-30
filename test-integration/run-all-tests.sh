@@ -33,6 +33,9 @@ run_test() {
 
     cd "$dir"
 
+    # Clean previous installation to avoid EINTEGRITY errors with local tarball
+    rm -rf node_modules package-lock.json
+
     # Install dependencies
     echo "Installing dependencies..."
     npm install > /dev/null 2>&1

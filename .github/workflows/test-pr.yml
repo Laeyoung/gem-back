@@ -31,8 +31,11 @@ jobs:
         id: run-tests
         run: |
           # Run tests and pipe output to both console and a file for capture
-          output=$(npm test 2>&1)
-          exit_code=$?
+          # Force no color to avoid encoding issues in GitHub comment
+          export FORCE_COLOR=0
+          # Run tests, capture output, and strip ANSI color codes
+          output=$(npm test -- --no-color 2>&1 | sed 's/\x1b\[[0-9;]*m//g')
+          exit_code=${PIPESTATUS[0]}
 
           # Store output in a temporary file to handle multiline safely
           echo "$output" > test_output.txt

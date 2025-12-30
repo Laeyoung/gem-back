@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import { isAuthError } from '../utils/error-handler';
 import type { GeminiModel } from '../types/models';
 import type { GenerateOptions, GenerateContentRequest, Content } from '../types/config';
 import type { GeminiResponse } from '../types/response';
@@ -20,6 +21,24 @@ export class GeminiClient {
 
   clearCache(): void {
     this.clientCache.clear();
+  }
+
+  async validateApiKey(apiKey: string): Promise<boolean> {
+    const ai = this.getClient(apiKey);
+    try {
+      // Use list() as a lightweight check.
+      // Even if we don't list all models, a successful auth check is enough.
+      // We limit to 1 to keep it light if possible, though list() usually pages.
+      await ai.models.list({ config: { pageSize: 1 } });
+      return true;
+    } catch (error) {
+      // If it's an auth error, return false.
+      if (isAuthError(error as Error)) {
+        return false;
+      }
+      // For other errors (e.g. network), we rethrow so the user knows something else is wrong
+      throw error;
+    }
   }
 
   async generate(
