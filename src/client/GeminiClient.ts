@@ -22,6 +22,23 @@ export class GeminiClient {
     this.clientCache.clear();
   }
 
+  async validateApiKey(apiKey: string): Promise<boolean> {
+    const ai = this.getClient(apiKey);
+    try {
+      // Use list() as a lightweight check.
+      // Even if we don't list all models, a successful auth check is enough.
+      // We limit to 1 to keep it light if possible, though list() usually pages.
+      await ai.models.list({ config: { pageSize: 1 } });
+      return true;
+    } catch (error) {
+      // If it's an auth error, return false.
+      // Otherwise, we assume the key is valid but something else is wrong (e.g. network),
+      // so we might still want to return false or throw.
+      // For validation purposes, if we can't connect, it's invalid.
+      return false;
+    }
+  }
+
   async generate(
     prompt: string,
     modelName: GeminiModel,

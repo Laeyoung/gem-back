@@ -77,6 +77,31 @@ export class GemBack {
     };
   }
 
+  /**
+   * Validates the configured API key(s).
+   * Throws an error if any of the keys are invalid.
+   */
+  async initialize(): Promise<void> {
+    const keysToCheck: string[] = [];
+    if (this.options.apiKeys && this.options.apiKeys.length > 0) {
+      keysToCheck.push(...this.options.apiKeys);
+    } else if (this.options.apiKey) {
+      keysToCheck.push(this.options.apiKey);
+    }
+
+    this.logger.debug(`Validating ${keysToCheck.length} API key(s)...`);
+
+    for (const [index, key] of keysToCheck.entries()) {
+      const isValid = await this.client.validateApiKey(key);
+      if (!isValid) {
+        throw new Error(
+          `Invalid API Key${keysToCheck.length > 1 ? ` at index ${index}` : ''}. Please check your configuration.`
+        );
+      }
+    }
+    this.logger.info('API key validation successful.');
+  }
+
   private getApiKey(): { key: string; index: number | null } {
     if (this.apiKeyRotator) {
       const result = this.apiKeyRotator.getNextKey();
