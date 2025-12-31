@@ -28,7 +28,7 @@ The Gemini API has **RPM (Requests Per Minute) limits** on the free tier, causin
 - ✅ **Zero Configuration**: Works out of the box with sensible defaults
 - ✅ **Full TypeScript Support**: Complete type definitions and autocomplete
 - ✅ **Dual Module Format**: CommonJS + ESM support
-- ✅ **Extensively Tested**: 165 tests verify reliability
+- ✅ **Extensively Tested**: 216 tests verify reliability
 - ✅ **Monitoring & Tracking**: Rate limit prediction and model health monitoring
 
 ---
@@ -398,7 +398,7 @@ const followUpResponse = await client.generateContent([
 - Create structured workflows and automation
 - Build AI agents with tool access
 
-### 7. Safety Settings (v0.6.0+)
+### 7. Safety Settings (v0.5.0+)
 
 Configure content filtering and safety thresholds for different harm categories:
 
@@ -472,7 +472,7 @@ const response3 = await client.generate('Write an educational article', {
 - Brand-appropriate responses
 - Educational content filtering
 
-### 8. JSON Mode (v0.6.0+)
+### 8. JSON Mode (v0.5.0+)
 
 Get structured JSON responses with schema validation:
 
@@ -605,9 +605,9 @@ const response = await client.generate('Hello!', {
   systemInstruction: 'You are a helpful assistant',  // v0.5.0+
   tools: [weatherFunction],  // v0.5.0+
   toolConfig: { functionCallingMode: 'auto' },  // v0.5.0+
-  safetySettings: [{ category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE }],  // v0.6.0+
-  responseMimeType: 'application/json',  // v0.6.0+
-  responseSchema: { type: 'object', properties: { ... } }  // v0.6.0+
+  safetySettings: [{ category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE }],  // v0.5.0+
+  responseMimeType: 'application/json',  // v0.5.0+
+  responseSchema: { type: 'object', properties: { ... } }  // v0.5.0+
 });
 ```
 
@@ -622,9 +622,9 @@ interface GenerateOptions {
   systemInstruction?: string | Content;  // v0.5.0+: Control model behavior
   tools?: FunctionDeclaration[];         // v0.5.0+: Available functions
   toolConfig?: ToolConfig;               // v0.5.0+: Function calling config
-  safetySettings?: SafetySetting[];      // v0.6.0+: Content filtering
-  responseMimeType?: string;             // v0.6.0+: Response format (e.g., 'application/json')
-  responseSchema?: ResponseSchema;       // v0.6.0+: JSON schema validation
+  safetySettings?: SafetySetting[];      // v0.5.0+: Content filtering
+  responseMimeType?: string;             // v0.5.0+: Response format (e.g., 'application/json')
+  responseSchema?: ResponseSchema;       // v0.5.0+: JSON schema validation
 }
 
 interface ToolConfig {
@@ -800,9 +800,9 @@ Phase 2 added advanced features to improve production stability.
 - ✅ Multi-key rotation for RPM limit bypass
 - ✅ Real-time model health tracking
 
-### Phase 2.5: Enhanced Content Generation ✅ (Completed - v0.5.0)
+### Phase 2.5: Advanced Content Generation ✅ (Completed - v0.5.0)
 
-Phase 2.5 adds advanced content generation features from the Google GenAI SDK.
+Phase 2.5 adds production-grade content generation features from the Google GenAI SDK, including function calling, system instructions, safety controls, and structured outputs.
 
 #### 🎯 System Instructions ✅
 - [x] **Control model behavior and response style**
@@ -818,16 +818,6 @@ Phase 2.5 adds advanced content generation features from the Google GenAI SDK.
   - Restrict allowed functions with allowedFunctionNames
   - Extract function calls from model responses
   - Support multi-turn conversations with function results
-
-**Phase 2.5 Achievements:**
-- ✅ 191 comprehensive tests (16% increase from Phase 2)
-- ✅ Full GenAI SDK compatibility for function calling types
-- ✅ System instruction support in all generation methods
-- ✅ Comprehensive examples for both features
-
-### Phase 2.6: Safety & Structured Output ✅ (Completed - v0.6.0)
-
-Phase 2.6 adds content safety controls and structured JSON output capabilities.
 
 #### 🛡️ Safety Settings ✅
 - [x] **Content filtering and moderation**
@@ -845,11 +835,12 @@ Phase 2.6 adds content safety controls and structured JSON output capabilities.
   - Type-safe integration with TypeScript interfaces
   - Structured data extraction and API response formatting
 
-**Phase 2.6 Achievements:**
-- ✅ 216 comprehensive tests (13% increase from Phase 2.5)
-- ✅ Full safety settings support with all harm categories
-- ✅ JSON mode with schema validation
-- ✅ Comprehensive examples for safety settings and JSON mode
+**Phase 2.5 Achievements:**
+- ✅ 216 comprehensive tests (31% increase from Phase 2)
+- ✅ Full GenAI SDK compatibility for all advanced features
+- ✅ Production-ready content safety controls
+- ✅ Type-safe structured outputs with schema validation
+- ✅ Comprehensive examples for all features
 
 ### Phase 3: Performance & Ecosystem (Planned)
 
