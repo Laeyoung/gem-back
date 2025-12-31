@@ -1,6 +1,16 @@
 import type { GeminiModel } from './models';
+import type {
+  FunctionDeclaration as SDKFunctionDeclaration,
+  FunctionCall as SDKFunctionCall,
+  FunctionResponse as SDKFunctionResponse,
+} from '@google/genai';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'silent';
+
+// Re-export SDK types for function calling
+export type FunctionDeclaration = SDKFunctionDeclaration;
+export type FunctionCall = SDKFunctionCall;
+export type FunctionResponse = SDKFunctionResponse;
 
 export interface GemBackOptions {
   apiKey?: string;
@@ -25,6 +35,9 @@ export interface GenerateOptions {
   maxTokens?: number;
   topP?: number;
   topK?: number;
+  systemInstruction?: string | Content;
+  tools?: FunctionDeclaration[];
+  toolConfig?: ToolConfig;
 }
 
 export interface ChatMessage {
@@ -43,11 +56,21 @@ export interface FileData {
   fileUri: string;
 }
 
-export type Part = { text: string } | { inlineData: InlineData } | { fileData: FileData };
+export type Part =
+  | { text: string }
+  | { inlineData: InlineData }
+  | { fileData: FileData };
 
 export interface Content {
   role: 'user' | 'model';
   parts: Part[];
+}
+
+export type FunctionCallingMode = 'auto' | 'any' | 'none';
+
+export interface ToolConfig {
+  functionCallingMode?: FunctionCallingMode;
+  allowedFunctionNames?: string[];
 }
 
 export interface GenerateContentRequest {
@@ -57,6 +80,9 @@ export interface GenerateContentRequest {
   maxTokens?: number;
   topP?: number;
   topK?: number;
+  systemInstruction?: string | Content;
+  tools?: FunctionDeclaration[];
+  toolConfig?: ToolConfig;
 }
 
 export { GeminiModel };

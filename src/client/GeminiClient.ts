@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, FunctionCallingConfigMode } from '@google/genai';
 import { isAuthError } from '../utils/error-handler';
 import type { GeminiModel } from '../types/models';
 import type { GenerateOptions, GenerateContentRequest, Content } from '../types/config';
@@ -17,6 +17,16 @@ export class GeminiClient {
       this.clientCache.set(apiKey, new GoogleGenAI({ apiKey }));
     }
     return this.clientCache.get(apiKey)!;
+  }
+
+  private normalizeSystemInstruction(systemInstruction?: string | Content): Content | undefined {
+    if (!systemInstruction) {
+      return undefined;
+    }
+    if (typeof systemInstruction === 'string') {
+      return { role: 'user', parts: [{ text: systemInstruction }] };
+    }
+    return systemInstruction;
   }
 
   clearCache(): void {
@@ -49,11 +59,27 @@ export class GeminiClient {
   ): Promise<GeminiResponse> {
     const ai = this.getClient(apiKey);
 
+    const systemInstruction = this.normalizeSystemInstruction(options?.systemInstruction);
+    const tools = options?.tools ? [{ functionDeclarations: options.tools }] : undefined;
+    const toolConfig = options?.toolConfig
+      ? {
+          functionCallingConfig: {
+            mode: options.toolConfig.functionCallingMode
+              ? (FunctionCallingConfigMode[options.toolConfig.functionCallingMode.toUpperCase() as keyof typeof FunctionCallingConfigMode])
+              : undefined,
+            allowedFunctionNames: options.toolConfig.allowedFunctionNames,
+          },
+        }
+      : undefined;
+
     const config = {
       temperature: options?.temperature,
       maxOutputTokens: options?.maxTokens,
       topP: options?.topP,
       topK: options?.topK,
+      systemInstruction,
+      tools,
+      toolConfig,
     };
 
     const timeoutPromise = new Promise<never>((_, reject) => {
@@ -69,10 +95,19 @@ export class GeminiClient {
     const result = await Promise.race([generatePromise, timeoutPromise]);
     const text = result.text ?? '';
 
+    // Extract function calls from response
+    const functionCalls = result.candidates?.[0]?.content?.parts
+      ?.filter((part: any) => part.functionCall)
+      .map((part: any) => ({
+        name: part.functionCall.name,
+        args: part.functionCall.args || {},
+      }));
+
     return {
       text,
       model: modelName,
       finishReason: result.candidates?.[0]?.finishReason,
+      functionCalls: functionCalls?.length ? functionCalls : undefined,
       usage: result.usageMetadata
         ? {
             promptTokens: result.usageMetadata.promptTokenCount || 0,
@@ -91,11 +126,27 @@ export class GeminiClient {
   ): AsyncGenerator<{ text: string }> {
     const ai = this.getClient(apiKey);
 
+    const systemInstruction = this.normalizeSystemInstruction(options?.systemInstruction);
+    const tools = options?.tools ? [{ functionDeclarations: options.tools }] : undefined;
+    const toolConfig = options?.toolConfig
+      ? {
+          functionCallingConfig: {
+            mode: options.toolConfig.functionCallingMode
+              ? (FunctionCallingConfigMode[options.toolConfig.functionCallingMode.toUpperCase() as keyof typeof FunctionCallingConfigMode])
+              : undefined,
+            allowedFunctionNames: options.toolConfig.allowedFunctionNames,
+          },
+        }
+      : undefined;
+
     const config = {
       temperature: options?.temperature,
       maxOutputTokens: options?.maxTokens,
       topP: options?.topP,
       topK: options?.topK,
+      systemInstruction,
+      tools,
+      toolConfig,
     };
 
     const response = await ai.models.generateContentStream({
@@ -120,11 +171,27 @@ export class GeminiClient {
   ): Promise<GeminiResponse> {
     const ai = this.getClient(apiKey);
 
+    const systemInstruction = this.normalizeSystemInstruction(options?.systemInstruction);
+    const tools = options?.tools ? [{ functionDeclarations: options.tools }] : undefined;
+    const toolConfig = options?.toolConfig
+      ? {
+          functionCallingConfig: {
+            mode: options.toolConfig.functionCallingMode
+              ? (FunctionCallingConfigMode[options.toolConfig.functionCallingMode.toUpperCase() as keyof typeof FunctionCallingConfigMode])
+              : undefined,
+            allowedFunctionNames: options.toolConfig.allowedFunctionNames,
+          },
+        }
+      : undefined;
+
     const config = {
       temperature: options?.temperature,
       maxOutputTokens: options?.maxTokens,
       topP: options?.topP,
       topK: options?.topK,
+      systemInstruction,
+      tools,
+      toolConfig,
     };
 
     const timeoutPromise = new Promise<never>((_, reject) => {
@@ -140,10 +207,19 @@ export class GeminiClient {
     const result = await Promise.race([generatePromise, timeoutPromise]);
     const text = result.text ?? '';
 
+    // Extract function calls from response
+    const functionCalls = result.candidates?.[0]?.content?.parts
+      ?.filter((part: any) => part.functionCall)
+      .map((part: any) => ({
+        name: part.functionCall.name,
+        args: part.functionCall.args || {},
+      }));
+
     return {
       text,
       model: modelName,
       finishReason: result.candidates?.[0]?.finishReason,
+      functionCalls: functionCalls?.length ? functionCalls : undefined,
       usage: result.usageMetadata
         ? {
             promptTokens: result.usageMetadata.promptTokenCount || 0,
@@ -162,11 +238,27 @@ export class GeminiClient {
   ): AsyncGenerator<{ text: string }> {
     const ai = this.getClient(apiKey);
 
+    const systemInstruction = this.normalizeSystemInstruction(options?.systemInstruction);
+    const tools = options?.tools ? [{ functionDeclarations: options.tools }] : undefined;
+    const toolConfig = options?.toolConfig
+      ? {
+          functionCallingConfig: {
+            mode: options.toolConfig.functionCallingMode
+              ? (FunctionCallingConfigMode[options.toolConfig.functionCallingMode.toUpperCase() as keyof typeof FunctionCallingConfigMode])
+              : undefined,
+            allowedFunctionNames: options.toolConfig.allowedFunctionNames,
+          },
+        }
+      : undefined;
+
     const config = {
       temperature: options?.temperature,
       maxOutputTokens: options?.maxTokens,
       topP: options?.topP,
       topK: options?.topK,
+      systemInstruction,
+      tools,
+      toolConfig,
     };
 
     const response = await ai.models.generateContentStream({

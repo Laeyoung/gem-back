@@ -1,9 +1,11 @@
 import type { GeminiModel } from './models';
+import type { FunctionCall } from './config';
 
 export interface GeminiResponse {
   text: string;
   model: GeminiModel;
   finishReason?: string;
+  functionCalls?: FunctionCall[];
   usage?: {
     promptTokens: number;
     completionTokens: number;
