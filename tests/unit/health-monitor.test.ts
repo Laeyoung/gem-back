@@ -121,7 +121,7 @@ describe('HealthMonitor', () => {
 
       const health = monitor.getHealth(model);
       expect(health.status).toBe('unhealthy');
-      expect(health.successRate).toBeCloseTo(0.70, 2);
+      expect(health.successRate).toBeCloseTo(0.7, 2);
     });
 
     it('should mark as degraded with slow response times', () => {
@@ -280,10 +280,7 @@ describe('HealthMonitor', () => {
         monitor.recordRequest('gemini-2.5-flash-lite', 1000, false);
       }
 
-      const healthiest = monitor.getHealthiestModel([
-        'gemini-2.5-flash',
-        'gemini-2.5-flash-lite',
-      ]);
+      const healthiest = monitor.getHealthiestModel(['gemini-2.5-flash', 'gemini-2.5-flash-lite']);
 
       expect(healthiest).toBeNull();
     });

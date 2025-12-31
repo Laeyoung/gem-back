@@ -5,7 +5,7 @@
 [![npm version](https://badge.fury.io/js/gemback.svg)](https://www.npmjs.com/package/gemback)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/tests-180%20passing-brightgreen.svg)](https://github.com/Laeyoung/gem-back)
+[![Tests](https://img.shields.io/badge/tests-216%20passing-brightgreen.svg)](https://github.com/Laeyoung/gem-back)
 
 **Gem Back** is an NPM library that provides an intelligent fallback system and production-grade monitoring for Google Gemini API, automatically handling RPM (Requests Per Minute) rate limits.
 
@@ -398,6 +398,173 @@ const followUpResponse = await client.generateContent([
 - Create structured workflows and automation
 - Build AI agents with tool access
 
+### 7. Safety Settings (v0.6.0+)
+
+Configure content filtering and safety thresholds for different harm categories:
+
+```typescript
+import { HarmCategory, HarmBlockThreshold } from '@google/genai';
+
+// Basic safety settings
+const response = await client.generate('Tell me about content moderation', {
+  safetySettings: [
+    {
+      category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+      threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    },
+    {
+      category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+      threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    },
+  ],
+});
+
+// Strict filtering for children's content
+const childContent = await client.generate('Tell a story for kids', {
+  safetySettings: [
+    {
+      category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+      threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+    },
+    {
+      category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+      threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+    },
+    {
+      category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+      threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+    },
+    {
+      category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+      threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+    },
+  ],
+});
+
+// Combine with other options
+const response3 = await client.generate('Write an educational article', {
+  systemInstruction: 'You are an educational content writer.',
+  safetySettings: [
+    {
+      category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+      threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    },
+  ],
+  temperature: 0.7,
+});
+```
+
+**Available Harm Categories:**
+- `HARM_CATEGORY_HARASSMENT`
+- `HARM_CATEGORY_HATE_SPEECH`
+- `HARM_CATEGORY_SEXUALLY_EXPLICIT`
+- `HARM_CATEGORY_DANGEROUS_CONTENT`
+
+**Blocking Thresholds:**
+- `BLOCK_NONE`: No blocking
+- `BLOCK_ONLY_HIGH`: Block only high severity content
+- `BLOCK_MEDIUM_AND_ABOVE`: Block medium and high severity (recommended)
+- `BLOCK_LOW_AND_ABOVE`: Block low, medium, and high severity (strictest)
+
+**Use Cases:**
+- Child-safe content generation
+- Compliance with content policies
+- Brand-appropriate responses
+- Educational content filtering
+
+### 8. JSON Mode (v0.6.0+)
+
+Get structured JSON responses with schema validation:
+
+```typescript
+import type { ResponseSchema } from 'gemback';
+
+// Basic JSON mode
+const response = await client.generate('Generate a user profile with name, age, and email', {
+  responseMimeType: 'application/json',
+});
+
+console.log(response.json);  // Parsed JSON object
+console.log(response.text);  // Raw JSON string
+
+// JSON mode with schema validation
+const userSchema: ResponseSchema = {
+  type: 'object',
+  properties: {
+    name: { type: 'string' },
+    age: { type: 'number' },
+    email: { type: 'string' },
+  },
+  required: ['name', 'age', 'email'],
+};
+
+const response2 = await client.generate('Generate a user profile', {
+  responseMimeType: 'application/json',
+  responseSchema: userSchema,
+});
+
+// Type-safe usage
+interface User {
+  name: string;
+  age: number;
+  email: string;
+}
+
+const user = response2.json as User;
+console.log(user.name, user.age, user.email);
+
+// Array of objects
+const productsSchema: ResponseSchema = {
+  type: 'array',
+  items: {
+    type: 'object',
+    properties: {
+      id: { type: 'number' },
+      name: { type: 'string' },
+      price: { type: 'number' },
+    },
+    required: ['id', 'name', 'price'],
+  },
+};
+
+const products = await client.generate('Generate 3 products', {
+  responseMimeType: 'application/json',
+  responseSchema: productsSchema,
+});
+
+// Complex nested structures
+const blogPostSchema: ResponseSchema = {
+  type: 'object',
+  properties: {
+    title: { type: 'string' },
+    author: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        email: { type: 'string' },
+      },
+    },
+    tags: {
+      type: 'array',
+      items: { type: 'string' },
+    },
+  },
+  required: ['title', 'author'],
+};
+```
+
+**Schema Types Supported:**
+- `object`: Object with defined properties
+- `array`: Array of items
+- `string`, `number`, `boolean`, `null`: Primitive types
+
+**Use Cases:**
+- API response formatting
+- Data extraction and structuring
+- Type-safe API integration
+- Structured content generation
+- Database-ready outputs
+
 ---
 
 ## 🔧 API Reference
@@ -437,7 +604,10 @@ const response = await client.generate('Hello!', {
   maxTokens: 1000,
   systemInstruction: 'You are a helpful assistant',  // v0.5.0+
   tools: [weatherFunction],  // v0.5.0+
-  toolConfig: { functionCallingMode: 'auto' }  // v0.5.0+
+  toolConfig: { functionCallingMode: 'auto' },  // v0.5.0+
+  safetySettings: [{ category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE }],  // v0.6.0+
+  responseMimeType: 'application/json',  // v0.6.0+
+  responseSchema: { type: 'object', properties: { ... } }  // v0.6.0+
 });
 ```
 
@@ -452,6 +622,9 @@ interface GenerateOptions {
   systemInstruction?: string | Content;  // v0.5.0+: Control model behavior
   tools?: FunctionDeclaration[];         // v0.5.0+: Available functions
   toolConfig?: ToolConfig;               // v0.5.0+: Function calling config
+  safetySettings?: SafetySetting[];      // v0.6.0+: Content filtering
+  responseMimeType?: string;             // v0.6.0+: Response format (e.g., 'application/json')
+  responseSchema?: ResponseSchema;       // v0.6.0+: JSON schema validation
 }
 
 interface ToolConfig {
@@ -651,6 +824,32 @@ Phase 2.5 adds advanced content generation features from the Google GenAI SDK.
 - ✅ Full GenAI SDK compatibility for function calling types
 - ✅ System instruction support in all generation methods
 - ✅ Comprehensive examples for both features
+
+### Phase 2.6: Safety & Structured Output ✅ (Completed - v0.6.0)
+
+Phase 2.6 adds content safety controls and structured JSON output capabilities.
+
+#### 🛡️ Safety Settings ✅
+- [x] **Content filtering and moderation**
+  - Configure safety thresholds for different harm categories
+  - Support for harassment, hate speech, sexually explicit, and dangerous content filtering
+  - Multiple blocking levels: none, low, medium, high
+  - Child-safe content generation
+  - Compliance with content policies
+
+#### 📊 JSON Mode ✅
+- [x] **Structured JSON responses**
+  - Automatic JSON parsing with `response.json` field
+  - Schema validation with OpenAPI-compatible schemas
+  - Support for objects, arrays, and nested structures
+  - Type-safe integration with TypeScript interfaces
+  - Structured data extraction and API response formatting
+
+**Phase 2.6 Achievements:**
+- ✅ 216 comprehensive tests (13% increase from Phase 2.5)
+- ✅ Full safety settings support with all harm categories
+- ✅ JSON mode with schema validation
+- ✅ Comprehensive examples for safety settings and JSON mode
 
 ### Phase 3: Performance & Ecosystem (Planned)
 

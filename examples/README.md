@@ -147,6 +147,35 @@ Enable AI to call external functions. Shows how to:
 npx tsx examples/function-calling.ts
 ```
 
+### 11. Safety Settings (`safety-settings.ts`) - v0.6.0+
+
+Configure content filtering and moderation. Shows how to:
+- Set safety thresholds for different harm categories
+- Use strict filtering for children's content
+- Apply permissive filtering for adult content
+- Combine safety settings with other options
+- Handle content blocked by safety filters
+
+**Run:**
+```bash
+npx tsx examples/safety-settings.ts
+```
+
+### 12. JSON Mode (`json-mode.ts`) - v0.6.0+
+
+Get structured JSON responses with schema validation. Shows how to:
+- Enable basic JSON mode
+- Validate with schemas
+- Generate arrays of objects
+- Use complex nested structures
+- Type-safe integration with TypeScript interfaces
+- Data extraction and API response formatting
+
+**Run:**
+```bash
+npx tsx examples/json-mode.ts
+```
+
 ## Running Examples
 
 ### With tsx (recommended)
