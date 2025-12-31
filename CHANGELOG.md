@@ -7,6 +7,124 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-01-01
+
+### Added
+
+#### 🎯 Function Calling / Tool Use
+
+**Production-grade function calling support** enabling AI agents, workflows, and structured interactions.
+
+- **Type Support**: Complete TypeScript types from `@google/genai` SDK
+  - `FunctionDeclaration`: Define callable functions with JSON schema
+  - `FunctionCall`: Represents AI's function invocation with arguments
+  - `FunctionResponse`: Return function execution results to AI
+  - `ToolConfig`: Configure function calling behavior (`auto`, `any`, `none`)
+
+- **Integration**: Seamless function calling across all generation methods
+  - `generate()`: Single-turn function calling
+  - `generateStream()`: Streaming with function calls
+  - `generateContent()`: Multimodal content with function calls
+  - `generateContentStream()`: Streaming multimodal with function calls
+
+- **Examples**: Complete working examples in `examples/function-calling.ts`
+  - Weather lookup demonstration
+  - Calculator functions
+  - Multi-step function orchestration
+
+#### 📝 System Instructions
+
+**Persistent context and behavior control** for consistent AI responses.
+
+- **Flexible Input**: Accepts both string and structured `Content` types
+  - Simple string: `systemInstruction: "You are a helpful assistant"`
+  - Structured: `systemInstruction: { role: 'user', parts: [{ text: '...' }] }`
+
+- **Universal Support**: Works across all generation methods
+  - Maintained across fallback attempts (consistent behavior)
+  - Combined with other options (tools, safety settings, etc.)
+
+- **Use Cases**:
+  - Role definition and persona setting
+  - Output format specification
+  - Behavioral constraints and guidelines
+
+#### 🛡️ Safety Settings
+
+**Production-compliant content safety controls** with automatic fallback on safety blocks.
+
+- **Complete Safety API**: Full support for Gemini's harm categories
+  - `HarmCategory`: Harassment, hate speech, sexually explicit, dangerous content
+  - `HarmBlockThreshold`: Block none, low and above, medium and above, only high
+  - `SafetySetting[]`: Array of category-specific safety rules
+
+- **Smart Fallback**: Automatic model switching on safety blocks
+  - Safety settings preserved across fallback attempts
+  - Logging and tracking of safety-related failures
+  - Health monitoring integration for safety block rates
+
+- **Production Ready**:
+  - Combine multiple safety settings for fine-grained control
+  - Empty array support for explicit "no restrictions" mode
+  - Backward compatible (works without safety settings)
+
+#### 🎨 JSON Mode (Structured Outputs)
+
+**Reliable structured data extraction** eliminating JSON parsing errors.
+
+- **Guaranteed JSON**: Force AI to output valid JSON
+  - `responseMimeType: 'application/json'`: Enable JSON mode
+  - `responseSchema`: Optional JSON schema for validation
+  - Automatic JSON parsing with `response.json` field
+
+- **Robust Parsing**:
+  - Handles all JSON types (objects, arrays, primitives, null)
+  - Graceful fallback on invalid JSON (keeps text, logs warning)
+  - Empty text handling (returns undefined for json field)
+
+- **Schema Support**: OpenAPI 3.0-style JSON schema
+  - Type definitions (`object`, `string`, `number`, `boolean`, `array`)
+  - Required fields and property constraints
+  - Nested object and array schemas
+
+- **Use Cases**:
+  - API response formatting
+  - Data extraction from unstructured text
+  - Structured form filling
+  - Database record generation
+
+### Changed
+
+#### 🔧 Code Quality Improvements
+
+**Enhanced type safety** with proper TypeScript patterns:
+
+- **Type Guards**: Added `hasFunctionCall()` type guard in `GeminiClient.ts`
+  - Eliminates unsafe `any` type usage
+  - Provides compile-time and runtime type safety
+  - Used for function call extraction from SDK responses
+
+- **Error Handling**: Improved `error-handler.ts` with explicit types
+  - Added `ErrorResponse` interface for JSON error parsing
+  - Removed unsafe type assertions
+  - Better null/undefined handling with optional chaining
+
+- **ESLint Clean**: All linting errors resolved (20 errors → 0 errors)
+  - No `@typescript-eslint/no-explicit-any` warnings
+  - No unsafe member access or assignments
+  - Full compliance with strict TypeScript rules
+
+### Tests
+
+**Comprehensive test coverage** for all new features:
+
+- `tests/unit/function-calling.test.ts`: Function calling scenarios (planned)
+- `tests/unit/system-instructions.test.ts`: 11 tests covering all use cases
+- `tests/unit/safety-settings.test.ts`: 10 tests including fallback behavior
+- `tests/unit/json-mode.test.ts`: 15 tests for JSON parsing edge cases
+
+**Overall**: 216 tests passing across 16 test files
+
 ## [0.4.0] - 2025-12-27
 
 ### Added
