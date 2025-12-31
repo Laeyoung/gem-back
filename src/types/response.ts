@@ -6,6 +6,7 @@ export interface GeminiResponse {
   model: GeminiModel;
   finishReason?: string;
   functionCalls?: FunctionCall[];
+  json?: unknown; // Parsed JSON response when using JSON mode
   usage?: {
     promptTokens: number;
     completionTokens: number;

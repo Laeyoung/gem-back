@@ -420,6 +420,9 @@ export class GemBack {
               systemInstruction: request.systemInstruction,
               tools: request.tools,
               toolConfig: request.toolConfig,
+              safetySettings: request.safetySettings,
+              responseMimeType: request.responseMimeType,
+              responseSchema: request.responseSchema,
             }),
           {
             maxRetries: this.options.maxRetries,
@@ -545,6 +548,7 @@ export class GemBack {
           systemInstruction: request.systemInstruction,
           tools: request.tools,
           toolConfig: request.toolConfig,
+          safetySettings: request.safetySettings,
         });
         let hasYielded = false;
 

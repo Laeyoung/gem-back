@@ -65,7 +65,9 @@ export class GeminiClient {
       ? {
           functionCallingConfig: {
             mode: options.toolConfig.functionCallingMode
-              ? (FunctionCallingConfigMode[options.toolConfig.functionCallingMode.toUpperCase() as keyof typeof FunctionCallingConfigMode])
+              ? FunctionCallingConfigMode[
+                  options.toolConfig.functionCallingMode.toUpperCase() as keyof typeof FunctionCallingConfigMode
+                ]
               : undefined,
             allowedFunctionNames: options.toolConfig.allowedFunctionNames,
           },
@@ -80,6 +82,9 @@ export class GeminiClient {
       systemInstruction,
       tools,
       toolConfig,
+      safetySettings: options?.safetySettings,
+      responseMimeType: options?.responseMimeType,
+      responseSchema: options?.responseSchema,
     };
 
     const timeoutPromise = new Promise<never>((_, reject) => {
@@ -95,6 +100,17 @@ export class GeminiClient {
     const result = await Promise.race([generatePromise, timeoutPromise]);
     const text = result.text ?? '';
 
+    // Parse JSON if response is JSON
+    let json: unknown = undefined;
+    if (options?.responseMimeType === 'application/json' && text) {
+      try {
+        json = JSON.parse(text);
+      } catch (error) {
+        // If JSON parsing fails, leave json undefined and keep the text
+        console.warn('Failed to parse JSON response:', error);
+      }
+    }
+
     // Extract function calls from response
     const functionCalls = result.candidates?.[0]?.content?.parts
       ?.filter((part: any) => part.functionCall)
@@ -108,6 +124,7 @@ export class GeminiClient {
       model: modelName,
       finishReason: result.candidates?.[0]?.finishReason,
       functionCalls: functionCalls?.length ? functionCalls : undefined,
+      json,
       usage: result.usageMetadata
         ? {
             promptTokens: result.usageMetadata.promptTokenCount || 0,
@@ -132,7 +149,9 @@ export class GeminiClient {
       ? {
           functionCallingConfig: {
             mode: options.toolConfig.functionCallingMode
-              ? (FunctionCallingConfigMode[options.toolConfig.functionCallingMode.toUpperCase() as keyof typeof FunctionCallingConfigMode])
+              ? FunctionCallingConfigMode[
+                  options.toolConfig.functionCallingMode.toUpperCase() as keyof typeof FunctionCallingConfigMode
+                ]
               : undefined,
             allowedFunctionNames: options.toolConfig.allowedFunctionNames,
           },
@@ -147,6 +166,9 @@ export class GeminiClient {
       systemInstruction,
       tools,
       toolConfig,
+      safetySettings: options?.safetySettings,
+      responseMimeType: options?.responseMimeType,
+      responseSchema: options?.responseSchema,
     };
 
     const response = await ai.models.generateContentStream({
@@ -177,7 +199,9 @@ export class GeminiClient {
       ? {
           functionCallingConfig: {
             mode: options.toolConfig.functionCallingMode
-              ? (FunctionCallingConfigMode[options.toolConfig.functionCallingMode.toUpperCase() as keyof typeof FunctionCallingConfigMode])
+              ? FunctionCallingConfigMode[
+                  options.toolConfig.functionCallingMode.toUpperCase() as keyof typeof FunctionCallingConfigMode
+                ]
               : undefined,
             allowedFunctionNames: options.toolConfig.allowedFunctionNames,
           },
@@ -192,6 +216,9 @@ export class GeminiClient {
       systemInstruction,
       tools,
       toolConfig,
+      safetySettings: options?.safetySettings,
+      responseMimeType: options?.responseMimeType,
+      responseSchema: options?.responseSchema,
     };
 
     const timeoutPromise = new Promise<never>((_, reject) => {
@@ -207,6 +234,17 @@ export class GeminiClient {
     const result = await Promise.race([generatePromise, timeoutPromise]);
     const text = result.text ?? '';
 
+    // Parse JSON if response is JSON
+    let json: unknown = undefined;
+    if (options?.responseMimeType === 'application/json' && text) {
+      try {
+        json = JSON.parse(text);
+      } catch (error) {
+        // If JSON parsing fails, leave json undefined and keep the text
+        console.warn('Failed to parse JSON response:', error);
+      }
+    }
+
     // Extract function calls from response
     const functionCalls = result.candidates?.[0]?.content?.parts
       ?.filter((part: any) => part.functionCall)
@@ -220,6 +258,7 @@ export class GeminiClient {
       model: modelName,
       finishReason: result.candidates?.[0]?.finishReason,
       functionCalls: functionCalls?.length ? functionCalls : undefined,
+      json,
       usage: result.usageMetadata
         ? {
             promptTokens: result.usageMetadata.promptTokenCount || 0,
@@ -244,7 +283,9 @@ export class GeminiClient {
       ? {
           functionCallingConfig: {
             mode: options.toolConfig.functionCallingMode
-              ? (FunctionCallingConfigMode[options.toolConfig.functionCallingMode.toUpperCase() as keyof typeof FunctionCallingConfigMode])
+              ? FunctionCallingConfigMode[
+                  options.toolConfig.functionCallingMode.toUpperCase() as keyof typeof FunctionCallingConfigMode
+                ]
               : undefined,
             allowedFunctionNames: options.toolConfig.allowedFunctionNames,
           },
@@ -259,6 +300,9 @@ export class GeminiClient {
       systemInstruction,
       tools,
       toolConfig,
+      safetySettings: options?.safetySettings,
+      responseMimeType: options?.responseMimeType,
+      responseSchema: options?.responseSchema,
     };
 
     const response = await ai.models.generateContentStream({

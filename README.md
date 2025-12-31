@@ -284,6 +284,120 @@ console.log(stats);
 // }
 ```
 
+### 5. System Instructions (v0.5.0+)
+
+Control the model's behavior, personality, and response style:
+
+```typescript
+// String format
+const response = await client.generate('Explain TypeScript', {
+  systemInstruction: 'You are a helpful programming tutor. Explain concepts clearly for beginners.',
+});
+
+// Structured Content format
+const response2 = await client.generate('What is async/await?', {
+  systemInstruction: {
+    role: 'user',
+    parts: [{ text: 'You are a senior engineer. Provide technical, detailed explanations.' }],
+  },
+});
+
+// Works with all generation methods
+const stream = client.generateStream('Explain promises', {
+  systemInstruction: 'Keep explanations under 100 words. Use bullet points.',
+});
+
+const chatResponse = await client.chat(messages, {
+  systemInstruction: 'You are a friendly coding mentor. Use analogies to explain.',
+});
+```
+
+**Use Cases:**
+- Guide model personality and tone
+- Enforce output formatting requirements
+- Create role-based assistants (tutor, technical writer, etc.)
+- Maintain consistent behavior across conversations
+
+### 6. Function Calling / Tool Use (v0.5.0+)
+
+Enable the model to call external functions with structured parameters:
+
+```typescript
+import type { FunctionDeclaration } from 'gemback';
+
+// Define a function
+const weatherFunction: FunctionDeclaration = {
+  name: 'get_current_weather',
+  description: 'Get the current weather in a given location',
+  parameters: {
+    type: 'object',
+    properties: {
+      location: {
+        type: 'string',
+        description: 'The city name, e.g. Tokyo, London',
+      },
+      unit: {
+        type: 'string',
+        enum: ['celsius', 'fahrenheit'],
+      },
+    },
+    required: ['location'],
+  },
+};
+
+// Use the function
+const response = await client.generate("What's the weather in Tokyo?", {
+  tools: [weatherFunction],
+  toolConfig: {
+    functionCallingMode: 'auto', // 'auto' | 'any' | 'none'
+  },
+});
+
+// Check if model called the function
+if (response.functionCalls && response.functionCalls.length > 0) {
+  response.functionCalls.forEach((call) => {
+    console.log('Function:', call.name);
+    console.log('Arguments:', call.args);
+
+    // Execute your actual function here
+    const result = getCurrentWeather(call.args.location, call.args.unit);
+    console.log('Result:', result);
+  });
+}
+```
+
+**Function Calling Modes:**
+- `auto`: Model decides when to call functions (default)
+- `any`: Force model to call at least one function
+- `none`: Disable function calling
+
+**Advanced Features:**
+```typescript
+// Restrict to specific functions
+const response = await client.generate(prompt, {
+  tools: [weatherFunction, calculatorFunction, databaseFunction],
+  toolConfig: {
+    functionCallingMode: 'any',
+    allowedFunctionNames: ['get_current_weather'], // Only allow weather
+  },
+});
+
+// Multi-turn conversation with function results
+const followUpResponse = await client.generateContent([
+  { role: 'user', parts: [{ text: "What's the weather?" }] },
+  { role: 'model', parts: [{ functionCall: { name: 'get_current_weather', args: {...} } }] },
+  { role: 'user', parts: [{ functionResponse: { name: 'get_current_weather', response: {...} } }] },
+  { role: 'user', parts: [{ text: 'Should I bring an umbrella?' }] },
+]);
+```
+
+**Use Cases:**
+- Integrate with external APIs and databases
+- Perform calculations and data processing
+- Access real-time information
+- Create structured workflows and automation
+- Build AI agents with tool access
+
 ---
 
 ## 🔧 API Reference
@@ -320,8 +434,30 @@ Generate text response
 const response = await client.generate('Hello!', {
   model: 'gemini-2.5-flash',  // Specify model
   temperature: 0.7,
-  maxTokens: 1000
+  maxTokens: 1000,
+  systemInstruction: 'You are a helpful assistant',  // v0.5.0+
+  tools: [weatherFunction],  // v0.5.0+
+  toolConfig: { functionCallingMode: 'auto' }  // v0.5.0+
 });
+```
+
+**GenerateOptions:**
+```typescript
+interface GenerateOptions {
+  model?: GeminiModel;
+  temperature?: number;           // 0.0 - 2.0
+  maxTokens?: number;            // Max output tokens
+  topP?: number;                 // 0.0 - 1.0
+  topK?: number;                 // Top-K sampling
+  systemInstruction?: string | Content;  // v0.5.0+: Control model behavior
+  tools?: FunctionDeclaration[];         // v0.5.0+: Available functions
+  toolConfig?: ToolConfig;               // v0.5.0+: Function calling config
+}
+
+interface ToolConfig {
+  functionCallingMode?: 'auto' | 'any' | 'none';
+  allowedFunctionNames?: string[];
+}
 ```
 
 ##### `generateStream(prompt, options?)`
@@ -490,6 +626,31 @@ Phase 2 added advanced features to improve production stability.
 - ✅ Production-level monitoring system
 - ✅ Multi-key rotation for RPM limit bypass
 - ✅ Real-time model health tracking
+
+### Phase 2.5: Enhanced Content Generation ✅ (Completed - v0.5.0)
+
+Phase 2.5 adds advanced content generation features from the Google GenAI SDK.
+
+#### 🎯 System Instructions ✅
+- [x] **Control model behavior and response style**
+  - Guide model personality, tone, and output format
+  - Support both string and structured Content format
+  - Apply instructions across all generation methods
+  - Maintain instructions through fallback chains
+
+#### 🔧 Function Calling (Tool Use) ✅
+- [x] **Enable AI to call external functions**
+  - Define functions with structured parameters (JSON Schema)
+  - Multiple function calling modes: auto, any, none
+  - Restrict allowed functions with allowedFunctionNames
+  - Extract function calls from model responses
+  - Support multi-turn conversations with function results
+
+**Phase 2.5 Achievements:**
+- ✅ 191 comprehensive tests (16% increase from Phase 2)
+- ✅ Full GenAI SDK compatibility for function calling types
+- ✅ System instruction support in all generation methods
+- ✅ Comprehensive examples for both features
 
 ### Phase 3: Performance & Ecosystem (Planned)
 
