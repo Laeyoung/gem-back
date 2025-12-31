@@ -4,6 +4,24 @@ import type { GeminiModel } from '../types/models';
 import type { GenerateOptions, GenerateContentRequest, Content } from '../types/config';
 import type { GeminiResponse } from '../types/response';
 
+// Type guard for parts with function calls
+interface PartWithFunctionCall {
+  functionCall: {
+    name: string;
+    args?: Record<string, unknown>;
+  };
+}
+
+function hasFunctionCall(part: unknown): part is PartWithFunctionCall {
+  return (
+    typeof part === 'object' &&
+    part !== null &&
+    'functionCall' in part &&
+    typeof (part as Record<string, unknown>).functionCall === 'object' &&
+    (part as Record<string, unknown>).functionCall !== null
+  );
+}
+
 export class GeminiClient {
   private timeout: number;
   private clientCache: Map<string, GoogleGenAI> = new Map();
@@ -113,8 +131,8 @@ export class GeminiClient {
 
     // Extract function calls from response
     const functionCalls = result.candidates?.[0]?.content?.parts
-      ?.filter((part: any) => part.functionCall)
-      .map((part: any) => ({
+      ?.filter(hasFunctionCall)
+      .map((part) => ({
         name: part.functionCall.name,
         args: part.functionCall.args || {},
       }));
@@ -247,8 +265,8 @@ export class GeminiClient {
 
     // Extract function calls from response
     const functionCalls = result.candidates?.[0]?.content?.parts
-      ?.filter((part: any) => part.functionCall)
-      .map((part: any) => ({
+      ?.filter(hasFunctionCall)
+      .map((part) => ({
         name: part.functionCall.name,
         args: part.functionCall.args || {},
       }));

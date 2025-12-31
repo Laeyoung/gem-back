@@ -1,7 +1,13 @@
+interface ErrorResponse {
+  error?: {
+    message?: string;
+  };
+}
+
 export function normalizeErrorMessage(error: Error): string {
   try {
-    const json = JSON.parse(error.message);
-    if (json.error && json.error.message) {
+    const json = JSON.parse(error.message) as ErrorResponse;
+    if (json.error?.message) {
       return json.error.message.toLowerCase();
     }
   } catch (e) {
