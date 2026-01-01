@@ -209,9 +209,10 @@ console.log(user.name, user.age, user.email);
 ### 포괄적인 테스트 커버리지
 
 **테스트 현황:**
-- ✅ **216 tests** passing (Phase 2 대비 31% 증가)
-- ✅ **16 test files** with comprehensive scenarios
+- ✅ **235 tests** passing (Phase 2 대비 42% 증가)
+- ✅ **17 test files** with comprehensive scenarios
 - ✅ 모든 신규 기능 테스트 완료:
+  - `tests/unit/function-calling.test.ts` - 19 tests
   - `tests/unit/system-instructions.test.ts` - 11 tests
   - `tests/unit/safety-settings.test.ts` - 10 tests
   - `tests/unit/json-mode.test.ts` - 15 tests

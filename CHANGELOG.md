@@ -118,12 +118,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Comprehensive test coverage** for all new features:
 
-- `tests/unit/function-calling.test.ts`: Function calling scenarios (planned)
+- `tests/unit/function-calling.test.ts`: 19 tests covering all scenarios (tools, toolConfig, streaming, fallback, edge cases)
 - `tests/unit/system-instructions.test.ts`: 11 tests covering all use cases
 - `tests/unit/safety-settings.test.ts`: 10 tests including fallback behavior
 - `tests/unit/json-mode.test.ts`: 15 tests for JSON parsing edge cases
 
-**Overall**: 216 tests passing across 16 test files
+**Overall**: 235 tests passing across 17 test files
 
 ## [0.4.0] - 2025-12-27
 
