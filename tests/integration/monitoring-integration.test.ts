@@ -392,9 +392,7 @@ describe('Monitoring Integration Tests', () => {
       expect(flashHealth?.metrics.failedRequests).toBe(10);
 
       // Second model should be healthy
-      const liteHealth = stats.monitoring?.modelHealth?.find(
-        (h) => h.model === 'gemini-2.5-flash'
-      );
+      const liteHealth = stats.monitoring?.modelHealth?.find((h) => h.model === 'gemini-2.5-flash');
       expect(liteHealth?.metrics.successfulRequests).toBe(10);
     });
   });

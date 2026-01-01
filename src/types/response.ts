@@ -1,9 +1,12 @@
 import type { GeminiModel } from './models';
+import type { FunctionCall } from './config';
 
 export interface GeminiResponse {
   text: string;
   model: GeminiModel;
   finishReason?: string;
+  functionCalls?: FunctionCall[];
+  json?: unknown; // Parsed JSON response when using JSON mode
   usage?: {
     promptTokens: number;
     completionTokens: number;

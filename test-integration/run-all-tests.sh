@@ -1,26 +1,55 @@
 #!/bin/bash
 
-# v0.4.0 Integration Tests Runner
+# v0.5.0 Integration Tests Runner
 # This script runs all integration tests for gemback
 
 set -e  # Exit on error
 
 echo "╔════════════════════════════════════════════════════════════╗"
-echo "║  Gem Back v0.4.0 - Integration Tests Runner               ║"
+echo "║  Gem Back v0.5.0 - Integration Tests Runner               ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 
 # Check if package is built
-PACKAGE_FILE=$(find .. -maxdepth 1 -name "gemback-*.tgz" | head -n 1)
+PACKAGE_PATH=$(find .. -maxdepth 1 -name "gemback-*.tgz" | head -n 1)
 
-if [ -z "$PACKAGE_FILE" ]; then
+if [ -z "$PACKAGE_PATH" ]; then
     echo "❌ Package not found: gemback-*.tgz"
     echo "Please run 'npm run build && npm pack' in the root directory first"
     exit 1
 fi
 
+# Extract package filename from path
+PACKAGE_FILE=$(basename "$PACKAGE_PATH")
+
 echo "✅ Package found: $PACKAGE_FILE"
 echo ""
+
+# Function to update package.json with current package version
+update_package_json() {
+    local pkg_json="$1"
+
+    if [ ! -f "$pkg_json" ]; then
+        echo "⚠️  Warning: $pkg_json not found"
+        return 1
+    fi
+
+    # Create backup
+    cp "$pkg_json" "$pkg_json.bak"
+
+    # Update gemback dependency using sed
+    # This works on both macOS and Linux
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS requires -i with extension
+        sed -i '.tmp' -E 's|"gemback": "file:../../gemback-.*\.tgz"|"gemback": "file:../../'"$PACKAGE_FILE"'"|' "$pkg_json"
+        rm -f "$pkg_json.tmp"
+    else
+        # Linux
+        sed -i -E 's|"gemback": "file:../../gemback-.*\.tgz"|"gemback": "file:../../'"$PACKAGE_FILE"'"|' "$pkg_json"
+    fi
+
+    echo "   ✓ Updated package.json to use $PACKAGE_FILE"
+}
 
 # Function to run test in a directory
 run_test() {
@@ -33,16 +62,44 @@ run_test() {
 
     cd "$dir"
 
+    # Update package.json to use current package version
+    echo "Updating package.json..."
+    update_package_json "package.json"
+
     # Clean previous installation to avoid EINTEGRITY errors with local tarball
+    echo "Cleaning previous installation..."
     rm -rf node_modules package-lock.json
 
     # Install dependencies
     echo "Installing dependencies..."
-    npm install > /dev/null 2>&1
+    if npm install > /dev/null 2>&1; then
+        echo "   ✓ Dependencies installed"
+    else
+        echo "   ❌ Failed to install dependencies"
+        # Restore backup
+        if [ -f "package.json.bak" ]; then
+            mv package.json.bak package.json
+        fi
+        cd - > /dev/null
+        return 1
+    fi
 
     # Install gemback package
     echo "Installing gemback package..."
-    npm install ../$PACKAGE_FILE > /dev/null 2>&1
+    if npm install "../../$PACKAGE_FILE" > /dev/null 2>&1; then
+        echo "   ✓ Gemback package installed"
+    else
+        echo "   ❌ Failed to install gemback package"
+        # Restore backup
+        if [ -f "package.json.bak" ]; then
+            mv package.json.bak package.json
+        fi
+        cd - > /dev/null
+        return 1
+    fi
+
+    # Remove backup after successful installation
+    rm -f package.json.bak
 
     # Run basic test
     echo "Running basic test..."

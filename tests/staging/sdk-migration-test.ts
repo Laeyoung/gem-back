@@ -66,10 +66,7 @@ if (!apiKey && !apiKeys) {
 
 const testResults: { name: string; passed: boolean; duration: number; error?: string }[] = [];
 
-async function runTest(
-  name: string,
-  testFn: () => Promise<void>
-): Promise<void> {
+async function runTest(name: string, testFn: () => Promise<void>): Promise<void> {
   const startTime = Date.now();
   try {
     await testFn();

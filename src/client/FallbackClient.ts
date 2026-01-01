@@ -417,6 +417,12 @@ export class GemBack {
               maxTokens: request.maxTokens,
               topP: request.topP,
               topK: request.topK,
+              systemInstruction: request.systemInstruction,
+              tools: request.tools,
+              toolConfig: request.toolConfig,
+              safetySettings: request.safetySettings,
+              responseMimeType: request.responseMimeType,
+              responseSchema: request.responseSchema,
             }),
           {
             maxRetries: this.options.maxRetries,
@@ -539,6 +545,10 @@ export class GemBack {
           maxTokens: request.maxTokens,
           topP: request.topP,
           topK: request.topK,
+          systemInstruction: request.systemInstruction,
+          tools: request.tools,
+          toolConfig: request.toolConfig,
+          safetySettings: request.safetySettings,
         });
         let hasYielded = false;
 
