@@ -5,7 +5,7 @@
 [![npm version](https://badge.fury.io/js/gemback.svg)](https://www.npmjs.com/package/gemback)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/tests-165%20passing-brightgreen.svg)](https://github.com/Laeyoung/gem-back)
+[![Tests](https://img.shields.io/badge/tests-235%20passing-brightgreen.svg)](https://github.com/Laeyoung/gem-back)
 
 **Gem Back**은 Google Gemini API의 RPM(Requests Per Minute) 제한을 자동으로 처리하는 Fallback 시스템과 프로덕션급 모니터링 기능을 제공하는 NPM 라이브러리입니다.
 
@@ -26,7 +26,7 @@ Gemini API는 무료 티어에서 **RPM(분당 요청 수) 제한**이 있어, �
 - ✅ **제로 설정**: 기본 설정만으로 바로 사용 가능
 - ✅ **완벽한 타입 지원**: TypeScript로 작성되어 자동완성 지원
 - ✅ **이중 모듈**: CommonJS + ESM 동시 지원
-- ✅ **완전한 테스트**: 165개 테스트로 검증된 안정성
+- ✅ **완전한 테스트**: 235개 테스트로 검증된 안정성
 - ✅ **모니터링 & 추적**: Rate limiting 예측 및 모델 Health 모니터링
 
 ---
@@ -281,6 +281,281 @@ console.log(stats);
 // }
 ```
 
+### 5. System Instructions (v0.5.0+)
+
+모델의 동작, 성격, 응답 스타일을 제어합니다:
+
+```typescript
+// 문자열 형식
+const response = await client.generate('TypeScript를 설명해주세요', {
+  systemInstruction: '당신은 친절한 프로그래밍 튜터입니다. 초보자를 위해 개념을 명확하게 설명하세요.',
+});
+
+// 구조화된 Content 형식
+const response2 = await client.generate('async/await이 무엇인가요?', {
+  systemInstruction: {
+    role: 'user',
+    parts: [{ text: '당신은 시니어 엔지니어입니다. 기술적이고 상세한 설명을 제공하세요.' }],
+  },
+});
+
+// 모든 생성 메서드에서 작동
+const stream = client.generateStream('프로미스를 설명해주세요', {
+  systemInstruction: '설명을 100단어 이하로 유지하세요. 불릿 포인트를 사용하세요.',
+});
+
+const chatResponse = await client.chat(messages, {
+  systemInstruction: '당신은 친근한 코딩 멘토입니다. 비유를 사용하여 설명하세요.',
+});
+```
+
+**활용 사례:**
+- 모델의 성격과 톤 가이드
+- 출력 형식 요구사항 적용
+- 역할 기반 어시스턴트 생성 (튜터, 기술 작가 등)
+- 대화 전반에 걸친 일관된 동작 유지
+
+### 6. Function Calling / Tool Use (v0.5.0+)
+
+모델이 구조화된 매개변수로 외부 함수를 호출할 수 있게 합니다:
+
+```typescript
+import type { FunctionDeclaration } from 'gemback';
+
+// 함수 정의
+const weatherFunction: FunctionDeclaration = {
+  name: 'get_current_weather',
+  description: '특정 위치의 현재 날씨를 가져옵니다',
+  parameters: {
+    type: 'object',
+    properties: {
+      location: {
+        type: 'string',
+        description: '도시 이름 (예: 서울, 부산)',
+      },
+      unit: {
+        type: 'string',
+        enum: ['celsius', 'fahrenheit'],
+      },
+    },
+    required: ['location'],
+  },
+};
+
+// 함수 사용
+const response = await client.generate("도쿄의 날씨는 어때요?", {
+  tools: [weatherFunction],
+  toolConfig: {
+    functionCallingMode: 'auto', // 'auto' | 'any' | 'none'
+  },
+});
+
+// 모델이 함수를 호출했는지 확인
+if (response.functionCalls && response.functionCalls.length > 0) {
+  response.functionCalls.forEach((call) => {
+    console.log('함수:', call.name);
+    console.log('인자:', call.args);
+
+    // 실제 함수 실행
+    const result = getCurrentWeather(call.args.location, call.args.unit);
+    console.log('결과:', result);
+  });
+}
+```
+
+**함수 호출 모드:**
+- `auto`: 모델이 함수 호출 시점 결정 (기본값)
+- `any`: 모델이 최소 하나의 함수를 호출하도록 강제
+- `none`: 함수 호출 비활성화
+
+**고급 기능:**
+```typescript
+// 특정 함수만 제한
+const response = await client.generate(prompt, {
+  tools: [weatherFunction, calculatorFunction, databaseFunction],
+  toolConfig: {
+    functionCallingMode: 'any',
+    allowedFunctionNames: ['get_current_weather'], // 날씨 함수만 허용
+  },
+});
+
+// 함수 결과를 포함한 멀티턴 대화
+const followUpResponse = await client.generateContent([
+  { role: 'user', parts: [{ text: "날씨는 어때요?" }] },
+  { role: 'model', parts: [{ functionCall: { name: 'get_current_weather', args: {...} } }] },
+  { role: 'user', parts: [{ functionResponse: { name: 'get_current_weather', response: {...} } }] },
+  { role: 'user', parts: [{ text: '우산을 가져가야 할까요?' }] },
+]);
+```
+
+**활용 사례:**
+- 외부 API 및 데이터베이스 통합
+- 계산 및 데이터 처리 수행
+- 실시간 정보 접근
+- 구조화된 워크플로우 및 자동화 생성
+- 도구 접근 권한이 있는 AI 에이전트 구축
+
+### 7. Safety Settings (v0.5.0+)
+
+다양한 유해 카테고리에 대한 콘텐츠 필터링 및 안전 임계값을 설정합니다:
+
+```typescript
+import { HarmCategory, HarmBlockThreshold } from '@google/genai';
+
+// 기본 안전 설정
+const response = await client.generate('콘텐츠 검열에 대해 알려주세요', {
+  safetySettings: [
+    {
+      category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+      threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    },
+    {
+      category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+      threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    },
+  ],
+});
+
+// 어린이 콘텐츠를 위한 엄격한 필터링
+const childContent = await client.generate('아이들을 위한 이야기를 들려주세요', {
+  safetySettings: [
+    {
+      category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+      threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+    },
+    {
+      category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+      threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+    },
+    {
+      category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+      threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+    },
+    {
+      category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+      threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+    },
+  ],
+});
+
+// 다른 옵션과 결합
+const response3 = await client.generate('교육용 기사를 작성하세요', {
+  systemInstruction: '당신은 교육 콘텐츠 작가입니다.',
+  safetySettings: [
+    {
+      category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+      threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    },
+  ],
+  temperature: 0.7,
+});
+```
+
+**사용 가능한 유해 카테고리:**
+- `HARM_CATEGORY_HARASSMENT` (괴롭힘)
+- `HARM_CATEGORY_HATE_SPEECH` (혐오 발언)
+- `HARM_CATEGORY_SEXUALLY_EXPLICIT` (성적 콘텐츠)
+- `HARM_CATEGORY_DANGEROUS_CONTENT` (위험 콘텐츠)
+
+**차단 임계값:**
+- `BLOCK_NONE`: 차단 안 함
+- `BLOCK_ONLY_HIGH`: 높은 심각도 콘텐츠만 차단
+- `BLOCK_MEDIUM_AND_ABOVE`: 중간 및 높은 심각도 차단 (권장)
+- `BLOCK_LOW_AND_ABOVE`: 낮은, 중간, 높은 심각도 모두 차단 (가장 엄격)
+
+**활용 사례:**
+- 어린이에게 안전한 콘텐츠 생성
+- 콘텐츠 정책 준수
+- 브랜드에 적합한 응답
+- 교육용 콘텐츠 필터링
+
+### 8. JSON Mode (v0.5.0+)
+
+스키마 검증을 통한 구조화된 JSON 응답 받기:
+
+```typescript
+import type { ResponseSchema } from 'gemback';
+
+// 기본 JSON 모드
+const response = await client.generate('이름, 나이, 이메일이 포함된 사용자 프로필을 생성하세요', {
+  responseMimeType: 'application/json',
+});
+
+console.log(response.json); // 자동 파싱된 JSON 객체
+// { name: "홍길동", age: 25, email: "hong@example.com" }
+
+// 스키마로 JSON 구조 정의
+const userSchema: ResponseSchema = {
+  type: 'object',
+  properties: {
+    name: { type: 'string', description: '사용자 이름' },
+    age: { type: 'number', description: '사용자 나이' },
+    email: { type: 'string', description: '이메일 주소' },
+    address: {
+      type: 'object',
+      properties: {
+        city: { type: 'string' },
+        country: { type: 'string' },
+      },
+    },
+  },
+  required: ['name', 'age', 'email'],
+};
+
+const response2 = await client.generate(
+  '30대 한국인 사용자 프로필을 생성하세요',
+  {
+    responseMimeType: 'application/json',
+    responseSchema: userSchema,
+  }
+);
+
+// TypeScript 타입 안전성
+interface User {
+  name: string;
+  age: number;
+  email: string;
+  address?: {
+    city: string;
+    country: string;
+  };
+}
+
+const user = response2.json as User;
+console.log(user.name, user.age, user.email);
+
+// 배열 응답
+const listSchema: ResponseSchema = {
+  type: 'array',
+  items: {
+    type: 'object',
+    properties: {
+      title: { type: 'string' },
+      priority: { type: 'string', enum: ['low', 'medium', 'high'] },
+    },
+  },
+};
+
+const todos = await client.generate('5개의 할 일 목록을 만들어주세요', {
+  responseMimeType: 'application/json',
+  responseSchema: listSchema,
+});
+```
+
+**JSON Mode 기능:**
+- ✅ **보장된 JSON**: 항상 유효한 JSON 출력
+- ✅ **자동 파싱**: `response.json` 필드에서 자동 파싱된 객체 제공
+- ✅ **스키마 검증**: OpenAPI 3.0 스타일 JSON Schema 지원
+- ✅ **타입 안전성**: TypeScript 인터페이스와 원활하게 통합
+- ✅ **복잡한 구조**: 중첩된 객체, 배열, 모든 JSON 타입 지원
+
+**활용 사례:**
+- API 응답 포맷팅
+- 비구조화된 텍스트에서 데이터 추출
+- 타입 안전한 API 통합
+- 데이터베이스 레코드 생성
+- 구조화된 콘텐츠 생성 (제품 목록, 설정 파일 등)
+
 ---
 
 ## 🔧 API 레퍼런스
@@ -487,6 +762,47 @@ Phase 2에서는 프로덕션 환경에서의 안정성을 향상시키는 고�
 - ✅ 프로덕션 레벨 모니터링 시스템
 - ✅ RPM 제한 회피를 위한 멀티 키 로테이션
 - ✅ 실시간 모델 Health 추적
+
+### Phase 2.5: Advanced Content Generation ✅ (완료 - v0.5.0)
+
+Phase 2.5에서는 Google GenAI SDK의 고급 콘텐츠 생성 기능을 완벽하게 지원하여, 프로덕션 환경에서 안전하고 구조화된 AI 콘텐츠 생성을 가능하게 했습니다.
+
+#### 🎯 Function Calling / Tool Use ✅
+- [x] **AI가 외부 함수를 호출할 수 있는 Tool Use 지원**
+  - JSON Schema 기반 함수 정의
+  - 3가지 호출 모드: `auto`, `any`, `none`
+  - 특정 함수만 허용하는 `allowedFunctionNames` 옵션
+  - 멀티턴 대화에서 함수 결과 반환 지원
+  - 모든 생성 메서드에서 동작 (`generate`, `generateStream`, `generateContent`)
+
+#### 📝 System Instructions ✅
+- [x] **모델의 동작, 톤, 출력 형식 제어**
+  - 문자열 및 구조화된 `Content` 형식 지원
+  - 모든 생성 메서드에 적용
+  - Fallback 시에도 명령어 유지
+  - 다른 옵션과 자유롭게 조합
+
+#### 🛡️ Safety Settings ✅
+- [x] **프로덕션 준수 콘텐츠 안전 제어**
+  - 4가지 유해 카테고리 지원 (괴롭힘, 혐오 발언, 성적 콘텐츠, 위험 콘텐츠)
+  - 4단계 차단 임계값 (없음, 높음만, 중간 이상, 낮음 이상)
+  - 안전 차단 시 자동 Fallback
+  - 여러 설정 조합 가능
+
+#### 🎨 JSON Mode (Structured Outputs) ✅
+- [x] **신뢰할 수 있는 구조화된 데이터 추출**
+  - `responseMimeType: 'application/json'`으로 JSON 모드 활성화
+  - OpenAPI 3.0 스타일 JSON Schema 검증
+  - 자동 JSON 파싱 (`response.json` 필드)
+  - 객체, 배열, 중첩 구조 지원
+  - TypeScript 인터페이스와 타입 안전하게 통합
+
+**Phase 2.5 주요 성과:**
+- ✅ 235개의 포괄적인 테스트 (Phase 2 대비 42% 증가)
+- ✅ 4가지 주요 기능 추가 (Function Calling, System Instructions, Safety Settings, JSON Mode)
+- ✅ ESLint 완전 클린 (20 에러 → 0 에러)
+- ✅ TypeScript strict mode 100% 준수
+- ✅ 프로덕션급 콘텐츠 생성 지원
 
 ### Phase 3: Performance & Ecosystem (향후 계획)
 
