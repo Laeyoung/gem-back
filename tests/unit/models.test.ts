@@ -5,7 +5,7 @@ describe('Model Definitions', () => {
   it('should export ALL_MODELS as an array of strings', () => {
     expect(Array.isArray(ALL_MODELS)).toBe(true);
     expect(ALL_MODELS.length).toBeGreaterThan(0);
-    ALL_MODELS.forEach(model => {
+    ALL_MODELS.forEach((model) => {
       expect(typeof model).toBe('string');
     });
   });
@@ -18,7 +18,7 @@ describe('Model Definitions', () => {
   });
 
   it('should ensure DEFAULT_FALLBACK_ORDER is a subset of ALL_MODELS', () => {
-    DEFAULT_FALLBACK_ORDER.forEach(model => {
+    DEFAULT_FALLBACK_ORDER.forEach((model) => {
       expect(ALL_MODELS).toContain(model);
     });
   });

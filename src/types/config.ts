@@ -1,6 +1,28 @@
 import type { GeminiModel } from './models';
+import type {
+  FunctionDeclaration as SDKFunctionDeclaration,
+  FunctionCall as SDKFunctionCall,
+  FunctionResponse as SDKFunctionResponse,
+  SafetySetting as SDKSafetySetting,
+  HarmCategory as SDKHarmCategory,
+  HarmBlockThreshold as SDKHarmBlockThreshold,
+  Schema as SDKSchema,
+} from '@google/genai';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'silent';
+
+// Re-export SDK types for function calling
+export type FunctionDeclaration = SDKFunctionDeclaration;
+export type FunctionCall = SDKFunctionCall;
+export type FunctionResponse = SDKFunctionResponse;
+
+// Re-export SDK types for safety settings
+export type SafetySetting = SDKSafetySetting;
+export type HarmCategory = SDKHarmCategory;
+export type HarmBlockThreshold = SDKHarmBlockThreshold;
+
+// Re-export SDK types for JSON mode
+export type ResponseSchema = SDKSchema;
 
 export interface GemBackOptions {
   apiKey?: string;
@@ -25,6 +47,12 @@ export interface GenerateOptions {
   maxTokens?: number;
   topP?: number;
   topK?: number;
+  systemInstruction?: string | Content;
+  tools?: FunctionDeclaration[];
+  toolConfig?: ToolConfig;
+  safetySettings?: SafetySetting[];
+  responseMimeType?: string;
+  responseSchema?: ResponseSchema;
 }
 
 export interface ChatMessage {
@@ -50,6 +78,13 @@ export interface Content {
   parts: Part[];
 }
 
+export type FunctionCallingMode = 'auto' | 'any' | 'none';
+
+export interface ToolConfig {
+  functionCallingMode?: FunctionCallingMode;
+  allowedFunctionNames?: string[];
+}
+
 export interface GenerateContentRequest {
   contents: Content[];
   model?: GeminiModel;
@@ -57,6 +92,12 @@ export interface GenerateContentRequest {
   maxTokens?: number;
   topP?: number;
   topK?: number;
+  systemInstruction?: string | Content;
+  tools?: FunctionDeclaration[];
+  toolConfig?: ToolConfig;
+  safetySettings?: SafetySetting[];
+  responseMimeType?: string;
+  responseSchema?: ResponseSchema;
 }
 
 export { GeminiModel };

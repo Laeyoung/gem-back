@@ -23,7 +23,7 @@ describe('GeminiClient Caching', () => {
 
   it('should reuse the same client instance for the same API key', async () => {
     const apiKey = 'test-key-1';
-    
+
     // First call
     await client.generate('test', 'gemini-2.5-flash', apiKey);
     expect(GoogleGenAI).toHaveBeenCalledTimes(1);

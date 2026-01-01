@@ -181,11 +181,7 @@ describe('GeminiClient', () => {
         },
       ];
 
-      const response = await client.generateContent(
-        contents,
-        'gemini-2.5-flash',
-        'test-api-key'
-      );
+      const response = await client.generateContent(contents, 'gemini-2.5-flash', 'test-api-key');
 
       expect(response).toEqual({
         text: 'Mock response text',
@@ -357,11 +353,7 @@ describe('GeminiClient', () => {
         },
       ];
 
-      const stream = client.generateContentStream(
-        contents,
-        'gemini-2.5-flash',
-        'test-api-key'
-      );
+      const stream = client.generateContentStream(contents, 'gemini-2.5-flash', 'test-api-key');
 
       const chunks: string[] = [];
       for await (const chunk of stream) {
@@ -386,22 +378,14 @@ describe('GeminiClient', () => {
       const contents = [
         {
           role: 'user' as const,
-          parts: [
-            { text: 'Analyze' },
-            { inlineData: { mimeType: 'image/jpeg', data: 'data' } },
-          ],
+          parts: [{ text: 'Analyze' }, { inlineData: { mimeType: 'image/jpeg', data: 'data' } }],
         },
       ];
 
-      const stream = client.generateContentStream(
-        contents,
-        'gemini-2.5-flash',
-        'test-api-key',
-        {
-          temperature: 0.6,
-          maxTokens: 1500,
-        }
-      );
+      const stream = client.generateContentStream(contents, 'gemini-2.5-flash', 'test-api-key', {
+        temperature: 0.6,
+        maxTokens: 1500,
+      });
 
       // Consume the stream
       for await (const _ of stream) {

@@ -31,5 +31,13 @@
     "node": true,
     "es2020": true
   },
-  "ignorePatterns": ["dist", "node_modules", "*.js", "*.mjs"]
+  "ignorePatterns": ["dist", "node_modules", "*.js", "*.mjs"],
+  "overrides": [
+    {
+      "files": ["tests/**/*.ts"],
+      "parserOptions": {
+        "project": "./tsconfig.test.json"
+      }
+    }
+  ]
 }

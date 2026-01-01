@@ -161,8 +161,16 @@ describe('GemBack', () => {
       }
 
       expect(chunks).toHaveLength(3); // 2 text chunks + 1 complete
-      expect(chunks[0]).toEqual({ text: 'Hello ', model: 'gemini-3-flash-preview', isComplete: false });
-      expect(chunks[1]).toEqual({ text: 'World', model: 'gemini-3-flash-preview', isComplete: false });
+      expect(chunks[0]).toEqual({
+        text: 'Hello ',
+        model: 'gemini-3-flash-preview',
+        isComplete: false,
+      });
+      expect(chunks[1]).toEqual({
+        text: 'World',
+        model: 'gemini-3-flash-preview',
+        isComplete: false,
+      });
       expect(chunks[2]).toEqual({ text: '', model: 'gemini-3-flash-preview', isComplete: true });
     });
 
@@ -314,9 +322,7 @@ describe('GemBack', () => {
     });
 
     it('should throw error when neither apiKey nor apiKeys provided', () => {
-      expect(() => new GemBack({} as any)).toThrow(
-        'Either apiKey or apiKeys must be provided'
-      );
+      expect(() => new GemBack({} as any)).toThrow('Either apiKey or apiKeys must be provided');
     });
 
     it('should rotate through API keys with round-robin', async () => {
