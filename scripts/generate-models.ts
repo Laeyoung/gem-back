@@ -33,9 +33,9 @@ function classifyModel(modelName: string): ModelClassification {
  * Returns [major, minor] or [0, 0] if not found
  */
 function extractVersion(modelName: string): [number, number] {
-  const match = modelName.match(/gemini-(\d+)\.(\d+)/);
+  const match = modelName.match(/gemini-(\d+)(?:\.(\d+))?/);
   if (match) {
-    return [parseInt(match[1]), parseInt(match[2])];
+    return [parseInt(match[1]), parseInt(match[2] ?? '0')];
   }
   return [0, 0];
 }
@@ -108,7 +108,7 @@ function generateTypesFile(models: ProcessedModel[]): string {
   const targetFallbackOrder = [
     'gemini-3-flash-preview',
     'gemini-2.5-flash',
-    'gemini-2.5-flash-lite'
+    'gemini-3.1-flash-lite-preview'
   ];
 
   const fallbackList = targetFallbackOrder

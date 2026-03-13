@@ -16,7 +16,8 @@ export const MODEL_PRIORITY: Record<GeminiModel, number> = {
   'gemini-2.5-pro': 105,
   'gemini-2.0-flash': 200,
   'gemini-2.0-flash-lite': 210,
-  'gemini-3-pro-preview': 1305,
+  'gemini-3.1-pro-preview': 1005,
+  'gemini-3.1-flash-lite-preview': 1010,
 };
 
 /**
@@ -61,9 +62,15 @@ export const MODEL_INFO: Record<
     description: 'Gemini 3 Flash Preview',
     maxTokens: 65536,
   },
-  'gemini-3-pro-preview': {
-    name: 'Gemini 3 Pro Preview',
-    description: 'Gemini 3 Pro Preview',
+  'gemini-3.1-pro-preview': {
+    name: 'Gemini 3.1 Pro Preview',
+    description:
+      'Advanced intelligence, complex problem-solving with powerful agentic and coding capabilities',
+    maxTokens: 65536,
+  },
+  'gemini-3.1-flash-lite-preview': {
+    name: 'Gemini 3.1 Flash-Lite Preview',
+    description: 'Most cost-efficient model, optimized for low latency high-volume use cases',
     maxTokens: 65536,
   },
 };

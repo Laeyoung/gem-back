@@ -22,7 +22,7 @@ describe('Fallback Flow Integration Tests', () => {
       const calls: string[] = [];
       mockGeminiClient.generate.mockImplementation((prompt: string, model: string) => {
         calls.push(model);
-        if (model === 'gemini-2.5-flash-lite') {
+        if (model === 'gemini-3.1-flash-lite-preview') {
           return Promise.resolve({
             text: 'Success from last model',
             model,
@@ -43,10 +43,10 @@ describe('Fallback Flow Integration Tests', () => {
       expect(calls).toEqual([
         'gemini-3-flash-preview',
         'gemini-2.5-flash',
-        'gemini-2.5-flash-lite',
+        'gemini-3.1-flash-lite-preview',
       ]);
       expect(response.text).toBe('Success from last model');
-      expect(response.model).toBe('gemini-2.5-flash-lite');
+      expect(response.model).toBe('gemini-3.1-flash-lite-preview');
     });
 
     it('should stop fallback on auth error', async () => {
@@ -114,7 +114,7 @@ describe('Fallback Flow Integration Tests', () => {
       const calls: string[] = [];
       mockGeminiClient.generate.mockImplementation((prompt: string, model: string) => {
         calls.push(model);
-        if (model === 'gemini-2.5-flash-lite') {
+        if (model === 'gemini-3.1-flash-lite-preview') {
           return Promise.resolve({
             text: 'Success',
             model,
@@ -126,14 +126,14 @@ describe('Fallback Flow Integration Tests', () => {
 
       const client = new GemBack({
         apiKey: 'test-key',
-        fallbackOrder: ['gemini-2.5-flash', 'gemini-2.5-flash-lite'],
+        fallbackOrder: ['gemini-2.5-flash', 'gemini-3.1-flash-lite-preview'],
         maxRetries: 0,
         debug: false,
       });
 
       await client.generate('Hello');
 
-      expect(calls).toEqual(['gemini-2.5-flash', 'gemini-2.5-flash-lite']);
+      expect(calls).toEqual(['gemini-2.5-flash', 'gemini-3.1-flash-lite-preview']);
     });
   });
 
@@ -254,7 +254,7 @@ describe('Fallback Flow Integration Tests', () => {
         if (model === 'gemini-2.5-flash') {
           throw new Error('500 Server error');
         }
-        if (model === 'gemini-2.5-flash-lite') {
+        if (model === 'gemini-3.1-flash-lite-preview') {
           throw new Error('503 Service Unavailable');
         }
         throw new Error('Unexpected');
@@ -278,7 +278,7 @@ describe('Fallback Flow Integration Tests', () => {
         expect(geminiError.allAttempts[0].error).toContain('429');
         expect(geminiError.allAttempts[1].model).toBe('gemini-2.5-flash');
         expect(geminiError.allAttempts[1].error).toContain('500');
-        expect(geminiError.allAttempts[2].model).toBe('gemini-2.5-flash-lite');
+        expect(geminiError.allAttempts[2].model).toBe('gemini-3.1-flash-lite-preview');
         expect(geminiError.allAttempts[2].error).toContain('503');
       }
     });

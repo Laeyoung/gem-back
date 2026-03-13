@@ -5,6 +5,28 @@
 
 ---
 
+## 2026-03-14 ~09:30 — 전체 구현 완료 (Phase 1~9)
+
+### Phase: 전체 구현
+
+**작업 내용**
+- Phase 1-4: 코어 타입/설정 변경, deprecated.ts 생성, FallbackClient에 deprecation 경고 추가
+- Phase 5: 중간 검증 — typecheck 통과, 테스트 4개 실패(예상대로), lint 통과
+- Phase 6-7: 테스트 업데이트 및 신규 deprecated.test.ts 작성, 전체 242 테스트 통과
+- Phase 8-9: 예제/문서 업데이트, package.json 0.6.0, CHANGELOG.md v0.6.0 릴리스 노트 추가, prepublishOnly 통과
+
+**기술적 결정**
+- `examples/custom-fallback.ts`에서 `gemini-2.0-flash` → `gemini-3-flash-preview`로 교체 (계획서의 의도와 동일)
+- CHANGELOG.md 링크 섹션에서 기존 `[Unreleased]`가 `v0.4.0` 기준이던 오류도 함께 수정하여 `v0.5.0`, `v0.6.0` 링크 추가
+
+**검증 결과**
+- `npx tsc --noEmit`: 통과
+- `npx eslint src/ --fix`: 통과
+- `npx vitest run`: 18 파일, 242 테스트 통과 (기존 235 → 242, +7 신규 테스트)
+- `npm run prepublishOnly`: build + test 모두 통과
+
+---
+
 ## 2026-03-14 ~15:00 — 프로젝트 초기 설정
 
 ### Phase: 사전 준비

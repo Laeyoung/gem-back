@@ -38,11 +38,13 @@ Gem Back은 다음 모델들의 자동 Fallback을 지원합니다:
 **기본 Fallback 체인** (무료 티어 최적화):
 1. `gemini-3-flash-preview` (무료 쿼터 제공) ⚠️
 2. `gemini-2.5-flash` (안정적, 고성능)
-3. `gemini-2.5-flash-lite` (경량 Fallback)
+3. `gemini-3.1-flash-lite-preview` (경량 Fallback) ⚠️
 
 **기타 지원 모델**:
-- `gemini-3-pro-preview`
+- `gemini-3.1-pro-preview`
+- `gemini-3.1-flash-lite-preview`
 - `gemini-2.5-pro`
+- `gemini-2.5-flash-lite`
 - `gemini-2.0-flash`
 - `gemini-2.0-flash-lite`
 

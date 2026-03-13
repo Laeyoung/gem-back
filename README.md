@@ -40,11 +40,13 @@ Gem Back supports automatic fallback across Gemini models:
 **Default Fallback Chain** (Optimized for Free Tier):
 1. `gemini-3-flash-preview` (Free quota available) ⚠️
 2. `gemini-2.5-flash` (Stable, high performance)
-3. `gemini-2.5-flash-lite` (Lightweight fallback)
+3. `gemini-3.1-flash-lite-preview` (Lightweight fallback) ⚠️
 
 **Other Supported Models**:
-- `gemini-3-pro-preview`
+- `gemini-3.1-pro-preview`
+- `gemini-3.1-flash-lite-preview`
 - `gemini-2.5-pro`
+- `gemini-2.5-flash-lite`
 - `gemini-2.0-flash`
 - `gemini-2.0-flash-lite`
 
@@ -88,9 +90,9 @@ console.log(response.text);
 const client = new GemBack({
   apiKey: process.env.GEMINI_API_KEY,
   fallbackOrder: [
-    'gemini-3-pro-preview',  // Optional: Include preview models explicitly
+    'gemini-3.1-pro-preview',  // Optional: Include preview models explicitly
     'gemini-2.5-flash',
-    'gemini-2.5-flash-lite'
+    'gemini-3.1-flash-lite-preview'
   ],
   maxRetries: 3,
   timeout: 30000,

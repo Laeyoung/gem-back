@@ -48,7 +48,7 @@
 
 1.  **Fallback Chain**:
     *   Requests attempt models in a defined `fallbackOrder`.
-    *   **Default Order**: `gemini-3-flash-preview` -> `gemini-2.5-flash` -> `gemini-2.5-flash-lite`.
+    *   **Default Order**: `gemini-3-flash-preview` -> `gemini-2.5-flash` -> `gemini-3.1-flash-lite-preview`.
     *   **429 (Rate Limit)** -> Immediate fallback to next model.
     *   **5xx (Server Error)** -> Retry with backoff, then fallback.
     *   **401/403 (Auth)** -> Fatal error, stops chain.

@@ -217,7 +217,7 @@ async function main() {
         if (match) {
           const major = parseInt(match[1]);
           const minor = match[2] ? parseInt(match[2]) : 0;
-          isLatest = (major === maxMajor && minor === maxMinor);
+          isLatest = major === maxMajor;
         }
 
         // Criteria 5: Stability

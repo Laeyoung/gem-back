@@ -132,7 +132,7 @@ npm run prepublishOnly
   - `GeminiBackError` - Main error class with attempt records
 
 - **`models.ts`** - Supported model enum
-  - Currently: `gemini-2.5-flash` and `gemini-2.5-flash-lite`
+  - 8 models: gemini-2.5-flash, gemini-2.5-pro, gemini-2.5-flash-lite, gemini-2.0-flash, gemini-2.0-flash-lite, gemini-3-flash-preview, gemini-3.1-pro-preview, gemini-3.1-flash-lite-preview
 
 ### Key Architectural Patterns
 
@@ -190,9 +190,10 @@ npm run prepublishOnly
 - Tracking uses sliding 5-minute window for trend analysis
 
 ### Model Support
-- Only 2 models currently supported (as of v0.3.1)
+- 8 models currently supported (as of v0.6.0)
 - Models removed from fallback when deprecated (see git history)
-- Default fallback order defined in `src/config/defaults.ts`
+- Default fallback order defined in `src/types/models.ts`
+- Deprecated model info in `src/config/deprecated.ts`
 
 ### Streaming Behavior
 - Streaming uses async generators (`AsyncGenerator<StreamChunk>`)
@@ -210,7 +211,7 @@ npm run prepublishOnly
 ### Adding a New Gemini Model
 1. Update `GeminiModel` type in `src/types/models.ts`
 2. Add to `SUPPORTED_MODELS` array
-3. Update `DEFAULT_FALLBACK_ORDER` in `src/config/defaults.ts`
+3. Update `DEFAULT_FALLBACK_ORDER` in `src/types/models.ts`
 4. Update monitoring default limits if model has different RPM limits
 5. Update README.md supported models section
 6. Add tests for new model

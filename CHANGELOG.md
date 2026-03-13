@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-03-14
+
+### Added
+
+- **Deprecation Warning System**: Automatic warnings when using models scheduled for shutdown
+  - `DEPRECATED_MODELS` constant exported for programmatic access
+  - `DeprecatedModelInfo` type for type-safe deprecation metadata
+  - Constructor warns when `fallbackOrder` contains deprecated models
+  - Per-request warnings when `options.model` specifies a deprecated model (once per model)
+
+- **New Model Support**:
+  - `gemini-3.1-pro-preview` - Advanced intelligence, replaces `gemini-3-pro-preview`
+  - `gemini-3.1-flash-lite-preview` - Most cost-efficient preview model
+
+### Changed
+
+- **Default Fallback Order**: `gemini-2.5-flash-lite` replaced by `gemini-3.1-flash-lite-preview` as 3rd fallback
+  - New order: `gemini-3-flash-preview` -> `gemini-2.5-flash` -> `gemini-3.1-flash-lite-preview`
+- Updated `MODEL_PRIORITY` and `MODEL_INFO` for new models
+- Fixed `extractVersion()` regex in `generate-models.ts` to handle major-only versions (e.g., `gemini-3-flash-preview`)
+- Fixed `fetch-models.ts` filtering to include all models within the latest major version
+
+### Breaking Changes
+
+- **`gemini-3-pro-preview` removed**: This model was shut down on 2026-03-09. Replace with `gemini-3.1-pro-preview`.
+- **Default fallback order changed**: 3rd model is now `gemini-3.1-flash-lite-preview` instead of `gemini-2.5-flash-lite`.
+
+### Migration from v0.5.x
+
+1. **`gemini-3-pro-preview` users**: Replace with `gemini-3.1-pro-preview` in your `fallbackOrder`.
+2. **Default fallback users**: 3rd fallback changed. Set explicit `fallbackOrder` to keep old behavior.
+3. **Deprecation warnings**: Set `logLevel: 'warn'` to see deprecation warnings (default `logLevel` is `'error'`).
+
 ## [0.5.0] - 2026-01-01
 
 ### Added
@@ -628,7 +661,9 @@ const client = new GemBack(options);
 - Contribution guidelines
 - MIT License
 
-[Unreleased]: https://github.com/Laeyoung/gem-back/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/Laeyoung/gem-back/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/Laeyoung/gem-back/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/Laeyoung/gem-back/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Laeyoung/gem-back/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/Laeyoung/gem-back/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/Laeyoung/gem-back/compare/v0.2.1...v0.3.0

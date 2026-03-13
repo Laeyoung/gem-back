@@ -13,7 +13,7 @@ async function main() {
     apiKey: process.env.GEMINI_API_KEY || 'your-api-key-here',
 
     // Only use these two models in this order
-    fallbackOrder: ['gemini-2.5-flash', 'gemini-2.0-flash'],
+    fallbackOrder: ['gemini-2.5-flash', 'gemini-3-flash-preview'],
 
     // Increase retry attempts for each model
     maxRetries: 3,

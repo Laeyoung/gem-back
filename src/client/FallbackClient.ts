@@ -22,6 +22,7 @@ import {
   isAuthError,
   getErrorStatusCode,
 } from '../utils/error-handler';
+import { DEPRECATED_MODELS } from '../config/deprecated';
 
 export class GemBack {
   private options: Required<Omit<GemBackOptions, 'apiKey' | 'apiKeys'>> & {
@@ -34,6 +35,7 @@ export class GemBack {
   private apiKeyRotator: ApiKeyRotator | null;
   private rateLimitTracker: RateLimitTracker | null;
   private healthMonitor: HealthMonitor | null;
+  private warnedDeprecatedModels: Set<string> = new Set();
 
   constructor(options: GemBackOptions) {
     if (!options.apiKey && (!options.apiKeys || options.apiKeys.length === 0)) {
@@ -75,6 +77,11 @@ export class GemBack {
       failureCount: 0,
       apiKeyStats: this.apiKeyRotator ? this.apiKeyRotator.getStats() : undefined,
     };
+
+    // Check for deprecated models in fallback order
+    for (const model of this.options.fallbackOrder) {
+      this.checkDeprecatedModel(model);
+    }
   }
 
   /**
@@ -125,6 +132,9 @@ export class GemBack {
   }
 
   async generate(prompt: string, options?: GenerateOptions): Promise<GeminiResponse> {
+    if (options?.model) {
+      this.checkDeprecatedModel(options.model);
+    }
     this.stats.totalRequests++;
 
     const attempts: AttemptRecord[] = [];
@@ -248,7 +258,22 @@ export class GemBack {
     this.stats.successRate = totalAttempts > 0 ? successCount / totalAttempts : 0;
   }
 
+  private checkDeprecatedModel(model: GeminiModel): void {
+    if (this.warnedDeprecatedModels.has(model)) return;
+    const deprecation = DEPRECATED_MODELS.find((d) => d.model === model);
+    if (deprecation) {
+      this.logger.warn(
+        `Model "${model}" is scheduled for shutdown on ${deprecation.shutdownDate}. ` +
+          `Consider migrating to "${deprecation.replacement}".`
+      );
+      this.warnedDeprecatedModels.add(model);
+    }
+  }
+
   async *generateStream(prompt: string, options?: GenerateOptions): AsyncGenerator<StreamChunk> {
+    if (options?.model) {
+      this.checkDeprecatedModel(options.model);
+    }
     this.stats.totalRequests++;
 
     const attempts: AttemptRecord[] = [];
@@ -378,6 +403,9 @@ export class GemBack {
   }
 
   async generateContent(request: GenerateContentRequest): Promise<GeminiResponse> {
+    if (request.model) {
+      this.checkDeprecatedModel(request.model);
+    }
     this.stats.totalRequests++;
 
     const attempts: AttemptRecord[] = [];
@@ -508,6 +536,9 @@ export class GemBack {
   }
 
   async *generateContentStream(request: GenerateContentRequest): AsyncGenerator<StreamChunk> {
+    if (request.model) {
+      this.checkDeprecatedModel(request.model);
+    }
     this.stats.totalRequests++;
 
     const attempts: AttemptRecord[] = [];
