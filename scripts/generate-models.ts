@@ -104,7 +104,7 @@ function processModels(models: ModelMetadata[]): ProcessedModel[] {
  */
 function generateTypesFile(models: ProcessedModel[]): string {
   // Define strict default fallback order per user request
-  // Priority: gemini-3-flash-preview -> gemini-2.5-flash -> gemini-2.5-flash-lite
+  // Priority: gemini-3-flash-preview -> gemini-2.5-flash -> gemini-3.1-flash-lite-preview
   const targetFallbackOrder = [
     'gemini-3-flash-preview',
     'gemini-2.5-flash',

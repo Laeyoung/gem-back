@@ -15,13 +15,13 @@ export const DEPRECATED_MODELS: DeprecatedModelInfo[] = [
   {
     model: 'gemini-2.0-flash',
     shutdownDate: '2026-06-01',
-    replacement: 'gemini-2.5-flash',
+    replacement: 'gemini-3-flash-preview',
     reason: 'Gemini 2.0 series end of life',
   },
   {
     model: 'gemini-2.0-flash-lite',
     shutdownDate: '2026-06-01',
-    replacement: 'gemini-2.5-flash-lite',
+    replacement: 'gemini-3.1-flash-lite-preview',
     reason: 'Gemini 2.0 series end of life',
   },
   {

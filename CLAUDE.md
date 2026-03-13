@@ -79,7 +79,7 @@ npm run prepublishOnly
   - Each operation follows the same pattern: try each model in fallback order, retry with backoff, record metrics
 
 - **`GeminiClient.ts`** - Direct Gemini SDK wrapper
-  - Thin wrapper around `@google/generative-ai`
+  - Thin wrapper around `@google/genai`
   - Handles model initialization and basic API calls
   - No fallback logic (that's in FallbackClient)
 
@@ -210,7 +210,7 @@ npm run prepublishOnly
 
 ### Adding a New Gemini Model
 1. Update `GeminiModel` type in `src/types/models.ts`
-2. Add to `SUPPORTED_MODELS` array
+2. Add to `ALL_MODELS` array
 3. Update `DEFAULT_FALLBACK_ORDER` in `src/types/models.ts`
 4. Update monitoring default limits if model has different RPM limits
 5. Update README.md supported models section

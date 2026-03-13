@@ -103,7 +103,7 @@
 
 ### Adding a New Model
 1.  Update `GeminiModel` type in `src/types/models.ts` (or use `npm run update-models`).
-2.  Add to `SUPPORTED_MODELS` list.
+2.  Add to `ALL_MODELS` list.
 3.  `DEFAULT_FALLBACK_ORDER` in `src/types/models.ts` is auto-generated.
 4.  Add unit tests ensuring the new model is attempted in the chain.
 
