@@ -227,6 +227,28 @@ npm run prepublishOnly
 - Ensure predictions don't cause false positives
 - Update monitoring integration tests
 
+## Development Progress Tracking
+
+개발 진행 현황은 `docs/DEV_PROGRESS.md`에서 관리합니다.
+
+### 규칙
+- 각 작업 항목을 시작할 때 상태를 `🔧 진행 중`으로 업데이트
+- 작업 완료 시 `✅ 완료`로 업데이트
+- 검증 단계(typecheck, test, lint) 통과 여부도 반드시 기록
+- 차단 사항이 있으면 `❌ 차단됨`으로 표시하고 비고에 사유 작성
+- 이어서 작업하는 개발자가 현재 진행 상태를 즉시 파악할 수 있도록 항상 최신 상태 유지
+
+## Development Log
+
+개발 중 주요 내용과 기술적 결정 사항은 `docs/DEV_LOG.md`에 기록합니다.
+
+### 규칙
+- 최신 항목이 파일 상단에 위치 (역순 정렬)
+- 각 항목에 날짜와 대략적인 시각 기재 (예: `2026-03-14 ~15:00`)
+- Phase 진행 시 작업 내용, 기술적 결정, 검토했던 대안을 함께 기록
+- 기술적 결정에는 반드시 "검토한 대안"과 "결정 이유"를 포함
+- 검증 실패나 예상치 못한 이슈가 발생한 경우 원인과 해결 과정도 기록
+
 ## Release Process
 
 1. Update version in `package.json`
