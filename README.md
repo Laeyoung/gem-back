@@ -49,6 +49,17 @@ Gem Back supports automatic fallback across Gemini models:
 - `gemini-2.0-flash`
 - `gemini-2.0-flash-lite`
 
+**Deprecation Warnings** (v0.6.0+): Models scheduled for shutdown are automatically tracked. Enable `logLevel: 'warn'` to see deprecation warnings, or use the `DEPRECATED_MODELS` export for programmatic access.
+
+```typescript
+import { DEPRECATED_MODELS } from 'gemback';
+
+// Check which models are deprecated
+DEPRECATED_MODELS.forEach(({ model, shutdownDate, replacement }) => {
+  console.log(`${model} → ${replacement} (by ${shutdownDate})`);
+});
+```
+
 **Model Auto-Update System**: The library includes automation scripts to keep the model list current with Google's API updates. See [Contributing Guide](./CONTRIBUTING.md) for details on updating models.
 
 ---

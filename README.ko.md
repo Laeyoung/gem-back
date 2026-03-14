@@ -47,6 +47,17 @@ Gem Back은 다음 모델들의 자동 Fallback을 지원합니다:
 - `gemini-2.0-flash`
 - `gemini-2.0-flash-lite`
 
+**Deprecation 경고** (v0.6.0+): 종료 예정 모델은 자동으로 추적됩니다. `logLevel: 'warn'`을 설정하면 deprecation 경고를 확인할 수 있으며, `DEPRECATED_MODELS` export를 통해 프로그래밍적으로 접근할 수도 있습니다.
+
+```typescript
+import { DEPRECATED_MODELS } from 'gemback';
+
+// 어떤 모델이 deprecated인지 확인
+DEPRECATED_MODELS.forEach(({ model, shutdownDate, replacement }) => {
+  console.log(`${model} → ${replacement} (${shutdownDate}까지)`);
+});
+```
+
 **모델 자동 업데이트**: 이 라이브러리는 Google API 업데이트에 맞춰 모델 목록을 최신화하는 자동화 스크립트를 포함하고 있습니다. 상세 내용은 [Contributing Guide](./CONTRIBUTING.md)를 참조하세요.
 
 ---
