@@ -3,6 +3,10 @@ import type { GeminiModel } from '../types/models';
 /**
  * Deprecated model information
  * Models that are scheduled for shutdown with replacement recommendations
+ *
+ * Note: Preview models (e.g. gemini-3-flash-preview, gemini-3.1-pro-preview)
+ * are inherently unstable and may be removed by Google without prior deprecation
+ * notice. This list only tracks officially announced deprecation schedules.
  */
 export interface DeprecatedModelInfo {
   model: GeminiModel;

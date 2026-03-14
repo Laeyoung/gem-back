@@ -64,7 +64,7 @@ Advanced image/video editing and manipulation capabilities.
 - Created `scripts/fetch-models.ts` (181 lines) for API integration
 - Created `scripts/generate-models.ts` (294 lines) for code generation
 - Added `ALL_MODELS` constant to eliminate hardcoded references
-- Added `gemini-3-pro-preview` support (optional, not in default fallback)
+- Added `gemini-3.1-pro-preview` and `gemini-3.1-flash-lite-preview` support (optional, not in default fallback)
 - Reduced model update time from 30+ minutes to <5 minutes
 - Infrastructure ready for `list()` method implementation
 

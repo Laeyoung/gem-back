@@ -168,6 +168,33 @@ describe('Deprecation warnings', () => {
       expect(warnings).toHaveLength(1);
       warnSpy.mockRestore();
     });
+
+    it('should warn when generateContentStream() is called with a deprecated model', async () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      async function* mockStream() {
+        yield { text: 'ok' };
+      }
+      mockGeminiClient.generateContentStream = vi.fn().mockReturnValue(mockStream());
+
+      const client = new GemBack({
+        apiKey: 'test-key',
+        fallbackOrder: ['gemini-3-flash-preview'],
+        logLevel: 'warn',
+      });
+
+      for await (const _ of client.generateContentStream({
+        contents: [{ role: 'user', parts: [{ text: 'Hello' }] }],
+        model: 'gemini-2.0-flash',
+      })) {
+        // consume
+      }
+
+      const warnings = warnSpy.mock.calls.filter(
+        c => typeof c[0] === 'string' && c[0].includes('gemini-2.0-flash')
+      );
+      expect(warnings).toHaveLength(1);
+      warnSpy.mockRestore();
+    });
   });
 
   describe('deduplication across paths', () => {

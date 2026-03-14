@@ -5,7 +5,7 @@
 [![npm version](https://badge.fury.io/js/gemback.svg)](https://www.npmjs.com/package/gemback)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/tests-247%20passing-brightgreen.svg)](https://github.com/Laeyoung/gem-back)
+[![Tests](https://img.shields.io/badge/tests-248%20passing-brightgreen.svg)](https://github.com/Laeyoung/gem-back)
 
 **Gem Back**은 Google Gemini API의 RPM(Requests Per Minute) 제한을 자동으로 처리하는 Fallback 시스템과 프로덕션급 모니터링 기능을 제공하는 NPM 라이브러리입니다.
 
@@ -26,7 +26,7 @@ Gemini API는 무료 티어에서 **RPM(분당 요청 수) 제한**이 있어, �
 - ✅ **제로 설정**: 기본 설정만으로 바로 사용 가능
 - ✅ **완벽한 타입 지원**: TypeScript로 작성되어 자동완성 지원
 - ✅ **이중 모듈**: CommonJS + ESM 동시 지원
-- ✅ **완전한 테스트**: 235개 테스트로 검증된 안정성
+- ✅ **완전한 테스트**: 248개 테스트로 검증된 안정성
 - ✅ **모니터링 & 추적**: Rate limiting 예측 및 모델 Health 모니터링
 
 ---
@@ -216,8 +216,8 @@ console.log(stats.monitoring?.summary);
 ### 1. 자동 Fallback
 
 ```typescript
-// gemini-2.5-flash가 RPM 제한에 걸리면
-// 자동으로 gemini-2.5-flash-lite로 전환
+// 모델이 RPM 제한에 걸리면 자동으로 다음 모델로 전환
+// (예: gemini-3-flash-preview → gemini-2.5-flash → gemini-3.1-flash-lite-preview)
 const response = await client.generate('복잡한 질문');
 ```
 
@@ -254,8 +254,8 @@ console.log(stats);
 //   successRate: 0.95,
 //   failureCount: 5,
 //   modelUsage: {
-//     'gemini-2.5-flash': 70,
-//     'gemini-2.5-flash-lite': 30
+//     'gemini-3-flash-preview': 70,
+//     'gemini-2.5-flash': 30
 //   },
 //   apiKeyStats: [  // 멀티 키 모드일 때만 제공
 //     {
@@ -640,8 +640,9 @@ const client = new GemBack({
 
   // 사용할 모델만 지정
   fallbackOrder: [
+    'gemini-3-flash-preview',
     'gemini-2.5-flash',
-    'gemini-2.5-flash-lite'
+    'gemini-3.1-flash-lite-preview'
   ],
 
   // 재시도 설정
@@ -670,7 +671,7 @@ const client = new GemBack({
   enableRateLimitPrediction: true,       // Rate limit 예측 경고
 
   // 기본 설정
-  fallbackOrder: ['gemini-2.5-flash', 'gemini-2.5-flash-lite'],
+  fallbackOrder: ['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-3.1-flash-lite-preview'],
   maxRetries: 2,
   timeout: 30000,
   logLevel: 'info'
@@ -704,11 +705,11 @@ const client = new GemBack({
 ### 기본 로깅 (`debug: true`)
 
 ```
-[GemBack] Attempting: gemini-2.5-flash
-[GemBack] Failed (429 RPM Limit): gemini-2.5-flash
-[GemBack] Fallback to: gemini-2.5-flash-lite
-[GemBack] Retry attempt 1/2: gemini-2.5-flash-lite
-[GemBack] Success: gemini-2.5-flash-lite (2nd attempt)
+[GemBack] Attempting: gemini-3-flash-preview
+[GemBack] Failed (429 RPM Limit): gemini-3-flash-preview
+[GemBack] Fallback to: gemini-2.5-flash
+[GemBack] Retry attempt 1/2: gemini-2.5-flash
+[GemBack] Success: gemini-2.5-flash (2nd attempt)
 ```
 
 ### 모니터링 활성화 시 (`enableMonitoring: true`)
@@ -799,7 +800,7 @@ Phase 2.5에서는 Google GenAI SDK의 고급 콘텐츠 생성 기능을 완벽�
   - TypeScript 인터페이스와 타입 안전하게 통합
 
 **Phase 2.5 주요 성과:**
-- ✅ 235개의 포괄적인 테스트 (Phase 2 대비 42% 증가)
+- ✅ 248개의 포괄적인 테스트
 - ✅ 4가지 주요 기능 추가 (Function Calling, System Instructions, Safety Settings, JSON Mode)
 - ✅ ESLint 완전 클린 (20 에러 → 0 에러)
 - ✅ TypeScript strict mode 100% 준수
