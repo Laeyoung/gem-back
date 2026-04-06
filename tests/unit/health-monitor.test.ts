@@ -330,8 +330,8 @@ describe('HealthMonitor', () => {
       monitor.recordRequest('gemini-2.5-flash', 1000, true);
       const allHealth = monitor.getAllHealth();
 
-      expect(allHealth.length).toBeGreaterThanOrEqual(7);
-      expect(allHealth.map((h) => h.model)).toContain('gemini-3-pro-preview');
+      expect(allHealth.length).toBeGreaterThanOrEqual(8);
+      expect(allHealth.map((h) => h.model)).toContain('gemini-3.1-pro-preview');
       expect(allHealth.map((h) => h.model)).toContain('gemini-3-flash-preview');
       expect(allHealth.map((h) => h.model)).toContain('gemini-2.5-flash');
       expect(allHealth.map((h) => h.model)).toContain('gemini-2.5-flash-lite');

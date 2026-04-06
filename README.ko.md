@@ -5,7 +5,7 @@
 [![npm version](https://badge.fury.io/js/gemback.svg)](https://www.npmjs.com/package/gemback)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/tests-235%20passing-brightgreen.svg)](https://github.com/Laeyoung/gem-back)
+[![Tests](https://img.shields.io/badge/tests-248%20passing-brightgreen.svg)](https://github.com/Laeyoung/gem-back)
 
 **Gem Back**은 Google Gemini API의 RPM(Requests Per Minute) 제한을 자동으로 처리하는 Fallback 시스템과 프로덕션급 모니터링 기능을 제공하는 NPM 라이브러리입니다.
 
@@ -26,7 +26,7 @@ Gemini API는 무료 티어에서 **RPM(분당 요청 수) 제한**이 있어, �
 - ✅ **제로 설정**: 기본 설정만으로 바로 사용 가능
 - ✅ **완벽한 타입 지원**: TypeScript로 작성되어 자동완성 지원
 - ✅ **이중 모듈**: CommonJS + ESM 동시 지원
-- ✅ **완전한 테스트**: 235개 테스트로 검증된 안정성
+- ✅ **완전한 테스트**: 248개 테스트로 검증된 안정성
 - ✅ **모니터링 & 추적**: Rate limiting 예측 및 모델 Health 모니터링
 
 ---
@@ -38,13 +38,25 @@ Gem Back은 다음 모델들의 자동 Fallback을 지원합니다:
 **기본 Fallback 체인** (무료 티어 최적화):
 1. `gemini-3-flash-preview` (무료 쿼터 제공) ⚠️
 2. `gemini-2.5-flash` (안정적, 고성능)
-3. `gemini-2.5-flash-lite` (경량 Fallback)
+3. `gemini-3.1-flash-lite-preview` (경량 Fallback) ⚠️
 
 **기타 지원 모델**:
-- `gemini-3-pro-preview`
+- `gemini-3.1-pro-preview`
 - `gemini-2.5-pro`
+- `gemini-2.5-flash-lite`
 - `gemini-2.0-flash`
 - `gemini-2.0-flash-lite`
+
+**Deprecation 경고** (v0.6.0+): 종료 예정 모델은 자동으로 추적됩니다. `logLevel: 'warn'`을 설정하면 deprecation 경고를 확인할 수 있으며, `DEPRECATED_MODELS` export를 통해 프로그래밍적으로 접근할 수도 있습니다.
+
+```typescript
+import { DEPRECATED_MODELS } from 'gemback';
+
+// 어떤 모델이 deprecated인지 확인
+DEPRECATED_MODELS.forEach(({ model, shutdownDate, replacement }) => {
+  console.log(`${model} → ${replacement} (${shutdownDate}까지)`);
+});
+```
 
 **모델 자동 업데이트**: 이 라이브러리는 Google API 업데이트에 맞춰 모델 목록을 최신화하는 자동화 스크립트를 포함하고 있습니다. 상세 내용은 [Contributing Guide](./CONTRIBUTING.md)를 참조하세요.
 
@@ -215,8 +227,8 @@ console.log(stats.monitoring?.summary);
 ### 1. 자동 Fallback
 
 ```typescript
-// gemini-2.5-flash가 RPM 제한에 걸리면
-// 자동으로 gemini-2.5-flash-lite로 전환
+// 모델이 RPM 제한에 걸리면 자동으로 다음 모델로 전환
+// (예: gemini-3-flash-preview → gemini-2.5-flash → gemini-3.1-flash-lite-preview)
 const response = await client.generate('복잡한 질문');
 ```
 
@@ -253,8 +265,8 @@ console.log(stats);
 //   successRate: 0.95,
 //   failureCount: 5,
 //   modelUsage: {
-//     'gemini-2.5-flash': 70,
-//     'gemini-2.5-flash-lite': 30
+//     'gemini-3-flash-preview': 70,
+//     'gemini-2.5-flash': 30
 //   },
 //   apiKeyStats: [  // 멀티 키 모드일 때만 제공
 //     {
@@ -639,8 +651,9 @@ const client = new GemBack({
 
   // 사용할 모델만 지정
   fallbackOrder: [
+    'gemini-3-flash-preview',
     'gemini-2.5-flash',
-    'gemini-2.5-flash-lite'
+    'gemini-3.1-flash-lite-preview'
   ],
 
   // 재시도 설정
@@ -669,7 +682,7 @@ const client = new GemBack({
   enableRateLimitPrediction: true,       // Rate limit 예측 경고
 
   // 기본 설정
-  fallbackOrder: ['gemini-2.5-flash', 'gemini-2.5-flash-lite'],
+  fallbackOrder: ['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-3.1-flash-lite-preview'],
   maxRetries: 2,
   timeout: 30000,
   logLevel: 'info'
@@ -703,11 +716,11 @@ const client = new GemBack({
 ### 기본 로깅 (`debug: true`)
 
 ```
-[GemBack] Attempting: gemini-2.5-flash
-[GemBack] Failed (429 RPM Limit): gemini-2.5-flash
-[GemBack] Fallback to: gemini-2.5-flash-lite
-[GemBack] Retry attempt 1/2: gemini-2.5-flash-lite
-[GemBack] Success: gemini-2.5-flash-lite (2nd attempt)
+[GemBack] Attempting: gemini-3-flash-preview
+[GemBack] Failed (429 RPM Limit): gemini-3-flash-preview
+[GemBack] Fallback to: gemini-2.5-flash
+[GemBack] Retry attempt 1/2: gemini-2.5-flash
+[GemBack] Success: gemini-2.5-flash (2nd attempt)
 ```
 
 ### 모니터링 활성화 시 (`enableMonitoring: true`)
@@ -798,7 +811,7 @@ Phase 2.5에서는 Google GenAI SDK의 고급 콘텐츠 생성 기능을 완벽�
   - TypeScript 인터페이스와 타입 안전하게 통합
 
 **Phase 2.5 주요 성과:**
-- ✅ 235개의 포괄적인 테스트 (Phase 2 대비 42% 증가)
+- ✅ 248개의 포괄적인 테스트
 - ✅ 4가지 주요 기능 추가 (Function Calling, System Instructions, Safety Settings, JSON Mode)
 - ✅ ESLint 완전 클린 (20 에러 → 0 에러)
 - ✅ TypeScript strict mode 100% 준수

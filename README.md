@@ -5,7 +5,7 @@
 [![npm version](https://badge.fury.io/js/gemback.svg)](https://www.npmjs.com/package/gemback)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/tests-216%20passing-brightgreen.svg)](https://github.com/Laeyoung/gem-back)
+[![Tests](https://img.shields.io/badge/tests-248%20passing-brightgreen.svg)](https://github.com/Laeyoung/gem-back)
 
 **Gem Back** is an NPM library that provides an intelligent fallback system and production-grade monitoring for Google Gemini API, automatically handling RPM (Requests Per Minute) rate limits.
 
@@ -28,7 +28,7 @@ The Gemini API has **RPM (Requests Per Minute) limits** on the free tier, causin
 - ✅ **Zero Configuration**: Works out of the box with sensible defaults
 - ✅ **Full TypeScript Support**: Complete type definitions and autocomplete
 - ✅ **Dual Module Format**: CommonJS + ESM support
-- ✅ **Extensively Tested**: 216 tests verify reliability
+- ✅ **Extensively Tested**: 248 tests verify reliability
 - ✅ **Monitoring & Tracking**: Rate limit prediction and model health monitoring
 
 ---
@@ -40,13 +40,25 @@ Gem Back supports automatic fallback across Gemini models:
 **Default Fallback Chain** (Optimized for Free Tier):
 1. `gemini-3-flash-preview` (Free quota available) ⚠️
 2. `gemini-2.5-flash` (Stable, high performance)
-3. `gemini-2.5-flash-lite` (Lightweight fallback)
+3. `gemini-3.1-flash-lite-preview` (Lightweight fallback) ⚠️
 
 **Other Supported Models**:
-- `gemini-3-pro-preview`
+- `gemini-3.1-pro-preview`
 - `gemini-2.5-pro`
+- `gemini-2.5-flash-lite`
 - `gemini-2.0-flash`
 - `gemini-2.0-flash-lite`
+
+**Deprecation Warnings** (v0.6.0+): Models scheduled for shutdown are automatically tracked. Enable `logLevel: 'warn'` to see deprecation warnings, or use the `DEPRECATED_MODELS` export for programmatic access.
+
+```typescript
+import { DEPRECATED_MODELS } from 'gemback';
+
+// Check which models are deprecated
+DEPRECATED_MODELS.forEach(({ model, shutdownDate, replacement }) => {
+  console.log(`${model} → ${replacement} (by ${shutdownDate})`);
+});
+```
 
 **Model Auto-Update System**: The library includes automation scripts to keep the model list current with Google's API updates. See [Contributing Guide](./CONTRIBUTING.md) for details on updating models.
 
@@ -88,9 +100,9 @@ console.log(response.text);
 const client = new GemBack({
   apiKey: process.env.GEMINI_API_KEY,
   fallbackOrder: [
-    'gemini-3-pro-preview',  // Optional: Include preview models explicitly
+    'gemini-3.1-pro-preview',  // Optional: Include preview models explicitly
     'gemini-2.5-flash',
-    'gemini-2.5-flash-lite'
+    'gemini-3.1-flash-lite-preview'
   ],
   maxRetries: 3,
   timeout: 30000,
@@ -218,8 +230,8 @@ console.log(stats.monitoring?.summary);
 ### 1. Automatic Fallback
 
 ```typescript
-// Automatically falls back to gemini-2.5-flash-lite
-// when gemini-2.5-flash hits rate limit
+// Automatically falls back through the fallback chain
+// when a model hits rate limit (e.g. gemini-3-flash-preview → gemini-2.5-flash → gemini-3.1-flash-lite-preview)
 const response = await client.generate('Complex question');
 ```
 
@@ -256,8 +268,8 @@ console.log(stats);
 //   successRate: 0.95,
 //   failureCount: 5,
 //   modelUsage: {
-//     'gemini-2.5-flash': 70,
-//     'gemini-2.5-flash-lite': 30
+//     'gemini-3-flash-preview': 70,
+//     'gemini-2.5-flash': 30
 //   },
 //   apiKeyStats: [  // Only in multi-key mode
 //     {
@@ -676,8 +688,9 @@ const client = new GemBack({
 
   // Specify models to use
   fallbackOrder: [
+    'gemini-3-flash-preview',
     'gemini-2.5-flash',
-    'gemini-2.5-flash-lite'
+    'gemini-3.1-flash-lite-preview'
   ],
 
   // Retry settings
@@ -706,7 +719,7 @@ const client = new GemBack({
   enableRateLimitPrediction: true,       // Rate limit prediction warnings
 
   // Base settings
-  fallbackOrder: ['gemini-2.5-flash', 'gemini-2.5-flash-lite'],
+  fallbackOrder: ['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-3.1-flash-lite-preview'],
   maxRetries: 2,
   timeout: 30000,
   logLevel: 'info'
@@ -740,11 +753,11 @@ const client = new GemBack({
 ### Basic Logging (`debug: true`)
 
 ```
-[GemBack] Attempting: gemini-2.5-flash
-[GemBack] Failed (429 RPM Limit): gemini-2.5-flash
-[GemBack] Fallback to: gemini-2.5-flash-lite
-[GemBack] Retry attempt 1/2: gemini-2.5-flash-lite
-[GemBack] Success: gemini-2.5-flash-lite (2nd attempt)
+[GemBack] Attempting: gemini-3-flash-preview
+[GemBack] Failed (429 RPM Limit): gemini-3-flash-preview
+[GemBack] Fallback to: gemini-2.5-flash
+[GemBack] Retry attempt 1/2: gemini-2.5-flash
+[GemBack] Success: gemini-2.5-flash (2nd attempt)
 ```
 
 ### With Monitoring Enabled (`enableMonitoring: true`)
@@ -836,7 +849,7 @@ Phase 2.5 adds production-grade content generation features from the Google GenA
   - Structured data extraction and API response formatting
 
 **Phase 2.5 Achievements:**
-- ✅ 216 comprehensive tests (31% increase from Phase 2)
+- ✅ 248 comprehensive tests
 - ✅ Full GenAI SDK compatibility for all advanced features
 - ✅ Production-ready content safety controls
 - ✅ Type-safe structured outputs with schema validation

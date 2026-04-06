@@ -28,7 +28,7 @@ describe('GemBack', () => {
       const stats = client.getFallbackStats();
       expect(stats.modelUsage).toHaveProperty('gemini-3-flash-preview');
       expect(stats.modelUsage).toHaveProperty('gemini-2.5-flash');
-      expect(stats.modelUsage).toHaveProperty('gemini-2.5-flash-lite');
+      expect(stats.modelUsage).toHaveProperty('gemini-3.1-flash-lite-preview');
     });
 
     it('should accept custom fallback order', () => {
@@ -99,7 +99,7 @@ describe('GemBack', () => {
         expect((err as GeminiBackError).message).toContain('All models failed');
       }
 
-      // Should have tried all default fallback models (currently 3: gemini-3-flash-preview, gemini-2.5-flash, gemini-2.5-flash-lite)
+      // Should have tried all default fallback models (currently 3: gemini-3-flash-preview, gemini-2.5-flash, gemini-3.1-flash-lite-preview)
       expect(mockGeminiClient.generate).toHaveBeenCalledTimes(3);
     });
 
@@ -237,7 +237,7 @@ describe('GemBack', () => {
       // Verify some key models are present in usage stats
       expect(stats.modelUsage).toHaveProperty('gemini-3-flash-preview', 0);
       expect(stats.modelUsage).toHaveProperty('gemini-2.5-flash', 0);
-      expect(stats.modelUsage).toHaveProperty('gemini-2.5-flash-lite', 0);
+      expect(stats.modelUsage).toHaveProperty('gemini-3.1-flash-lite-preview', 0);
       expect(stats.failureCount).toBe(0);
       expect(stats.apiKeyStats).toBeUndefined();
     });

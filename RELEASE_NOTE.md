@@ -1,3 +1,157 @@
+# 🎉 Release v0.6.0 - Gemini 3.1 Models & Deprecation Warning System
+
+**Release Date**: 2026-03-14
+**Package**: `gemback`
+**NPM**: https://www.npmjs.com/package/gemback
+**Repository**: https://github.com/Laeyoung/gem-back
+
+---
+
+## 📦 Overview
+
+**gemback v0.6.0** updates the supported Gemini model lineup and introduces a deprecation warning system. With Google shutting down `gemini-3-pro-preview` and scheduling end-of-life for Gemini 2.0/2.5 series, this release adds the new Gemini 3.1 models, removes the shutdown model, and proactively warns users about upcoming deprecations.
+
+---
+
+## ✨ What's New
+
+### 🤖 1. New Gemini 3.1 Models
+
+Two new preview models added to the supported model list:
+
+- **`gemini-3.1-pro-preview`** - Advanced intelligence, complex problem-solving with powerful agentic and coding capabilities (replaces `gemini-3-pro-preview`)
+- **`gemini-3.1-flash-lite-preview`** - Most cost-efficient model, optimized for low latency high-volume use cases
+
+**Updated Supported Models (8 total):**
+```
+gemini-2.5-flash          (stable - shutdown 2026-06-17)
+gemini-2.5-pro            (stable - shutdown 2026-06-17)
+gemini-2.5-flash-lite     (stable - shutdown 2026-07-22)
+gemini-2.0-flash          (stable - shutdown 2026-06-01)
+gemini-2.0-flash-lite     (stable - shutdown 2026-06-01)
+gemini-3-flash-preview    (preview - active)
+gemini-3.1-pro-preview    (preview - NEW)
+gemini-3.1-flash-lite-preview (preview - NEW)
+```
+
+---
+
+### ⚠️ 2. Deprecation Warning System
+
+Automatic warnings when using models scheduled for shutdown.
+
+**Key Features:**
+- Constructor warns when `fallbackOrder` contains deprecated models
+- Per-request warnings when `options.model` specifies a deprecated model (once per model)
+- `DEPRECATED_MODELS` constant exported for programmatic access
+- `DeprecatedModelInfo` type for type-safe deprecation metadata
+
+**Example:**
+```typescript
+import { GemBack, DEPRECATED_MODELS } from 'gemback';
+
+// Enable deprecation warnings with logLevel: 'warn'
+const client = new GemBack({
+  apiKey: 'your-key',
+  logLevel: 'warn',
+});
+// Logs: Model "gemini-2.5-flash" is scheduled for shutdown on 2026-06-17.
+//       Consider migrating to "gemini-3-flash-preview".
+
+// Programmatic access to deprecation info
+DEPRECATED_MODELS.forEach(({ model, shutdownDate, replacement }) => {
+  console.log(`${model} → ${replacement} (by ${shutdownDate})`);
+});
+```
+
+**Deprecated Models:**
+| Model | Shutdown Date | Replacement |
+|-------|--------------|-------------|
+| `gemini-2.0-flash` | 2026-06-01 | `gemini-2.5-flash` |
+| `gemini-2.0-flash-lite` | 2026-06-01 | `gemini-2.5-flash-lite` |
+| `gemini-2.5-flash` | 2026-06-17 | `gemini-3-flash-preview` |
+| `gemini-2.5-pro` | 2026-06-17 | `gemini-3.1-pro-preview` |
+| `gemini-2.5-flash-lite` | 2026-07-22 | `gemini-3.1-flash-lite-preview` |
+
+---
+
+### 🔄 3. Updated Default Fallback Order
+
+```
+gemini-3-flash-preview → gemini-2.5-flash → gemini-3.1-flash-lite-preview
+```
+
+The 3rd fallback changed from `gemini-2.5-flash-lite` to `gemini-3.1-flash-lite-preview` because:
+- `gemini-3.1-flash-lite-preview` is newer and actively maintained
+- `gemini-2.5-flash-lite` is scheduled for shutdown on 2026-07-22
+
+> **Note:** Two preview models are now in the default fallback order. This is unavoidable as all stable models are scheduled for deprecation. For production use, explicitly specify your own `fallbackOrder`.
+
+---
+
+## 🔧 Internal Improvements
+
+- Fixed `extractVersion()` regex in `generate-models.ts` to handle major-only versions (e.g., `gemini-3-flash-preview`)
+- Fixed `fetch-models.ts` filtering to include all models within the latest major version
+- Updated `MODEL_PRIORITY` and `MODEL_INFO` for new models
+
+---
+
+## 📊 Testing & Validation
+
+**Test Status:**
+- ✅ **248 tests** passing (5.5% increase from v0.5.0)
+- ✅ **18 test files** with comprehensive scenarios
+- ✅ New test file: `tests/unit/deprecated.test.ts` - 10 tests for deprecation system
+- ✅ All existing tests updated for new model lineup
+
+---
+
+## 📋 Migration Guide
+
+### Upgrading to v0.6.0
+
+```bash
+npm install gemback@0.6.0
+# or
+yarn upgrade gemback@0.6.0
+# or
+pnpm update gemback@0.6.0
+```
+
+### Breaking Changes
+
+1. **`gemini-3-pro-preview` removed**: This model was shut down on 2026-03-09. Replace with `gemini-3.1-pro-preview`.
+   ```typescript
+   // Before
+   fallbackOrder: ['gemini-3-pro-preview', 'gemini-2.5-flash']
+   // After
+   fallbackOrder: ['gemini-3.1-pro-preview', 'gemini-2.5-flash']
+   ```
+
+2. **Default fallback order changed**: 3rd model is now `gemini-3.1-flash-lite-preview` instead of `gemini-2.5-flash-lite`. Set explicit `fallbackOrder` to keep old behavior.
+
+3. **Deprecation warnings**: Set `logLevel: 'warn'` to see deprecation warnings (default `logLevel` is `'error'`).
+   ```typescript
+   const client = new GemBack({
+     apiKey: 'your-key',
+     logLevel: 'warn',  // required to see deprecation warnings
+   });
+   ```
+
+---
+
+## 🔗 Links
+
+- **NPM Package**: https://www.npmjs.com/package/gemback
+- **GitHub Repository**: https://github.com/Laeyoung/gem-back
+- **Full CHANGELOG**: [CHANGELOG.md](./CHANGELOG.md)
+- **Documentation**: [README.md](./README.md)
+
+---
+
+---
+
 # 🎉 Release v0.5.0 - Production-Grade Content Generation
 
 **Release Date**: 2026-01-01

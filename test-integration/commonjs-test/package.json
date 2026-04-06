@@ -12,6 +12,6 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "gemback": "file:../../gemback-0.5.0.tgz"
+    "gemback": "file:../../gemback-0.6.0.tgz"
   }
 }

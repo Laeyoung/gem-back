@@ -14,17 +14,20 @@ export type GeminiModel =
   | 'gemini-2.0-flash-lite'
   /** ⚠️ PREVIEW - Gemini 3 Flash Preview */
   | 'gemini-3-flash-preview'
-  /** ⚠️ PREVIEW - Gemini 3 Pro Preview */
-  | 'gemini-3-pro-preview';
+  /** ⚠️ PREVIEW - Gemini 3.1 Pro Preview */
+  | 'gemini-3.1-pro-preview'
+  /** ⚠️ PREVIEW - Gemini 3.1 Flash-Lite Preview */
+  | 'gemini-3.1-flash-lite-preview';
 
 /**
- * Default fallback order for stable models
- * Preview and experimental models must be explicitly specified
+ * Default fallback order
+ * Note: Includes preview models because all stable models are scheduled for deprecation.
+ * For production use, explicitly specify your own fallbackOrder.
  */
 export const DEFAULT_FALLBACK_ORDER: GeminiModel[] = [
   'gemini-3-flash-preview',
   'gemini-2.5-flash',
-  'gemini-2.5-flash-lite',
+  'gemini-3.1-flash-lite-preview',
 ];
 
 /**
@@ -37,5 +40,6 @@ export const ALL_MODELS: GeminiModel[] = [
   'gemini-2.0-flash',
   'gemini-2.0-flash-lite',
   'gemini-3-flash-preview',
-  'gemini-3-pro-preview',
+  'gemini-3.1-pro-preview',
+  'gemini-3.1-flash-lite-preview',
 ];

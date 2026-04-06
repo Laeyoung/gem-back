@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { ALL_MODELS, DEFAULT_FALLBACK_ORDER, GeminiModel } from '../../src/types/models';
+import { DEPRECATED_MODELS } from '../../src/config/deprecated';
 
 describe('Model Definitions', () => {
   it('should export ALL_MODELS as an array of strings', () => {
     expect(Array.isArray(ALL_MODELS)).toBe(true);
-    expect(ALL_MODELS.length).toBeGreaterThan(0);
+    expect(ALL_MODELS).toHaveLength(8);
     ALL_MODELS.forEach((model) => {
       expect(typeof model).toBe('string');
     });
@@ -14,7 +15,10 @@ describe('Model Definitions', () => {
     expect(ALL_MODELS).toContain('gemini-2.5-flash');
     expect(ALL_MODELS).toContain('gemini-2.5-flash-lite');
     // Preview models
-    expect(ALL_MODELS).toContain('gemini-3-pro-preview');
+    expect(ALL_MODELS).toContain('gemini-3.1-pro-preview');
+    expect(ALL_MODELS).toContain('gemini-3.1-flash-lite-preview');
+    // Removed models
+    expect(ALL_MODELS).not.toContain('gemini-3-pro-preview');
   });
 
   it('should ensure DEFAULT_FALLBACK_ORDER is a subset of ALL_MODELS', () => {
@@ -23,8 +27,27 @@ describe('Model Definitions', () => {
     });
   });
 
-  it('should not include preview models in DEFAULT_FALLBACK_ORDER', () => {
-    // gemini-3-pro-preview is marked as preview/unstable in documentation
+  it('should not include shutdown models in DEFAULT_FALLBACK_ORDER', () => {
     expect(DEFAULT_FALLBACK_ORDER).not.toContain('gemini-3-pro-preview');
+  });
+});
+
+describe('DEPRECATED_MODELS', () => {
+  it('should have all deprecated models in ALL_MODELS', () => {
+    DEPRECATED_MODELS.forEach(({ model }) => {
+      expect(ALL_MODELS).toContain(model);
+    });
+  });
+
+  it('should have all replacement models in ALL_MODELS', () => {
+    DEPRECATED_MODELS.forEach(({ replacement }) => {
+      expect(ALL_MODELS).toContain(replacement);
+    });
+  });
+
+  it('should have valid shutdown dates', () => {
+    DEPRECATED_MODELS.forEach(({ shutdownDate }) => {
+      expect(Date.parse(shutdownDate)).not.toBeNaN();
+    });
   });
 });

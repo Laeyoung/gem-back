@@ -79,7 +79,7 @@ npm run prepublishOnly
   - Each operation follows the same pattern: try each model in fallback order, retry with backoff, record metrics
 
 - **`GeminiClient.ts`** - Direct Gemini SDK wrapper
-  - Thin wrapper around `@google/generative-ai`
+  - Thin wrapper around `@google/genai`
   - Handles model initialization and basic API calls
   - No fallback logic (that's in FallbackClient)
 
@@ -132,7 +132,7 @@ npm run prepublishOnly
   - `GeminiBackError` - Main error class with attempt records
 
 - **`models.ts`** - Supported model enum
-  - Currently: `gemini-2.5-flash` and `gemini-2.5-flash-lite`
+  - 8 models: gemini-2.5-flash, gemini-2.5-pro, gemini-2.5-flash-lite, gemini-2.0-flash, gemini-2.0-flash-lite, gemini-3-flash-preview, gemini-3.1-pro-preview, gemini-3.1-flash-lite-preview
 
 ### Key Architectural Patterns
 
@@ -190,9 +190,10 @@ npm run prepublishOnly
 - Tracking uses sliding 5-minute window for trend analysis
 
 ### Model Support
-- Only 2 models currently supported (as of v0.3.1)
+- 8 models currently supported (as of v0.6.0)
 - Models removed from fallback when deprecated (see git history)
-- Default fallback order defined in `src/config/defaults.ts`
+- Default fallback order defined in `src/types/models.ts`
+- Deprecated model info in `src/config/deprecated.ts`
 
 ### Streaming Behavior
 - Streaming uses async generators (`AsyncGenerator<StreamChunk>`)
@@ -209,8 +210,8 @@ npm run prepublishOnly
 
 ### Adding a New Gemini Model
 1. Update `GeminiModel` type in `src/types/models.ts`
-2. Add to `SUPPORTED_MODELS` array
-3. Update `DEFAULT_FALLBACK_ORDER` in `src/config/defaults.ts`
+2. Add to `ALL_MODELS` array
+3. Update `DEFAULT_FALLBACK_ORDER` in `src/types/models.ts`
 4. Update monitoring default limits if model has different RPM limits
 5. Update README.md supported models section
 6. Add tests for new model
@@ -226,6 +227,28 @@ npm run prepublishOnly
 - Thresholds: `warningThreshold` (80%), `predictionThreshold` (90%)
 - Ensure predictions don't cause false positives
 - Update monitoring integration tests
+
+## Development Progress Tracking
+
+개발 진행 현황은 `docs/DEV_PROGRESS.md`에서 관리합니다.
+
+### 규칙
+- 각 작업 항목을 시작할 때 상태를 `🔧 진행 중`으로 업데이트
+- 작업 완료 시 `✅ 완료`로 업데이트
+- 검증 단계(typecheck, test, lint) 통과 여부도 반드시 기록
+- 차단 사항이 있으면 `❌ 차단됨`으로 표시하고 비고에 사유 작성
+- 이어서 작업하는 개발자가 현재 진행 상태를 즉시 파악할 수 있도록 항상 최신 상태 유지
+
+## Development Log
+
+개발 중 주요 내용과 기술적 결정 사항은 `docs/DEV_LOG.md`에 기록합니다.
+
+### 규칙
+- 최신 항목이 파일 상단에 위치 (역순 정렬)
+- 각 항목에 날짜와 대략적인 시각 기재 (예: `2026-03-14 ~15:00`)
+- Phase 진행 시 작업 내용, 기술적 결정, 검토했던 대안을 함께 기록
+- 기술적 결정에는 반드시 "검토한 대안"과 "결정 이유"를 포함
+- 검증 실패나 예상치 못한 이슈가 발생한 경우 원인과 해결 과정도 기록
 
 ## Release Process
 
