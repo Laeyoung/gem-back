@@ -12,7 +12,7 @@ describe('HealthMonitor', () => {
 
   describe('Request Recording', () => {
     it('should record successful requests', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-3.5-flash';
 
       monitor.recordRequest(model, 1000, true);
       monitor.recordRequest(model, 1500, true);
@@ -27,7 +27,7 @@ describe('HealthMonitor', () => {
     });
 
     it('should record failed requests', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-3.5-flash';
 
       monitor.recordRequest(model, 1000, true);
       monitor.recordRequest(model, 500, false, '500 Server error');
@@ -42,7 +42,7 @@ describe('HealthMonitor', () => {
     });
 
     it('should track consecutive failures', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-3.5-flash';
 
       monitor.recordRequest(model, 1000, false);
       monitor.recordRequest(model, 1000, false);
@@ -53,7 +53,7 @@ describe('HealthMonitor', () => {
     });
 
     it('should reset consecutive failures on success', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-3.5-flash';
 
       monitor.recordRequest(model, 1000, false);
       monitor.recordRequest(model, 1000, false);
@@ -64,7 +64,7 @@ describe('HealthMonitor', () => {
     });
 
     it('should track timeouts separately', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-3.5-flash';
 
       monitor.recordRequest(model, 1000, false, 'Request timeout');
       monitor.recordRequest(model, 1000, false, 'Network timeout');
@@ -77,7 +77,7 @@ describe('HealthMonitor', () => {
 
   describe('Health Status Determination', () => {
     it('should mark as healthy with high success rate', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-3.5-flash';
 
       // 96% success rate, fast responses
       for (let i = 0; i < 96; i++) {
@@ -93,7 +93,7 @@ describe('HealthMonitor', () => {
     });
 
     it('should mark as degraded with moderate success rate', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-3.5-flash';
 
       // 85% success rate
       for (let i = 0; i < 85; i++) {
@@ -109,7 +109,7 @@ describe('HealthMonitor', () => {
     });
 
     it('should mark as unhealthy with low success rate', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-3.5-flash';
 
       // 70% success rate (below degraded threshold)
       for (let i = 0; i < 70; i++) {
@@ -125,7 +125,7 @@ describe('HealthMonitor', () => {
     });
 
     it('should mark as degraded with slow response times', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-3.5-flash';
 
       // High success but slow responses (4000ms avg)
       for (let i = 0; i < 100; i++) {
@@ -138,7 +138,7 @@ describe('HealthMonitor', () => {
     });
 
     it('should mark as unhealthy with very slow response times', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-3.5-flash';
 
       // Very slow responses (6000ms avg)
       for (let i = 0; i < 100; i++) {
@@ -150,7 +150,7 @@ describe('HealthMonitor', () => {
     });
 
     it('should return unknown status with no data', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-3.5-flash';
 
       const health = monitor.getHealth(model);
       expect(health.status).toBe('unknown');
@@ -161,7 +161,7 @@ describe('HealthMonitor', () => {
 
   describe('Performance Metrics', () => {
     it('should calculate average response time correctly', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-3.5-flash';
 
       monitor.recordRequest(model, 1000, true);
       monitor.recordRequest(model, 2000, true);
@@ -172,7 +172,7 @@ describe('HealthMonitor', () => {
     });
 
     it('should calculate percentile response times', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-3.5-flash';
 
       // Record various response times (100 data points for better percentile calculation)
       for (let i = 1; i <= 100; i++) {
@@ -186,7 +186,7 @@ describe('HealthMonitor', () => {
     });
 
     it('should only include successful requests in response time calculations', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-3.5-flash';
 
       monitor.recordRequest(model, 1000, true);
       monitor.recordRequest(model, 5000, false); // Failed request, should not affect avg
@@ -197,7 +197,7 @@ describe('HealthMonitor', () => {
     });
 
     it('should calculate availability correctly', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-3.5-flash';
 
       // 8 successful, 2 timeouts
       for (let i = 0; i < 8; i++) {
@@ -214,7 +214,7 @@ describe('HealthMonitor', () => {
 
   describe('Time Windows', () => {
     it('should only consider recent metrics (last hour)', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-3.5-flash';
 
       // Record old requests
       for (let i = 0; i < 50; i++) {
@@ -240,10 +240,10 @@ describe('HealthMonitor', () => {
     it('should identify healthiest model', () => {
       // Model 1: 90% success, 1500ms avg
       for (let i = 0; i < 90; i++) {
-        monitor.recordRequest('gemini-2.5-flash', 1500, true);
+        monitor.recordRequest('gemini-3.5-flash', 1500, true);
       }
       for (let i = 0; i < 10; i++) {
-        monitor.recordRequest('gemini-2.5-flash', 1500, false);
+        monitor.recordRequest('gemini-3.5-flash', 1500, false);
       }
 
       // Model 2: 95% success, 2000ms avg
@@ -256,37 +256,37 @@ describe('HealthMonitor', () => {
 
       // Model 3: 98% success, 1000ms avg (best)
       for (let i = 0; i < 98; i++) {
-        monitor.recordRequest('gemini-3-flash-preview', 1000, true);
+        monitor.recordRequest('gemini-3.1-flash-lite', 1000, true);
       }
       for (let i = 0; i < 2; i++) {
-        monitor.recordRequest('gemini-3-flash-preview', 1000, false);
+        monitor.recordRequest('gemini-3.1-flash-lite', 1000, false);
       }
 
       const healthiest = monitor.getHealthiestModel([
-        'gemini-2.5-flash',
+        'gemini-3.5-flash',
         'gemini-2.5-flash-lite',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
       ]);
 
-      expect(healthiest).toBe('gemini-3-flash-preview');
+      expect(healthiest).toBe('gemini-3.1-flash-lite');
     });
 
     it('should return null when no models are healthy', () => {
       // All models unhealthy
       for (let i = 0; i < 30; i++) {
-        monitor.recordRequest('gemini-2.5-flash', 1000, false);
+        monitor.recordRequest('gemini-3.5-flash', 1000, false);
       }
       for (let i = 0; i < 30; i++) {
         monitor.recordRequest('gemini-2.5-flash-lite', 1000, false);
       }
 
-      const healthiest = monitor.getHealthiestModel(['gemini-2.5-flash', 'gemini-2.5-flash-lite']);
+      const healthiest = monitor.getHealthiestModel(['gemini-3.5-flash', 'gemini-2.5-flash-lite']);
 
       expect(healthiest).toBeNull();
     });
 
     it('should check if model is healthy', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-3.5-flash';
 
       // Record healthy metrics
       for (let i = 0; i < 96; i++) {
@@ -300,7 +300,7 @@ describe('HealthMonitor', () => {
     });
 
     it('should accept degraded as healthy enough', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-3.5-flash';
 
       // Record degraded metrics (85% success)
       for (let i = 0; i < 85; i++) {
@@ -314,7 +314,7 @@ describe('HealthMonitor', () => {
     });
 
     it('should reject unhealthy models', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-3.5-flash';
 
       // Record unhealthy metrics
       for (let i = 0; i < 30; i++) {
@@ -327,13 +327,13 @@ describe('HealthMonitor', () => {
 
   describe('Get All Health', () => {
     it('should return health for all models', () => {
-      monitor.recordRequest('gemini-2.5-flash', 1000, true);
+      monitor.recordRequest('gemini-3.5-flash', 1000, true);
       const allHealth = monitor.getAllHealth();
 
       expect(allHealth.length).toBeGreaterThanOrEqual(8);
       expect(allHealth.map((h) => h.model)).toContain('gemini-3.1-pro-preview');
-      expect(allHealth.map((h) => h.model)).toContain('gemini-3-flash-preview');
-      expect(allHealth.map((h) => h.model)).toContain('gemini-2.5-flash');
+      expect(allHealth.map((h) => h.model)).toContain('gemini-3.1-flash-lite');
+      expect(allHealth.map((h) => h.model)).toContain('gemini-3.5-flash');
       expect(allHealth.map((h) => h.model)).toContain('gemini-2.5-flash-lite');
     });
   });
@@ -342,10 +342,10 @@ describe('HealthMonitor', () => {
     it('should calculate summary across all models', () => {
       // Healthy model
       for (let i = 0; i < 96; i++) {
-        monitor.recordRequest('gemini-2.5-flash', 1000, true);
+        monitor.recordRequest('gemini-3.5-flash', 1000, true);
       }
       for (let i = 0; i < 4; i++) {
-        monitor.recordRequest('gemini-2.5-flash', 1000, false);
+        monitor.recordRequest('gemini-3.5-flash', 1000, false);
       }
 
       // Degraded model
@@ -360,7 +360,7 @@ describe('HealthMonitor', () => {
       // Unhealthy model - reusing 2.5-flash to make it unhealthy now
       // This will overwrite previous healthy stats for 2.5-flash
       for (let i = 0; i < 30; i++) {
-        monitor.recordRequest('gemini-2.5-flash', 3000, false);
+        monitor.recordRequest('gemini-3.5-flash', 3000, false);
       }
 
       const summary = monitor.getSummary();
@@ -375,12 +375,12 @@ describe('HealthMonitor', () => {
 
   describe('Reset', () => {
     it('should reset specific model metrics', () => {
-      monitor.recordRequest('gemini-2.5-flash', 1000, true);
+      monitor.recordRequest('gemini-3.5-flash', 1000, true);
       monitor.recordRequest('gemini-2.5-flash-lite', 1000, true);
 
-      monitor.reset('gemini-2.5-flash');
+      monitor.reset('gemini-3.5-flash');
 
-      const health1 = monitor.getHealth('gemini-2.5-flash');
+      const health1 = monitor.getHealth('gemini-3.5-flash');
       const health2 = monitor.getHealth('gemini-2.5-flash-lite');
 
       expect(health1.metrics.totalRequests).toBe(0);
@@ -388,12 +388,12 @@ describe('HealthMonitor', () => {
     });
 
     it('should reset all metrics', () => {
-      monitor.recordRequest('gemini-2.5-flash', 1000, true);
+      monitor.recordRequest('gemini-3.5-flash', 1000, true);
       monitor.recordRequest('gemini-2.5-flash-lite', 1000, true);
 
       monitor.reset();
 
-      const health1 = monitor.getHealth('gemini-2.5-flash');
+      const health1 = monitor.getHealth('gemini-3.5-flash');
       const health2 = monitor.getHealth('gemini-2.5-flash-lite');
 
       expect(health1.metrics.totalRequests).toBe(0);
@@ -401,7 +401,7 @@ describe('HealthMonitor', () => {
     });
 
     it('should reset consecutive failures', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-3.5-flash';
 
       monitor.recordRequest(model, 1000, false);
       monitor.recordRequest(model, 1000, false);
@@ -415,7 +415,7 @@ describe('HealthMonitor', () => {
 
   describe('Edge Cases', () => {
     it('should handle empty response time array for percentiles', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-3.5-flash';
 
       // Record only failures
       monitor.recordRequest(model, 1000, false);
@@ -428,7 +428,7 @@ describe('HealthMonitor', () => {
     });
 
     it('should handle single data point for percentiles', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-3.5-flash';
 
       monitor.recordRequest(model, 1000, true);
 
@@ -439,7 +439,7 @@ describe('HealthMonitor', () => {
     });
 
     it('should trim old metrics when exceeding max', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-3.5-flash';
 
       // Record 1500 requests (exceeds maxMetricsPerModel of 1000)
       for (let i = 0; i < 1500; i++) {

@@ -37,15 +37,26 @@ The Gemini API has **RPM (Requests Per Minute) limits** on the free tier, causin
 
 Gem Back supports automatic fallback across Gemini models:
 
-**Default Fallback Chain** (Optimized for Free Tier):
-1. `gemini-3-flash-preview` (Free quota available) ⚠️
-2. `gemini-2.5-flash` (Stable, high performance)
-3. `gemini-3.1-flash-lite-preview` (Lightweight fallback) ⚠️
+**Default Fallback Chain** (Optimized for Free Tier — v0.7.0, RPD-first):
+1. `gemini-3.1-flash-lite` — stable, 500 RPD (dominant daily quota)
+2. `gemini-3.5-flash` — newest, highest quality (20 RPD)
+3. `gemini-3-flash-preview` — backup (20 RPD) ⚠️
 
-**Other Supported Models**:
+If output quality matters more than daily throughput, pass an explicit `fallbackOrder` putting `gemini-3.5-flash` first.
+
+**Free-Tier Quota Snapshot** (2026-05-28):
+
+| Model | RPM | TPM | RPD |
+|---|---|---|---|
+| `gemini-3.1-flash-lite` | 15 | 250K | 500 |
+| `gemini-2.5-flash-lite` | 10 | 250K | 20 |
+| `gemini-3.5-flash` | 5 | 250K | 20 |
+| `gemini-3-flash-preview` | 5 | 250K | 20 |
+| `gemini-2.5-flash` | 5 | 250K | 20 |
+
+**Paid-Only Models** (still in `ALL_MODELS`; runtime warning when used on free-tier keys):
 - `gemini-3.1-pro-preview`
 - `gemini-2.5-pro`
-- `gemini-2.5-flash-lite`
 - `gemini-2.0-flash`
 - `gemini-2.0-flash-lite`
 
@@ -73,6 +84,52 @@ yarn add gemback
 # or
 pnpm add gemback
 ```
+
+---
+
+## 🔄 Migrating from v0.6 to v0.7
+
+v0.7.0 includes one always-on breaking change and one conditional one. Most call sites need no update.
+
+### Confirmed breaking change
+
+- **`DeprecatedModelInfo.reason` is now a string-literal union** (`'replaced_by_newer' | 'removed_from_api' | 'tier_change'`) instead of free-form `string`. If you read `reason`, switch to the union. The old prose strings on existing entries were moved to a new optional `notes: string` field.
+
+  ```ts
+  // Before (v0.6)
+  const reason: string = info.reason; // e.g. "Gemini 2.0 series end of life"
+
+  // After (v0.7)
+  const reason: DeprecationReason = info.reason; // 'replaced_by_newer' | ...
+  const detail: string | undefined = info.notes; // original prose, if any
+  ```
+
+### Default fallback order changed
+
+If you didn't pass `fallbackOrder` to `GemBack`, the default sequence now optimizes for daily RPD instead of model quality:
+
+```
+gemini-3.1-flash-lite → gemini-3.5-flash → gemini-3-flash-preview
+```
+
+To keep the v0.6 quality-first behavior, pass it explicitly:
+
+```ts
+new GemBack({
+  apiKey: process.env.GEMINI_API_KEY,
+  fallbackOrder: ['gemini-3.5-flash', 'gemini-3-flash-preview', 'gemini-3.1-flash-lite'],
+});
+```
+
+### New utilities you can adopt
+
+- `REMOVED_MODELS` and `DEPRECATED_MODELS` exports are the single source of truth for what was removed/replaced.
+- `RateLimitStatus.currentTPM` / `maxTPM` / `tpmUtilizationPercent` are now populated for free-tier models.
+- `gemini-3.5-flash` and stable `gemini-3.1-flash-lite` are available.
+
+### Paid-only models on free-tier keys
+
+If you invoke `gemini-2.5-pro`, `gemini-2.0-flash`, `gemini-2.0-flash-lite`, or `gemini-3.1-pro-preview` on a free-tier API key, you'll see a one-time `logger.warn` explaining the 4xx you can expect. Either upgrade the key or pin `fallbackOrder` to free-tier models.
 
 ---
 

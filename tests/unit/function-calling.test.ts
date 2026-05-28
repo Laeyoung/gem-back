@@ -71,7 +71,7 @@ describe('Function Calling', () => {
 
   const mockSuccessResponse = {
     text: 'I will check the weather for you.',
-    model: 'gemini-3-flash-preview' as any,
+    model: 'gemini-3.1-flash-lite' as any,
     finishReason: 'STOP',
     usage: {
       promptTokens: 20,
@@ -82,7 +82,7 @@ describe('Function Calling', () => {
 
   const mockFunctionCallResponse = {
     text: '',
-    model: 'gemini-3-flash-preview' as any,
+    model: 'gemini-3.1-flash-lite' as any,
     finishReason: 'STOP',
     functionCalls: [
       {
@@ -108,7 +108,7 @@ describe('Function Calling', () => {
 
       expect(mockGenerate).toHaveBeenCalledWith(
         'What is the weather in Tokyo?',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         expect.objectContaining({
           tools: [weatherFunction],
@@ -126,7 +126,7 @@ describe('Function Calling', () => {
 
       expect(mockGenerate).toHaveBeenCalledWith(
         'Calculate 5 + 3 and tell me the weather',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         expect.objectContaining({
           tools: [weatherFunction, calculatorFunction],
@@ -170,7 +170,7 @@ describe('Function Calling', () => {
 
       expect(mockGenerate).toHaveBeenCalledWith(
         'Hello',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         undefined
       );
@@ -193,7 +193,7 @@ describe('Function Calling', () => {
 
       expect(mockGenerate).toHaveBeenCalledWith(
         'Test',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         expect.objectContaining({
           tools: [weatherFunction],
@@ -217,7 +217,7 @@ describe('Function Calling', () => {
 
       expect(mockGenerate).toHaveBeenCalledWith(
         'Test',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         expect.objectContaining({
           toolConfig,
@@ -240,7 +240,7 @@ describe('Function Calling', () => {
 
       expect(mockGenerate).toHaveBeenCalledWith(
         'Test',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         expect.objectContaining({
           toolConfig,
@@ -264,7 +264,7 @@ describe('Function Calling', () => {
 
       expect(mockGenerate).toHaveBeenCalledWith(
         'Test',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         expect.objectContaining({
           tools: [weatherFunction, calculatorFunction],
@@ -286,7 +286,7 @@ describe('Function Calling', () => {
 
       expect(mockGenerate).toHaveBeenCalledWith(
         'Test',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         expect.objectContaining({
           tools: [weatherFunction],
@@ -327,7 +327,7 @@ describe('Function Calling', () => {
 
       expect(mockGenerateStream).toHaveBeenCalledWith(
         'What is the weather?',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         expect.objectContaining({
           tools: [weatherFunction],
@@ -357,7 +357,7 @@ describe('Function Calling', () => {
 
       expect(mockGenerateStream).toHaveBeenCalledWith(
         'Test',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         expect.objectContaining({
           tools: [weatherFunction],
@@ -386,7 +386,7 @@ describe('Function Calling', () => {
 
       expect(mockGenerateContent).toHaveBeenCalledWith(
         request.contents,
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         expect.any(String),
         expect.objectContaining({
           tools: [weatherFunction],
@@ -444,7 +444,7 @@ describe('Function Calling', () => {
 
       expect(mockGenerateContentStream).toHaveBeenCalledWith(
         request.contents,
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         expect.any(String),
         expect.objectContaining({
           tools: [weatherFunction],
@@ -467,7 +467,7 @@ describe('Function Calling', () => {
 
       const client2 = new GemBack({
         apiKey: 'test-key',
-        fallbackOrder: ['gemini-2.5-flash', 'gemini-2.5-flash-lite'],
+        fallbackOrder: ['gemini-3.5-flash', 'gemini-2.5-flash-lite'],
       });
       (client2 as any).client.generate = mockGenerate;
 
@@ -483,7 +483,7 @@ describe('Function Calling', () => {
       expect(mockGenerate).toHaveBeenNthCalledWith(
         1,
         'Test',
-        'gemini-2.5-flash',
+        'gemini-3.5-flash',
         'test-key',
         expect.objectContaining({
           tools: [weatherFunction],
@@ -512,7 +512,7 @@ describe('Function Calling', () => {
 
       expect(mockGenerate).toHaveBeenCalledWith(
         'Test',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         expect.objectContaining({
           tools: [],
@@ -523,7 +523,7 @@ describe('Function Calling', () => {
     it('should handle response with multiple function calls', async () => {
       const multiCallResponse = {
         text: '',
-        model: 'gemini-3-flash-preview' as any,
+        model: 'gemini-3.1-flash-lite' as any,
         finishReason: 'STOP',
         functionCalls: [
           {
@@ -557,7 +557,7 @@ describe('Function Calling', () => {
     it('should handle function call with missing args', async () => {
       const responseWithoutArgs = {
         text: '',
-        model: 'gemini-3-flash-preview' as any,
+        model: 'gemini-3.1-flash-lite' as any,
         finishReason: 'STOP',
         functionCalls: [
           {

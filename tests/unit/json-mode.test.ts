@@ -52,7 +52,7 @@ describe('JSON Mode', () => {
 
       const response = await client.generate(
         'Generate JSON',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         {
           responseMimeType: 'application/json',
@@ -85,7 +85,7 @@ describe('JSON Mode', () => {
 
       const response = await client.generate(
         'Generate complex JSON',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         {
           responseMimeType: 'application/json',
@@ -102,7 +102,7 @@ describe('JSON Mode', () => {
         usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 5, totalTokenCount: 15 },
       });
 
-      const response = await client.generate('Generate text', 'gemini-3-flash-preview', 'test-key');
+      const response = await client.generate('Generate text', 'gemini-3.1-flash-lite', 'test-key');
 
       expect(response.json).toBeUndefined();
       expect(response.text).toBe('{"name": "John"}');
@@ -120,7 +120,7 @@ describe('JSON Mode', () => {
 
       const response = await client.generate(
         'Generate JSON',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         {
           responseMimeType: 'application/json',
@@ -143,7 +143,7 @@ describe('JSON Mode', () => {
 
       const response = await client.generate(
         'Generate empty',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         {
           responseMimeType: 'application/json',
@@ -162,7 +162,7 @@ describe('JSON Mode', () => {
 
       const response = await client.generate(
         'Generate array',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         {
           responseMimeType: 'application/json',
@@ -181,7 +181,7 @@ describe('JSON Mode', () => {
 
       const response = await client.generate(
         'Generate null',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         {
           responseMimeType: 'application/json',
@@ -200,7 +200,7 @@ describe('JSON Mode', () => {
 
       const response = await client.generate(
         'Generate boolean',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         {
           responseMimeType: 'application/json',
@@ -219,7 +219,7 @@ describe('JSON Mode', () => {
 
       const response = await client.generate(
         'Generate number',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         {
           responseMimeType: 'application/json',
@@ -236,7 +236,7 @@ describe('JSON Mode', () => {
         usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 0, totalTokenCount: 10 },
       });
 
-      const response = await client.generate('Test', 'gemini-3-flash-preview', 'test-key', {
+      const response = await client.generate('Test', 'gemini-3.1-flash-lite', 'test-key', {
         responseMimeType: 'application/json',
       });
 
@@ -257,7 +257,7 @@ describe('JSON Mode', () => {
 
       const response = await client.generate(
         'Generate array',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         {
           responseMimeType: 'application/json',
@@ -270,7 +270,7 @@ describe('JSON Mode', () => {
 
   describe('SDK integration', () => {
     it('should pass responseMimeType to SDK', async () => {
-      await client.generate('Test', 'gemini-3-flash-preview', 'test-key', {
+      await client.generate('Test', 'gemini-3.1-flash-lite', 'test-key', {
         responseMimeType: 'application/json',
       });
 
@@ -293,7 +293,7 @@ describe('JSON Mode', () => {
         required: ['name', 'age'],
       };
 
-      await client.generate('Test', 'gemini-3-flash-preview', 'test-key', {
+      await client.generate('Test', 'gemini-3.1-flash-lite', 'test-key', {
         responseMimeType: 'application/json',
         responseSchema: schema,
       });
@@ -316,7 +316,7 @@ describe('JSON Mode', () => {
         },
       };
 
-      await client.generate('Test', 'gemini-3-flash-preview', 'test-key', {
+      await client.generate('Test', 'gemini-3.1-flash-lite', 'test-key', {
         temperature: 0.7,
         maxTokens: 1000,
         responseMimeType: 'application/json',
@@ -326,7 +326,7 @@ describe('JSON Mode', () => {
 
       expect(mockGenerateContent).toHaveBeenCalledWith(
         expect.objectContaining({
-          model: 'gemini-3-flash-preview',
+          model: 'gemini-3.1-flash-lite',
           contents: [{ role: 'user', parts: [{ text: 'Test' }] }],
           config: expect.objectContaining({
             temperature: 0.7,
@@ -351,7 +351,7 @@ describe('JSON Mode', () => {
 
       const response = await client.generateContent(
         [{ role: 'user', parts: [{ text: 'Test' }] }],
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         {
           responseMimeType: 'application/json',

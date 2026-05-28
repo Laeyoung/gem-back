@@ -5,20 +5,23 @@ import { DEPRECATED_MODELS } from '../../src/config/deprecated';
 describe('Model Definitions', () => {
   it('should export ALL_MODELS as an array of strings', () => {
     expect(Array.isArray(ALL_MODELS)).toBe(true);
-    expect(ALL_MODELS).toHaveLength(8);
+    expect(ALL_MODELS).toHaveLength(10);
     ALL_MODELS.forEach((model) => {
       expect(typeof model).toBe('string');
     });
   });
 
   it('should include key models in ALL_MODELS', () => {
-    expect(ALL_MODELS).toContain('gemini-2.5-flash');
+    expect(ALL_MODELS).toContain('gemini-3.5-flash');
     expect(ALL_MODELS).toContain('gemini-2.5-flash-lite');
+    // Newest free-tier models (v0.7.0)
+    expect(ALL_MODELS).toContain('gemini-3.5-flash');
+    expect(ALL_MODELS).toContain('gemini-3.1-flash-lite');
     // Preview models
     expect(ALL_MODELS).toContain('gemini-3.1-pro-preview');
-    expect(ALL_MODELS).toContain('gemini-3.1-flash-lite-preview');
-    // Removed models
-    expect(ALL_MODELS).not.toContain('gemini-3-pro-preview');
+    expect(ALL_MODELS).toContain('gemini-3-flash-preview');
+    // Removed/specialized models (deprecated in v0.6.0 or excluded as variants)
+    expect(ALL_MODELS).not.toContain('gemini-3-pro-preview' as GeminiModel);
   });
 
   it('should ensure DEFAULT_FALLBACK_ORDER is a subset of ALL_MODELS', () => {

@@ -23,6 +23,7 @@ import {
   getErrorStatusCode,
 } from '../utils/error-handler';
 import { DEPRECATED_MODELS } from '../config/deprecated';
+import { NON_FREE_TIER_MODELS } from '../config/free-tier-limits';
 
 export class GemBack {
   private options: Required<Omit<GemBackOptions, 'apiKey' | 'apiKeys'>> & {
@@ -36,6 +37,7 @@ export class GemBack {
   private rateLimitTracker: RateLimitTracker | null;
   private healthMonitor: HealthMonitor | null;
   private warnedDeprecatedModels: Set<string> = new Set();
+  private warnedNonFreeTierModels: Set<string> = new Set();
 
   constructor(options: GemBackOptions) {
     if (!options.apiKey && (!options.apiKeys || options.apiKeys.length === 0)) {
@@ -78,9 +80,10 @@ export class GemBack {
       apiKeyStats: this.apiKeyRotator ? this.apiKeyRotator.getStats() : undefined,
     };
 
-    // Check for deprecated models in fallback order
+    // Check for deprecated / non-free-tier models in fallback order
     for (const model of this.options.fallbackOrder) {
       this.checkDeprecatedModel(model);
+      this.checkNonFreeTierModel(model);
     }
   }
 
@@ -134,6 +137,7 @@ export class GemBack {
   async generate(prompt: string, options?: GenerateOptions): Promise<GeminiResponse> {
     if (options?.model) {
       this.checkDeprecatedModel(options.model);
+      this.checkNonFreeTierModel(options.model);
     }
     this.stats.totalRequests++;
 
@@ -187,6 +191,11 @@ export class GemBack {
         );
 
         const responseTime = Date.now() - startTime;
+
+        // Record TPM (free-tier models only — paid-tier has no tpm in defaults)
+        if (this.rateLimitTracker && response.usage?.totalTokens) {
+          this.rateLimitTracker.recordTokens(model, response.usage.totalTokens);
+        }
 
         // Record health monitoring
         if (this.healthMonitor) {
@@ -270,9 +279,29 @@ export class GemBack {
     }
   }
 
+  /**
+   * Warn (once per instance) when the caller is invoking a model that exists
+   * in the API but has no free-tier quota as of the latest snapshot.
+   *
+   * `NON_FREE_TIER_MODELS` is the single authoritative signal here — independent
+   * of `DEPRECATED_MODELS` (deprecation and tier classification are orthogonal).
+   * If a model is also `removed_from_api`, that case is handled by the removal
+   * pipeline (Phase 1.5) before reaching this check.
+   */
+  private checkNonFreeTierModel(model: GeminiModel): void {
+    if (this.warnedNonFreeTierModels.has(model)) return;
+    if (!(NON_FREE_TIER_MODELS as readonly string[]).includes(model)) return;
+    this.logger.warn(
+      `[GemBack] Model "${model}" is not on the free tier as of 2026-05-28; ` +
+        `expect 4xx on free-tier API keys.`
+    );
+    this.warnedNonFreeTierModels.add(model);
+  }
+
   async *generateStream(prompt: string, options?: GenerateOptions): AsyncGenerator<StreamChunk> {
     if (options?.model) {
       this.checkDeprecatedModel(options.model);
+      this.checkNonFreeTierModel(options.model);
     }
     this.stats.totalRequests++;
 
@@ -405,6 +434,7 @@ export class GemBack {
   async generateContent(request: GenerateContentRequest): Promise<GeminiResponse> {
     if (request.model) {
       this.checkDeprecatedModel(request.model);
+      this.checkNonFreeTierModel(request.model);
     }
     this.stats.totalRequests++;
 
@@ -470,6 +500,11 @@ export class GemBack {
         );
 
         const responseTime = Date.now() - startTime;
+
+        // Record TPM (free-tier models only)
+        if (this.rateLimitTracker && response.usage?.totalTokens) {
+          this.rateLimitTracker.recordTokens(model, response.usage.totalTokens);
+        }
 
         // Record health monitoring
         if (this.healthMonitor) {
@@ -538,6 +573,7 @@ export class GemBack {
   async *generateContentStream(request: GenerateContentRequest): AsyncGenerator<StreamChunk> {
     if (request.model) {
       this.checkDeprecatedModel(request.model);
+      this.checkNonFreeTierModel(request.model);
     }
     this.stats.totalRequests++;
 

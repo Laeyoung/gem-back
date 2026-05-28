@@ -17,4 +17,4 @@ export type { HealthStatus, ModelHealth, RateLimitStatus } from './monitoring';
 export { GeminiBackError } from './types/errors';
 export { ALL_MODELS, DEFAULT_FALLBACK_ORDER } from './types/models';
 export { DEPRECATED_MODELS } from './config/deprecated';
-export type { DeprecatedModelInfo } from './config/deprecated';
+export type { DeprecatedModelInfo, DeprecationReason } from './config/deprecated';

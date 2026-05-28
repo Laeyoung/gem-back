@@ -20,7 +20,7 @@ describe('Multi API Key Integration Tests', () => {
     it('should distribute load evenly with round-robin across 3 keys', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-2.5-flash' as const,
+        model: 'gemini-3.5-flash' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -52,7 +52,7 @@ describe('Multi API Key Integration Tests', () => {
     it('should use least-used strategy to balance uneven load', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-2.5-flash' as const,
+        model: 'gemini-3.5-flash' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -88,7 +88,7 @@ describe('Multi API Key Integration Tests', () => {
           // key2 succeeds
           return Promise.resolve({
             text: 'Success',
-            model: 'gemini-2.5-flash' as const,
+            model: 'gemini-3.5-flash' as const,
             finishReason: 'STOP',
           });
         }
@@ -120,7 +120,7 @@ describe('Multi API Key Integration Tests', () => {
     it('should maintain key rotation even after failures', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-2.5-flash' as const,
+        model: 'gemini-3.5-flash' as const,
         finishReason: 'STOP',
       };
 
@@ -168,7 +168,7 @@ describe('Multi API Key Integration Tests', () => {
     it('should continue working when one key hits RPM limit', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-2.5-flash' as const,
+        model: 'gemini-3.5-flash' as const,
         finishReason: 'STOP',
       };
 
@@ -210,7 +210,7 @@ describe('Multi API Key Integration Tests', () => {
     it('should track different success rates for each key', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-2.5-flash' as const,
+        model: 'gemini-3.5-flash' as const,
         finishReason: 'STOP',
       };
 
@@ -264,7 +264,7 @@ describe('Multi API Key Integration Tests', () => {
     it('should work identically with single key via apiKey option', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-2.5-flash' as const,
+        model: 'gemini-3.5-flash' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -339,7 +339,7 @@ describe('Multi API Key Integration Tests', () => {
     it('should handle 100 concurrent requests with proper key rotation', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-2.5-flash' as const,
+        model: 'gemini-3.5-flash' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -374,7 +374,7 @@ describe('Multi API Key Integration Tests', () => {
     it('should handle auth error on first key and try other keys', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-2.5-flash' as const,
+        model: 'gemini-3.5-flash' as const,
         finishReason: 'STOP',
       };
 
@@ -408,7 +408,7 @@ describe('Multi API Key Integration Tests', () => {
     it('should maintain stats consistency after multiple error types', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-2.5-flash' as const,
+        model: 'gemini-3.5-flash' as const,
         finishReason: 'STOP',
       };
 

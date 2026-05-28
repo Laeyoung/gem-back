@@ -68,7 +68,7 @@ describe('Deprecation warnings', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       new GemBack({
         apiKey: 'test-key',
-        fallbackOrder: ['gemini-3-flash-preview'],
+        fallbackOrder: ['gemini-3.1-flash-lite'],
         logLevel: 'warn',
       });
       expect(warnSpy).not.toHaveBeenCalled();
@@ -94,14 +94,14 @@ describe('Deprecation warnings', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const client = new GemBack({
         apiKey: 'test-key',
-        fallbackOrder: ['gemini-3-flash-preview'],
+        fallbackOrder: ['gemini-3.1-flash-lite'],
         logLevel: 'warn',
       });
       expect(warnSpy).not.toHaveBeenCalled();
 
       await client.generate('Hello', { model: 'gemini-2.0-flash' });
       const warnings = warnSpy.mock.calls.filter(
-        c => typeof c[0] === 'string' && c[0].includes('gemini-2.0-flash')
+        c => typeof c[0] === 'string' && c[0].includes('gemini-2.0-flash') && c[0].includes('shutdown')
       );
       expect(warnings).toHaveLength(1);
       warnSpy.mockRestore();
@@ -111,7 +111,7 @@ describe('Deprecation warnings', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const client = new GemBack({
         apiKey: 'test-key',
-        fallbackOrder: ['gemini-3-flash-preview'],
+        fallbackOrder: ['gemini-3.1-flash-lite'],
         logLevel: 'warn',
       });
 
@@ -119,7 +119,7 @@ describe('Deprecation warnings', () => {
       await client.generate('Hello', { model: 'gemini-2.0-flash' });
 
       const warnings = warnSpy.mock.calls.filter(
-        c => typeof c[0] === 'string' && c[0].includes('gemini-2.0-flash')
+        c => typeof c[0] === 'string' && c[0].includes('gemini-2.0-flash') && c[0].includes('shutdown')
       );
       expect(warnings).toHaveLength(1);
       warnSpy.mockRestore();
@@ -134,7 +134,7 @@ describe('Deprecation warnings', () => {
 
       const client = new GemBack({
         apiKey: 'test-key',
-        fallbackOrder: ['gemini-3-flash-preview'],
+        fallbackOrder: ['gemini-3.1-flash-lite'],
         logLevel: 'warn',
       });
 
@@ -143,7 +143,7 @@ describe('Deprecation warnings', () => {
       }
 
       const warnings = warnSpy.mock.calls.filter(
-        c => typeof c[0] === 'string' && c[0].includes('gemini-2.0-flash')
+        c => typeof c[0] === 'string' && c[0].includes('gemini-2.0-flash') && c[0].includes('shutdown')
       );
       expect(warnings).toHaveLength(1);
       warnSpy.mockRestore();
@@ -153,7 +153,7 @@ describe('Deprecation warnings', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const client = new GemBack({
         apiKey: 'test-key',
-        fallbackOrder: ['gemini-3-flash-preview'],
+        fallbackOrder: ['gemini-3.1-flash-lite'],
         logLevel: 'warn',
       });
 
@@ -163,7 +163,7 @@ describe('Deprecation warnings', () => {
       });
 
       const warnings = warnSpy.mock.calls.filter(
-        c => typeof c[0] === 'string' && c[0].includes('gemini-2.0-flash')
+        c => typeof c[0] === 'string' && c[0].includes('gemini-2.0-flash') && c[0].includes('shutdown')
       );
       expect(warnings).toHaveLength(1);
       warnSpy.mockRestore();
@@ -178,7 +178,7 @@ describe('Deprecation warnings', () => {
 
       const client = new GemBack({
         apiKey: 'test-key',
-        fallbackOrder: ['gemini-3-flash-preview'],
+        fallbackOrder: ['gemini-3.1-flash-lite'],
         logLevel: 'warn',
       });
 
@@ -190,7 +190,7 @@ describe('Deprecation warnings', () => {
       }
 
       const warnings = warnSpy.mock.calls.filter(
-        c => typeof c[0] === 'string' && c[0].includes('gemini-2.0-flash')
+        c => typeof c[0] === 'string' && c[0].includes('gemini-2.0-flash') && c[0].includes('shutdown')
       );
       expect(warnings).toHaveLength(1);
       warnSpy.mockRestore();
@@ -207,7 +207,7 @@ describe('Deprecation warnings', () => {
       });
 
       const constructorWarnings = warnSpy.mock.calls.filter(
-        c => typeof c[0] === 'string' && c[0].includes('gemini-2.0-flash')
+        c => typeof c[0] === 'string' && c[0].includes('gemini-2.0-flash') && c[0].includes('shutdown')
       );
       expect(constructorWarnings).toHaveLength(1);
 
@@ -215,7 +215,7 @@ describe('Deprecation warnings', () => {
       await client.generate('Hello', { model: 'gemini-2.0-flash' });
 
       const totalWarnings = warnSpy.mock.calls.filter(
-        c => typeof c[0] === 'string' && c[0].includes('gemini-2.0-flash')
+        c => typeof c[0] === 'string' && c[0].includes('gemini-2.0-flash') && c[0].includes('shutdown')
       );
       expect(totalWarnings).toHaveLength(1);
       warnSpy.mockRestore();

@@ -1,15 +1,22 @@
 import type { GeminiModel } from '../types/models';
 import { ALL_MODELS } from '../types/models';
+import { FREE_TIER_LIMITS } from '../config/free-tier-limits';
 
 export interface RateLimitConfig {
   rpm: number; // Requests per minute
   rpd?: number; // Requests per day (optional)
+  tpm?: number; // Tokens per minute (optional, free-tier only)
 }
 
 export interface RateLimitWindow {
   startTime: Date;
   requestCount: number;
   exceededCount: number;
+}
+
+interface TokenRecord {
+  time: Date;
+  tokens: number;
 }
 
 export interface RateLimitStatus {
@@ -25,6 +32,11 @@ export interface RateLimitStatus {
     requestsInLast5Minutes: number;
     averageRPM: number;
   };
+  // TPM tracking (free-tier models only). All three are `undefined` for paid-tier
+  // models — see `FREE_TIER_LIMITS` in src/config/free-tier-limits.ts.
+  currentTPM?: number;
+  maxTPM?: number;
+  tpmUtilizationPercent?: number;
 }
 
 /**
@@ -32,15 +44,27 @@ export interface RateLimitStatus {
  * Provides predictions and warnings before hitting limits
  */
 export class RateLimitTracker {
-  private readonly defaultLimits: Record<GeminiModel, RateLimitConfig> = Object.fromEntries(
-    ALL_MODELS.map((model) => [model, { rpm: 15, rpd: 1500 }])
-  ) as Record<GeminiModel, RateLimitConfig>;
+  private readonly defaultLimits: Record<GeminiModel, RateLimitConfig>;
 
   private requestHistory: Map<string, Date[]> = new Map();
+  private tokenHistory: Map<string, TokenRecord[]> = new Map();
   private warningThreshold = 0.8; // Warn at 80% capacity
   private predictionThreshold = 0.9; // Predict exceed at 90%
 
   constructor(customLimits?: Partial<Record<GeminiModel, RateLimitConfig>>) {
+    // Seed per-model defaults: free-tier models get their published limits,
+    // everything else (paid-tier and unknown) gets a conservative fallback.
+    // See docs/plan-free-tier-models-2026-05.md §5 Phase 3 for rationale.
+    this.defaultLimits = Object.fromEntries(
+      ALL_MODELS.map((model) => {
+        const freeTier = FREE_TIER_LIMITS[model];
+        if (freeTier) {
+          return [model, { rpm: freeTier.rpm, tpm: freeTier.tpm, rpd: freeTier.rpd }];
+        }
+        return [model, { rpm: 15, rpd: 1500 }]; // paid-tier conservative default; no tpm
+      })
+    ) as Record<GeminiModel, RateLimitConfig>;
+
     if (customLimits) {
       Object.assign(this.defaultLimits, customLimits);
     }
@@ -65,6 +89,28 @@ export class RateLimitTracker {
   }
 
   /**
+   * Record token usage for a completed request.
+   *
+   * Called by `FallbackClient` AFTER the SDK response resolves (where
+   * `usageMetadata.totalTokenCount` is available). Separate from
+   * `recordRequest()` because that runs before the SDK call returns.
+   *
+   * For paid-tier models (no `tpm` in defaults), tokens are still recorded
+   * but never compared against a limit.
+   */
+  recordTokens(model: GeminiModel, tokens: number, apiKeyIndex?: number): void {
+    if (tokens <= 0) return;
+    const key = this.getKey(model, apiKeyIndex);
+
+    if (!this.tokenHistory.has(key)) {
+      this.tokenHistory.set(key, []);
+    }
+
+    this.tokenHistory.get(key)!.push({ time: new Date(), tokens });
+    this.cleanOldTokens(key);
+  }
+
+  /**
    * Get current rate limit status for a model
    */
   getStatus(model: GeminiModel, apiKeyIndex?: number): RateLimitStatus {
@@ -81,7 +127,23 @@ export class RateLimitTracker {
 
     const averageRPM = requestsInLast5Minutes / 5;
     const currentRPM = requestsInLastMinute;
-    const utilizationPercent = (currentRPM / config.rpm) * 100;
+    const rpmUtilization = (currentRPM / config.rpm) * 100;
+
+    let utilizationPercent = rpmUtilization;
+    let currentTPM: number | undefined;
+    let maxTPM: number | undefined;
+    let tpmUtilizationPercent: number | undefined;
+
+    if (config.tpm !== undefined) {
+      const tokens = this.tokenHistory.get(key) || [];
+      currentTPM = tokens
+        .filter((r) => r.time >= oneMinuteAgo)
+        .reduce((sum, r) => sum + r.tokens, 0);
+      maxTPM = config.tpm;
+      tpmUtilizationPercent = (currentTPM / maxTPM) * 100;
+      // The effective utilization is whichever limit is closest to being hit.
+      utilizationPercent = Math.max(utilizationPercent, tpmUtilizationPercent);
+    }
 
     const isNearLimit = utilizationPercent >= this.warningThreshold * 100;
     const willExceedSoon = utilizationPercent >= this.predictionThreshold * 100;
@@ -104,6 +166,9 @@ export class RateLimitTracker {
         requestsInLast5Minutes,
         averageRPM,
       },
+      currentTPM,
+      maxTPM,
+      tpmUtilizationPercent,
     };
   }
 
@@ -112,7 +177,11 @@ export class RateLimitTracker {
    */
   wouldExceedLimit(model: GeminiModel, apiKeyIndex?: number): boolean {
     const status = this.getStatus(model, apiKeyIndex);
-    return status.currentRPM >= status.maxRPM;
+    if (status.currentRPM >= status.maxRPM) return true;
+    if (status.maxTPM !== undefined && status.currentTPM !== undefined) {
+      if (status.currentTPM >= status.maxTPM) return true;
+    }
+    return false;
   }
 
   /**
@@ -158,8 +227,10 @@ export class RateLimitTracker {
     if (model) {
       const key = this.getKey(model, apiKeyIndex);
       this.requestHistory.delete(key);
+      this.tokenHistory.delete(key);
     } else {
       this.requestHistory.clear();
+      this.tokenHistory.clear();
     }
   }
 
@@ -218,5 +289,16 @@ export class RateLimitTracker {
     const filtered = history.filter((t) => t >= fiveMinutesAgo);
 
     this.requestHistory.set(key, filtered);
+  }
+
+  private cleanOldTokens(key: string): void {
+    const tokens = this.tokenHistory.get(key);
+    if (!tokens) return;
+
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    this.tokenHistory.set(
+      key,
+      tokens.filter((r) => r.time >= fiveMinutesAgo)
+    );
   }
 }

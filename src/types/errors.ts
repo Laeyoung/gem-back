@@ -1,10 +1,16 @@
 import type { GeminiModel } from './models';
+import type { DeprecationReason } from '../config/deprecated';
 
 export interface AttemptRecord {
   model: GeminiModel;
   error: string;
   timestamp: Date;
   statusCode?: number;
+  /**
+   * Set when the attempt was skipped without calling the SDK
+   * (e.g. model removed from upstream API).
+   */
+  reason?: DeprecationReason;
 }
 
 export class GeminiBackError extends Error {

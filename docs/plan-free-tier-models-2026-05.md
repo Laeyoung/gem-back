@@ -20,18 +20,24 @@
 
 ## 2. 2026-05-28 Free Tier 스냅샷
 
-| 사용자 표기 | RPM | TPM | RPD | 추정 모델 ID | 현재 ALL_MODELS |
+| 사용자 표기 | RPM | TPM | RPD | Canonical 모델 ID (Phase 1 확정 — 2026-05-29) | 현재 ALL_MODELS |
 |---|---|---|---|---|---|
 | Gemini 2.5 Flash | 5 | 250K | 20 | `gemini-2.5-flash` | ✅ |
 | Gemini 2.5 Flash Lite | 10 | 250K | 20 | `gemini-2.5-flash-lite` | ✅ |
-| Gemini 3 Flash | 5 | 250K | 20 | `gemini-3-flash-preview` (요확인) | ✅ |
-| Gemini 3.1 Flash Lite | 15 | 250K | 500 | `gemini-3.1-flash-lite-preview` (요확인) | ✅ |
-| **Gemini 3.5 Flash** | **5** | **250K** | **20** | **`gemini-3.5-flash` (요확인)** | **❌ 신규** |
+| Gemini 3 Flash | 5 | 250K | 20 | `gemini-3-flash-preview` (preview 유지) | ✅ |
+| Gemini 3.1 Flash Lite | 15 | 250K | 500 | **`gemini-3.1-flash-lite`** (stable 출시; preview도 공존) | preview만 있음 → stable 추가 필요 |
+| **Gemini 3.5 Flash** | **5** | **250K** | **20** | **`gemini-3.5-flash`** (preview suffix 없음) | **❌ 신규 추가 필요** |
 
 Free-tier 미제공 (현재 지원 중이지만 quota 0):
 - `gemini-2.5-pro`, `gemini-2.0-flash`, `gemini-2.0-flash-lite`, `gemini-3.1-pro-preview`
 
-> **주의**: 사용자가 제공한 표기는 마케팅 명칭이다. 실제 API ID, 그리고 `-preview` suffix가 stable 전환된 모델이 있는지는 Phase 1에서 `npm run fetch-models`로 확정한다.
+**Phase 1 (`npm run fetch-models`) 실행 결과 (2026-05-29)**:
+- API 응답 13개 모델 (이전 7개 → 13개로 증가). 사라진 모델 없음.
+- 신규 발견: stable `gemini-3.1-flash-lite`, `gemini-3-pro-preview` (v0.6.0에서 deprecated 처리), `gemini-3.1-flash-tts-preview`, `gemini-3.1-pro-preview-customtools`, `gemini-3.5-flash`.
+- 결정:
+  - `gemini-3.1-flash-lite` (stable)을 **DEFAULT_FALLBACK_ORDER에 채택**, preview는 `replaced_by_newer`로 deprecated.
+  - 특수 variant (`*-tts-preview`, `*-customtools`)는 일반 chat 사용 패턴에 부적합 → `ALL_MODELS`에서 제외 (generate-models에서 필터링).
+  - `gemini-3-pro-preview`는 v0.6.0의 deprecation 결정 유지 (3.1-pro-preview로 대체됨).
 
 ## 3. 목표 및 비목표
 
@@ -55,16 +61,14 @@ Free-tier 미제공 (현재 지원 중이지만 quota 0):
 - 유료 모델의 enterprise quota 반영
 - Paid tier user를 위한 별도 fallback chain (지금은 옵션으로 외부 주입만 권장)
 
-## 4. 신규 DEFAULT_FALLBACK_ORDER 제안
-
-> 본 §4의 모델 ID는 모두 **임시 추정**이다. Phase 1 (`npm run fetch-models`) 완료 후 canonical ID로 교체하고 `scripts/generate-models.ts`의 `targetFallbackOrder`에 반영한다.
+## 4. DEFAULT_FALLBACK_ORDER (Phase 1 확정 ID 기준)
 
 Free-tier 사용자의 일일 처리량 최대화 관점에서, RPD 합산이 가장 큰 조합을 우선한다:
 
 ```
-1. gemini-3.1-flash-lite-preview   # 500 RPD — 일일 quota의 압도적 대부분
-2. gemini-3.5-flash                # 20 RPD — 최신·최고 품질 모델 (신규)
-3. gemini-3-flash-preview          # 20 RPD — 백업
+1. gemini-3.1-flash-lite     # 500 RPD — stable, 일일 quota 대부분
+2. gemini-3.5-flash          # 20 RPD — 최신·최고 품질 (신규)
+3. gemini-3-flash-preview    # 20 RPD — 백업 (stable 미출시)
 ```
 
 대안으로 검토:
@@ -157,8 +161,9 @@ export interface AttemptRecord {
     'gemini-2.5-flash':              { rpm: 5,  tpm: 250_000, rpd: 20 },
     'gemini-2.5-flash-lite':         { rpm: 10, tpm: 250_000, rpd: 20 },
     'gemini-3-flash-preview':        { rpm: 5,  tpm: 250_000, rpd: 20 },
-    'gemini-3.1-flash-lite-preview': { rpm: 15, tpm: 250_000, rpd: 500 },
+    'gemini-3.1-flash-lite':         { rpm: 15, tpm: 250_000, rpd: 500 },  // stable (Phase 1 확정)
     'gemini-3.5-flash':              { rpm: 5,  tpm: 250_000, rpd: 20 },
+    // 'gemini-3.1-flash-lite-preview'는 stable로 대체 — DEPRECATED_MODELS에서 replaced_by_newer 처리
     // 이외 모델은 paid-tier 추정 — fallback default 유지
   };
   ```

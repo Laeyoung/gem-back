@@ -76,10 +76,37 @@ function calculatePriority(modelName: string, classification: ModelClassificatio
 }
 
 /**
+ * Specialized variants that should NOT appear in the general ALL_MODELS list.
+ * These are domain-specific models (TTS, custom-tools optimized) that don't
+ * fit the gem-back fallback chain semantics (generic chat / generate).
+ */
+const EXCLUDED_VARIANT_PATTERN = /-tts-|-customtools$/;
+
+/**
+ * Models manually deprecated in prior releases that should be excluded from
+ * ALL_MODELS even though the upstream API still returns them.
+ * See src/config/deprecated.ts for DEPRECATED_MODELS metadata.
+ */
+const MANUAL_EXCLUDES = new Set<string>([
+  'gemini-3-pro-preview', // Deprecated in v0.6.0 (replaced by gemini-3.1-pro-preview)
+]);
+
+/**
  * Process models and sort by priority
  */
 function processModels(models: ModelMetadata[]): ProcessedModel[] {
   return models
+    .filter((model) => {
+      if (EXCLUDED_VARIANT_PATTERN.test(model.name)) {
+        console.log(`   ↪ Excluding specialized variant: ${model.name}`);
+        return false;
+      }
+      if (MANUAL_EXCLUDES.has(model.name)) {
+        console.log(`   ↪ Excluding deprecated model: ${model.name}`);
+        return false;
+      }
+      return true;
+    })
     .map((model) => {
       const classification = classifyModel(model.name);
       const priority = calculatePriority(model.name, classification);
@@ -103,12 +130,15 @@ function processModels(models: ModelMetadata[]): ProcessedModel[] {
  * Generate src/types/models.ts content
  */
 function generateTypesFile(models: ProcessedModel[]): string {
-  // Define strict default fallback order per user request
-  // Priority: gemini-3-flash-preview -> gemini-2.5-flash -> gemini-3.1-flash-lite-preview
+  // Default fallback order (v0.7.0 — Phase 1 confirmed IDs, RPD-first strategy)
+  // See docs/plan-free-tier-models-2026-05.md §4 for rationale.
+  // 1) gemini-3.1-flash-lite (stable, 500 RPD — dominant daily quota)
+  // 2) gemini-3.5-flash      (20 RPD  — newest/highest quality)
+  // 3) gemini-3-flash-preview(20 RPD  — backup, no stable variant yet)
   const targetFallbackOrder = [
+    'gemini-3.1-flash-lite',
+    'gemini-3.5-flash',
     'gemini-3-flash-preview',
-    'gemini-2.5-flash',
-    'gemini-3.1-flash-lite-preview'
   ];
 
   const fallbackList = targetFallbackOrder

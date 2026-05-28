@@ -1,6 +1,6 @@
 {
-  "timestamp": "2025-12-26T13:58:40.160Z",
-  "count": 7,
+  "timestamp": "2026-05-28T15:25:20.805Z",
+  "count": 13,
   "models": [
     {
       "name": "gemini-2.0-flash",
@@ -99,6 +99,89 @@
         "batchGenerateContent"
       ],
       "version": "3-pro-preview-11-2025"
+    },
+    {
+      "name": "gemini-3.1-flash-lite",
+      "displayName": "Gemini 3.1 Flash Lite",
+      "description": "Gemini 3.1 Flash Lite",
+      "inputTokenLimit": 1048576,
+      "outputTokenLimit": 65536,
+      "supportedMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+      ],
+      "version": "3.1-flash-lite-05-2026"
+    },
+    {
+      "name": "gemini-3.1-flash-lite-preview",
+      "displayName": "Gemini 3.1 Flash Lite Preview",
+      "description": "Gemini 3.1 Flash Lite Preview",
+      "inputTokenLimit": 1048576,
+      "outputTokenLimit": 65536,
+      "supportedMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+      ],
+      "version": "3.1-flash-lite-preview-03-2026"
+    },
+    {
+      "name": "gemini-3.1-flash-tts-preview",
+      "displayName": "Gemini 3.1 Flash TTS Preview",
+      "description": "Gemini 3.1 Flash TTS Preview",
+      "inputTokenLimit": 8192,
+      "outputTokenLimit": 16384,
+      "supportedMethods": [
+        "generateContent",
+        "countTokens",
+        "batchGenerateContent"
+      ],
+      "version": "3.1-flash-tts-preview"
+    },
+    {
+      "name": "gemini-3.1-pro-preview",
+      "displayName": "Gemini 3.1 Pro Preview",
+      "description": "Gemini 3.1 Pro Preview",
+      "inputTokenLimit": 1048576,
+      "outputTokenLimit": 65536,
+      "supportedMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+      ],
+      "version": "3.1-pro-preview-01-2026"
+    },
+    {
+      "name": "gemini-3.1-pro-preview-customtools",
+      "displayName": "Gemini 3.1 Pro Preview Custom Tools",
+      "description": "Gemini 3.1 Pro Preview optimized for custom tool usage",
+      "inputTokenLimit": 1048576,
+      "outputTokenLimit": 65536,
+      "supportedMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+      ],
+      "version": "3.1-pro-preview-01-2026"
+    },
+    {
+      "name": "gemini-3.5-flash",
+      "displayName": "Gemini 3.5 Flash",
+      "description": "Gemini 3.5 Flash",
+      "inputTokenLimit": 1048576,
+      "outputTokenLimit": 65536,
+      "supportedMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+      ],
+      "version": "3.5-flash-05-2026"
     }
   ]
 }

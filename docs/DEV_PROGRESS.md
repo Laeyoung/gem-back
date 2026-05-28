@@ -1,4 +1,38 @@
-# Gemini 모델 업데이트 v0.6.0 - 개발 진행 현황
+# 개발 진행 현황
+
+## v0.7.0 — Free Tier 모델 지원 업데이트
+
+> 계획서: [docs/plan-free-tier-models-2026-05.md](./plan-free-tier-models-2026-05.md)
+> 브랜치: `support-gemini-3.5`
+> 시작일: 2026-05-28 / 완료일: 2026-05-29
+
+### 상태 범례
+- ⬜ 미착수 / 🔧 진행 중 / ✅ 완료 / ⏸️ 보류 / ❌ 차단됨
+
+### Phase 진행 현황
+
+| Phase | 작업 | 상태 | 검증 |
+|---|---|---|---|
+| 1 | fetch-models 실행, abort 조건 통과 (gemini-3.5-flash 확인) | ✅ | API 응답 13개 모델 |
+| 1.5 | DeprecatedModelInfo.reason narrowing + AttemptRecord 확장 + 5 entry 마이그레이션 | ✅ | typecheck/test pass |
+| 2 | generate-models.ts 필터 추가, targetFallbackOrder 갱신, ALL_MODELS 8→10 | ✅ | npm run update-models |
+| 3 | FREE_TIER_LIMITS / NON_FREE_TIER_MODELS, RateLimitTracker 모델별 default | ✅ | typecheck/test pass |
+| 4 | TPM 추적: recordTokens, currentTPM/maxTPM/tpmUtilizationPercent, willExceedSoon | ✅ | typecheck/test pass |
+| 5 | paid-only 런타임 warn (warnedNonFreeTierModels) | ✅ | deprecated.test.ts 갱신 |
+| 6 | 신규 free-tier-limits.test.ts (10건) + 기존 248건 갱신 | ✅ | 258 tests pass |
+| 7 | package.json 0.7.0, CHANGELOG BREAKING, README MIGRATION 섹션, DEV_LOG | ✅ | lint clean |
+
+### 검증 결과
+- ✅ `npm run typecheck` 통과
+- ✅ `npm test` — 258/258 passing
+- ✅ `npm run lint` clean
+- ⬜ `npm run build && npm pack` — 사용자 확인 후 실행
+- ⬜ Backward-compat smoke (gemback-0.6.0.tgz vs 0.7.0.tgz) — 사용자 확인 후 실행
+- ⬜ git tag v0.7.0 + push — 사용자 확인 후 실행
+
+---
+
+## v0.6.0 — Gemini 3.1 모델 추가 (이전 릴리스)
 
 > 계획서: [docs/plan-update-gemini-models-2026-03.md](./plan-update-gemini-models-2026-03.md)
 > 브랜치: `feat/support-and-deprecated-gemini-model`

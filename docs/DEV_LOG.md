@@ -1,7 +1,71 @@
 # 개발 로그 (Development Log)
 
 > 최신 항목이 가장 위에 위치합니다.
-> 관련 문서: [계획서](./plan-update-gemini-models-2026-03.md) | [진행 현황](./DEV_PROGRESS.md)
+> 관련 문서: [v0.7 계획서](./plan-free-tier-models-2026-05.md) | [v0.6 계획서](./plan-update-gemini-models-2026-03.md) | [진행 현황](./DEV_PROGRESS.md)
+
+---
+
+## 2026-05-29 — v0.7.0 Free Tier 지원 업데이트 (Phase 1~7)
+
+### 배경
+2026-05-28 AI Studio dashboard free-tier 스냅샷 기반. 8회 multi-agent document review 거친 plan을 실행.
+
+### Phase 1 — fetch-models 실행 결과 (블로킹 게이트)
+- `gemini-3.5-flash` API에 존재 → 릴리스 차단 없음
+- API 응답 13개 모델 (이전 7개에서 확장). 사라진 모델 없음 — Phase 1.5 removal pipeline 비활성.
+- 신규 발견:
+  - **`gemini-3.1-flash-lite`** (stable, preview suffix 없음) — DEFAULT_FALLBACK_ORDER에 채택
+  - **`gemini-3-pro-preview`** — v0.6.0 deprecation 유지 (재포함하지 않음)
+  - `gemini-3.1-flash-tts-preview`, `gemini-3.1-pro-preview-customtools` — 특수 variant, ALL_MODELS에서 제외
+- 결정 이유: free-tier 사용자에게 stable 3.1-flash-lite의 500 RPD가 dominant daily quota이므로 DEFAULT 1순위로 두는 것이 quota 소진 지연에 최적.
+
+### Phase 2 — 모델 메타데이터
+- `scripts/generate-models.ts`에 `EXCLUDED_VARIANT_PATTERN` (`/-tts-|-customtools$/`) 및 `MANUAL_EXCLUDES` (gemini-3-pro-preview) 필터 추가.
+- `targetFallbackOrder`를 `[3.1-flash-lite, 3.5-flash, 3-flash-preview]`로 변경.
+- `npm run update-models` 실행 → ALL_MODELS 8 → 10 (3.5-flash, 3.1-flash-lite 추가).
+
+### Phase 1.5 — DeprecatedModelInfo + AttemptRecord
+- `reason: string` → `DeprecationReason = 'replaced_by_newer' | 'removed_from_api' | 'tier_change'` narrowing.
+- 기존 5개 entry 마이그레이션: prose → `'replaced_by_newer'`, prose는 신규 optional `notes` 필드로 이전.
+- 신규 entry: `gemini-3.1-flash-lite-preview` → `gemini-3.1-flash-lite` (replaced_by_newer).
+- `AttemptRecord.reason?: DeprecationReason` 추가 (skip된 호출 기록용, removed_from_api 시나리오 대비).
+- `DeprecationReason` 타입 src/index.ts에서 export.
+
+### Phase 3 — 모델별 Rate Limit
+- `src/config/free-tier-limits.ts` 신규 — `FREE_TIER_LIMITS` (5개 모델별 RPM/TPM/RPD), `NON_FREE_TIER_MODELS` (4개 paid-only).
+- `RateLimitTracker` constructor가 ALL_MODELS 순회하며 FREE_TIER_LIMITS 우선, 없으면 `{rpm:15, rpd:1500}` paid 기본값.
+- 검토한 대안: paid-tier에도 enterprise quota 적용 / FREE_TIER_LIMITS만 사용 → 기존 `{rpm:15, rpd:1500}` 유지하여 paid 사용자의 customLimits 호환성 보존.
+
+### Phase 4 — TPM 추적
+- `RateLimitConfig.tpm?: number` 추가.
+- `tokenHistory: Map<string, TokenRecord[]>` 분리 트래킹 (request history와 별도).
+- `recordTokens(model, tokens, apiKeyIndex?)` 신규 메서드 — `recordRequest`와 별개로 응답 후 호출.
+- 검토한 대안: `recordRequest`에 `tokensUsed?` 추가 → 거부. `recordRequest`는 SDK 호출 **이전**에 실행되어 토큰 수 미정. 2-step 패턴이 call-site 호환성 보존.
+- `RateLimitStatus`에 `currentTPM`, `maxTPM`, `tpmUtilizationPercent` 추가 — paid-tier 모델은 `undefined`.
+- `willExceedSoon` = max(rpmUtilization, tpmUtilization) ≥ 90% (TPM은 config.tpm !== undefined 가드 적용).
+- `FallbackClient.generate()` 및 `generateContent()`에 `recordTokens(model, response.usage.totalTokens)` 호출 추가. streaming은 chunk별 usage 부재로 미구현.
+
+### Phase 5 — paid-only 모델 warn
+- `warnedNonFreeTierModels: Set<string>` instance field 추가.
+- `checkNonFreeTierModel(model)` — `NON_FREE_TIER_MODELS.includes(model)`일 때만 1회 logger.warn.
+- 검토한 대안: DEPRECATED_MODELS.reason === 'tier_change'를 함께 신호로 사용 → 거부. deprecation 시스템과 free-tier 분류는 직교한다는 plan 결정 유지.
+
+### Phase 6 — 테스트
+- 신규 `tests/unit/free-tier-limits.test.ts`: 10개 테스트 (FREE_TIER_LIMITS 적용, TPM 추적, paid-tier 가드, customLimits regression).
+- 기존 테스트 248개 유지 (sed로 default order 변경 반영): `gemini-3-flash-preview` ↔ `gemini-3.1-flash-lite` swap, `gemini-2.5-flash` → `gemini-3.5-flash`, 일부 paid-tier 의존 케이스는 `gemini-2.5-pro`로 모델 교체.
+- 최종 258 tests passing, typecheck/lint clean.
+
+### Phase 7 — 문서/릴리스
+- package.json 0.6.0 → 0.7.0.
+- CHANGELOG에 BREAKING CHANGES 섹션 + Added/Changed/Migration 분리.
+- README의 supported models 갱신 (free-tier 표 첨부), "Migrating from v0.6 to v0.7" 섹션 신규.
+- 본 DEV_LOG 작성.
+
+### 후속 결정
+- README.ko.md 한국어 갱신 — 후속 작업 (선택).
+- MONITORING.md TPM 섹션 추가 — 후속 작업 (선택).
+- examples/ 스니펫 갱신 — 후속 작업.
+- `git tag v0.7.0 && git push origin master --tags` — 사용자 확인 후 실행.
 
 ---
 

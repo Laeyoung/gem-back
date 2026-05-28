@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-05-29
+
+### BREAKING CHANGES
+
+- **`DeprecatedModelInfo.reason` narrowed** from `string` to a string-literal union `DeprecationReason = 'replaced_by_newer' | 'removed_from_api' | 'tier_change'`. Downstream callers reading `reason` as a free-form string must switch to the union. Existing prose strings on the 5 v0.6.0 entries were moved to the new optional `notes` field; the `reason` field now uses `'replaced_by_newer'` for all of them.
+- **`DEFAULT_FALLBACK_ORDER` reshuffled to a free-tier-friendly composition** (RPD-first):
+  `gemini-3.1-flash-lite` (stable, 500 RPD) → `gemini-3.5-flash` (top quality, 20 RPD) → `gemini-3-flash-preview` (backup, 20 RPD).
+  Callers relying on the prior order should pass an explicit `fallbackOrder`.
+
+### Added
+
+- **`gemini-3.5-flash`** (new free-tier model: 5 RPM / 250K TPM / 20 RPD).
+- **`gemini-3.1-flash-lite`** stable (free-tier: 15 RPM / 250K TPM / 500 RPD). Preview variant deprecated in favor of stable.
+- **`FREE_TIER_LIMITS` and `NON_FREE_TIER_MODELS`** exports in `src/config/free-tier-limits.ts` — per-model quota source of truth.
+- **`RateLimitTracker` per-model defaults**: `defaultLimits` now seeded from `FREE_TIER_LIMITS` for free-tier models; paid-tier models keep the conservative `{ rpm: 15, rpd: 1500 }` fallback (no TPM tracking).
+- **TPM tracking** in `RateLimitTracker`:
+  - `RateLimitConfig.tpm?: number`
+  - `recordTokens(model, tokens, apiKeyIndex?)` separate method (called after the SDK response resolves)
+  - `RateLimitStatus.currentTPM`, `maxTPM`, `tpmUtilizationPercent` (undefined for paid-tier models)
+  - `willExceedSoon` now considers RPM and TPM, whichever is closer to its limit
+- **Paid-tier runtime warning**: `FallbackClient` emits a one-time `logger.warn` when a model in `NON_FREE_TIER_MODELS` is invoked, so free-tier API key users understand why they see 4xx.
+- **`AttemptRecord.reason?: DeprecationReason`** field — set when the call was skipped without invoking the SDK (e.g., for `removed_from_api`).
+- **`DeprecationReason`** type exported from `src/index.ts`.
+
+### Changed
+
+- `scripts/generate-models.ts` now filters out specialized variants (`*-tts-*`, `*-customtools`) and manually-deprecated entries (`gemini-3-pro-preview`) before generating `ALL_MODELS`.
+- `scripts/generate-models.ts` `targetFallbackOrder` updated to match the new free-tier composition.
+- Deprecation table updated: previously `replacement: gemini-3.1-flash-lite-preview` entries now point at the stable `gemini-3.1-flash-lite`.
+
+### Migration
+
+See README "Migrating from v0.6 to v0.7" for code examples. Most call sites need no change; the breaking surfaces are `DeprecatedModelInfo.reason` consumers and callers that depend on the exact `DEFAULT_FALLBACK_ORDER` sequence.
+
 ## [0.6.0] - 2026-03-14
 
 ### Added

@@ -20,7 +20,7 @@ describe('Monitoring Integration Tests', () => {
     it('should include monitoring data in stats when enabled', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-3-flash-preview' as const,
+        model: 'gemini-3.1-flash-lite' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -42,7 +42,7 @@ describe('Monitoring Integration Tests', () => {
     it('should not include monitoring data when disabled', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-3-flash-preview' as const,
+        model: 'gemini-3.1-flash-lite' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -63,7 +63,7 @@ describe('Monitoring Integration Tests', () => {
     it('should track rate limits for requests', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-3-flash-preview' as const,
+        model: 'gemini-3.1-flash-lite' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -80,7 +80,7 @@ describe('Monitoring Integration Tests', () => {
 
       const stats = client.getFallbackStats();
       const flashStatus = stats.monitoring?.rateLimitStatus?.find(
-        (s) => s.model === 'gemini-3-flash-preview'
+        (s) => s.model === 'gemini-3.1-flash-lite'
       );
 
       expect(flashStatus).toBeDefined();
@@ -113,7 +113,7 @@ describe('Monitoring Integration Tests', () => {
 
       const stats = client.getFallbackStats();
       const flashStatus = stats.monitoring?.rateLimitStatus?.find(
-        (s) => s.model === 'gemini-3-flash-preview'
+        (s) => s.model === 'gemini-3.1-flash-lite'
       );
 
       expect(flashStatus?.currentRPM).toBe(3);
@@ -122,7 +122,7 @@ describe('Monitoring Integration Tests', () => {
     it('should track rate limits per API key when using multi-key', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-3-flash-preview' as const,
+        model: 'gemini-3.1-flash-lite' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -140,7 +140,7 @@ describe('Monitoring Integration Tests', () => {
       const stats = client.getFallbackStats();
       // Overall RPM should be 9
       const flashStatus = stats.monitoring?.rateLimitStatus?.find(
-        (s) => s.model === 'gemini-3-flash-preview'
+        (s) => s.model === 'gemini-3.1-flash-lite'
       );
       expect(flashStatus?.currentRPM).toBe(9);
     });
@@ -150,7 +150,7 @@ describe('Monitoring Integration Tests', () => {
     it('should track successful requests as healthy', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-3-flash-preview' as const,
+        model: 'gemini-3.1-flash-lite' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -167,7 +167,7 @@ describe('Monitoring Integration Tests', () => {
 
       const stats = client.getFallbackStats();
       const flashHealth = stats.monitoring?.modelHealth?.find(
-        (h) => h.model === 'gemini-3-flash-preview'
+        (h) => h.model === 'gemini-3.1-flash-lite'
       );
 
       expect(flashHealth).toBeDefined();
@@ -200,7 +200,7 @@ describe('Monitoring Integration Tests', () => {
 
       const stats = client.getFallbackStats();
       const flashHealth = stats.monitoring?.modelHealth?.find(
-        (h) => h.model === 'gemini-3-flash-preview'
+        (h) => h.model === 'gemini-3.1-flash-lite'
       );
 
       expect(flashHealth).toBeDefined();
@@ -212,7 +212,7 @@ describe('Monitoring Integration Tests', () => {
     it('should track response times in health metrics', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-3-flash-preview' as const,
+        model: 'gemini-3.1-flash-lite' as const,
         finishReason: 'STOP',
       };
 
@@ -234,7 +234,7 @@ describe('Monitoring Integration Tests', () => {
 
       const stats = client.getFallbackStats();
       const flashHealth = stats.monitoring?.modelHealth?.find(
-        (h) => h.model === 'gemini-3-flash-preview'
+        (h) => h.model === 'gemini-3.1-flash-lite'
       );
 
       expect(flashHealth).toBeDefined();
@@ -254,7 +254,7 @@ describe('Monitoring Integration Tests', () => {
         }
         return Promise.resolve({
           text: 'Success',
-          model: 'gemini-3-flash-preview' as const,
+          model: 'gemini-3.1-flash-lite' as const,
           finishReason: 'STOP',
         });
       });
@@ -276,7 +276,7 @@ describe('Monitoring Integration Tests', () => {
 
       let stats = client.getFallbackStats();
       let flashHealth = stats.monitoring?.modelHealth?.find(
-        (h) => h.model === 'gemini-3-flash-preview'
+        (h) => h.model === 'gemini-3.1-flash-lite'
       );
       expect(flashHealth?.consecutiveFailures).toBe(3);
 
@@ -285,7 +285,7 @@ describe('Monitoring Integration Tests', () => {
 
       stats = client.getFallbackStats();
       flashHealth = stats.monitoring?.modelHealth?.find(
-        (h) => h.model === 'gemini-3-flash-preview'
+        (h) => h.model === 'gemini-3.1-flash-lite'
       );
       expect(flashHealth?.consecutiveFailures).toBe(0);
     });
@@ -295,7 +295,7 @@ describe('Monitoring Integration Tests', () => {
     it('should calculate summary statistics correctly', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-3-flash-preview' as const,
+        model: 'gemini-3.1-flash-lite' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -329,7 +329,7 @@ describe('Monitoring Integration Tests', () => {
         }
         return Promise.resolve({
           text: 'Success',
-          model: 'gemini-3-flash-preview' as const,
+          model: 'gemini-3.1-flash-lite' as const,
           finishReason: 'STOP',
         });
       });
@@ -362,12 +362,12 @@ describe('Monitoring Integration Tests', () => {
     it('should track health across fallback chain', async () => {
       mockGeminiClient.generate.mockImplementation((_prompt: string, model: string) => {
         // First model fails, second succeeds
-        if (model === 'gemini-3-flash-preview') {
+        if (model === 'gemini-3.1-flash-lite') {
           return Promise.reject(new Error('500 Server error'));
         }
         return Promise.resolve({
           text: 'Success',
-          model: model as 'gemini-2.5-flash',
+          model: model as 'gemini-3.5-flash',
           finishReason: 'STOP',
         });
       });
@@ -387,12 +387,12 @@ describe('Monitoring Integration Tests', () => {
 
       // First model should be unhealthy
       const flashHealth = stats.monitoring?.modelHealth?.find(
-        (h) => h.model === 'gemini-3-flash-preview'
+        (h) => h.model === 'gemini-3.1-flash-lite'
       );
       expect(flashHealth?.metrics.failedRequests).toBe(10);
 
       // Second model should be healthy
-      const liteHealth = stats.monitoring?.modelHealth?.find((h) => h.model === 'gemini-2.5-flash');
+      const liteHealth = stats.monitoring?.modelHealth?.find((h) => h.model === 'gemini-3.5-flash');
       expect(liteHealth?.metrics.successfulRequests).toBe(10);
     });
   });
@@ -401,7 +401,7 @@ describe('Monitoring Integration Tests', () => {
     it('should track health and rate limits for multi-key setup', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-3-flash-preview' as const,
+        model: 'gemini-3.1-flash-lite' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -430,7 +430,7 @@ describe('Monitoring Integration Tests', () => {
 
       // Health should reflect all successful requests
       const flashHealth = stats.monitoring?.modelHealth?.find(
-        (h) => h.model === 'gemini-3-flash-preview'
+        (h) => h.model === 'gemini-3.1-flash-lite'
       );
       expect(flashHealth?.metrics.totalRequests).toBe(30);
       expect(flashHealth?.status).toBe('healthy');
@@ -463,7 +463,7 @@ describe('Monitoring Integration Tests', () => {
 
       const stats = client.getFallbackStats();
       const flashHealth = stats.monitoring?.modelHealth?.find(
-        (h) => h.model === 'gemini-3-flash-preview'
+        (h) => h.model === 'gemini-3.1-flash-lite'
       );
 
       expect(flashHealth?.metrics.totalRequests).toBe(10);
@@ -497,7 +497,7 @@ describe('Monitoring Integration Tests', () => {
 
       const stats = client.getFallbackStats();
       const flashHealth = stats.monitoring?.modelHealth?.find(
-        (h) => h.model === 'gemini-3-flash-preview'
+        (h) => h.model === 'gemini-3.1-flash-lite'
       );
 
       expect(flashHealth?.metrics.failedRequests).toBeGreaterThan(0);
