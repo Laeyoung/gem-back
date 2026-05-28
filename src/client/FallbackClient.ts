@@ -65,7 +65,9 @@ export class GemBack {
     );
 
     // Initialize monitoring if enabled
-    this.rateLimitTracker = options.enableMonitoring ? new RateLimitTracker() : null;
+    this.rateLimitTracker = options.enableMonitoring
+      ? new RateLimitTracker(options.customRateLimits)
+      : null;
     this.healthMonitor = options.enableMonitoring ? new HealthMonitor() : null;
 
     if (this.rateLimitTracker || this.healthMonitor) {

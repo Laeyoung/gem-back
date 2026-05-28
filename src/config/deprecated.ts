@@ -30,6 +30,25 @@ export interface DeprecatedModelInfo {
   notes?: string;
 }
 
+/**
+ * Models that were removed from the upstream Gemini API since the last release.
+ *
+ * Empty by default — populated only when `npm run fetch-models` (Phase 1 of the
+ * v0.7+ release process) detects a model that disappeared. Calls referencing
+ * these IDs are guaranteed to 404 and `FallbackClient` will skip the SDK call
+ * entirely (see `AttemptRecord.reason === 'removed_from_api'`).
+ *
+ * Typed as `readonly string[]` (not `readonly GeminiModel[]`) because removed
+ * model IDs are by definition no longer members of the `GeminiModel` union.
+ * Downstream code that needs to detect ALL_MODELS shrinkage can take the diff:
+ *
+ * ```ts
+ * const stillKnown = new Set<string>(ALL_MODELS);
+ * const justRemoved = REMOVED_MODELS.filter((m) => !stillKnown.has(m));
+ * ```
+ */
+export const REMOVED_MODELS: readonly string[] = [] as const;
+
 export const DEPRECATED_MODELS: DeprecatedModelInfo[] = [
   {
     model: 'gemini-2.0-flash',
@@ -48,9 +67,10 @@ export const DEPRECATED_MODELS: DeprecatedModelInfo[] = [
   {
     model: 'gemini-2.5-flash',
     shutdownDate: '2026-06-17',
-    replacement: 'gemini-3-flash-preview',
+    replacement: 'gemini-3.1-flash-lite',
     reason: 'replaced_by_newer',
-    notes: 'Gemini 2.5 Flash scheduled deprecation',
+    notes:
+      'Gemini 2.5 Flash scheduled deprecation — replaced by stable 3.1 Flash Lite for highest RPD',
   },
   {
     model: 'gemini-2.5-pro',

@@ -20,12 +20,14 @@
 | 4 | TPM 추적: recordTokens, currentTPM/maxTPM/tpmUtilizationPercent, willExceedSoon | ✅ | typecheck/test pass |
 | 5 | paid-only 런타임 warn (warnedNonFreeTierModels) | ✅ | deprecated.test.ts 갱신 |
 | 6 | 신규 free-tier-limits.test.ts (10건) + 기존 248건 갱신 | ✅ | 258 tests pass |
-| 7 | package.json 0.7.0, CHANGELOG BREAKING, README MIGRATION 섹션, DEV_LOG | ✅ | lint clean |
+| 7 | package.json 0.7.0, CHANGELOG BREAKING + version links, README MIGRATION 섹션, MONITORING.md TPM 섹션, DEV_LOG, CLAUDE.md 모델 추가 워크플로 갱신 | ✅ | lint clean |
+| 7.1 (iter1 review fix) | REMOVED_MODELS / FREE_TIER_LIMITS / NON_FREE_TIER_MODELS 공개 export, GemBackOptions.customRateLimits 와이어링, gemini-2.5-flash deprecated replacement를 stable로 교정 | ✅ | typecheck/test/lint pass |
 
 ### 검증 결과
 - ✅ `npm run typecheck` 통과
 - ✅ `npm test` — 258/258 passing
 - ✅ `npm run lint` clean
+- ⏸️ README.ko.md v0.7 갱신 — 한국어 번역 작업 후속 PR (현재 상단에 stale 경고만 추가)
 - ⬜ `npm run build && npm pack` — 사용자 확인 후 실행
 - ⬜ Backward-compat smoke (gemback-0.6.0.tgz vs 0.7.0.tgz) — 사용자 확인 후 실행
 - ⬜ git tag v0.7.0 + push — 사용자 확인 후 실행

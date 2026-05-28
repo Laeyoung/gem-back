@@ -233,10 +233,11 @@ npm run prepublishOnly
 ### Adding a New Gemini Model
 The model list is regenerated from the live Gemini API, not hand-edited.
 1. Run `npm run update-models` (fetches `v1beta/models`, regenerates `src/types/models.ts` + `src/config/models.ts`, runs `lint:fix`).
-2. If the new model has non-default RPM/RPD limits, update `rate-limit-tracker.ts` defaults.
-3. If you want it in the default fallback chain, edit the `DEFAULT_FALLBACK_ORDER` block inside the model generator (`scripts/generate-models.ts`) — editing the auto-generated output directly will be overwritten on the next regen.
-4. Update README.md (and README.ko.md) supported models section.
-5. Add tests for new model.
+2. If the new model has free-tier quota, add an entry to `FREE_TIER_LIMITS` in `src/config/free-tier-limits.ts` (RPM/TPM/RPD). Paid-only models don't need an entry — they fall back to `{ rpm: 15, rpd: 1500 }` automatically; add the model ID to `NON_FREE_TIER_MODELS` in the same file so callers get the runtime warn.
+3. If the API returns a specialized variant (e.g. `*-tts-*`, `*-customtools`), confirm `EXCLUDED_VARIANT_PATTERN` in `scripts/generate-models.ts` already excludes it; otherwise extend the pattern. For models that should be skipped despite matching no pattern, add to `MANUAL_EXCLUDES`.
+4. If you want it in the default fallback chain, edit the `targetFallbackOrder` block inside the model generator (`scripts/generate-models.ts`) — editing the auto-generated output directly will be overwritten on the next regen.
+5. Update README.md (and README.ko.md) supported models section.
+6. Add tests for new model.
 
 ### Modifying Fallback Logic
 - Main logic in `FallbackClient.ts` `generate()` method

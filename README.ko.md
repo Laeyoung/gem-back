@@ -1,5 +1,8 @@
 # 💎 Gem Back
 
+> ⚠️ **v0.7.0 변경 사항 미반영** — 본 한국어 문서는 v0.6.0 기준입니다.
+> v0.7.0의 신규 모델(`gemini-3.5-flash`, stable `gemini-3.1-flash-lite`), TPM 추적, 변경된 DEFAULT_FALLBACK_ORDER, breaking change 사항은 영문 [README.md](./README.md)와 [CHANGELOG.md](./CHANGELOG.md)를 참조해 주세요. 한국어 문서 갱신은 후속 PR 예정입니다.
+
 > Smart Gemini API Fallback Library with Multi-Key Rotation & Monitoring
 
 [![npm version](https://badge.fury.io/js/gemback.svg)](https://www.npmjs.com/package/gemback)

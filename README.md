@@ -157,13 +157,13 @@ console.log(response.text);
 const client = new GemBack({
   apiKey: process.env.GEMINI_API_KEY,
   fallbackOrder: [
-    'gemini-3.1-pro-preview',  // Optional: Include preview models explicitly
-    'gemini-2.5-flash',
-    'gemini-3.1-flash-lite-preview'
+    'gemini-3.5-flash',       // Optional: top-quality first if quality > daily throughput
+    'gemini-3.1-flash-lite',  // Stable, highest free-tier RPD (500/day)
+    'gemini-3-flash-preview', // Last-resort backup
   ],
   maxRetries: 3,
   timeout: 30000,
-  debug: true // Enable detailed logging
+  debug: true, // Enable detailed logging
 });
 ```
 
@@ -288,7 +288,7 @@ console.log(stats.monitoring?.summary);
 
 ```typescript
 // Automatically falls back through the fallback chain
-// when a model hits rate limit (e.g. gemini-3-flash-preview → gemini-2.5-flash → gemini-3.1-flash-lite-preview)
+// when a model hits rate limit (default v0.7.0: gemini-3.1-flash-lite → gemini-3.5-flash → gemini-3-flash-preview)
 const response = await client.generate('Complex question');
 ```
 
@@ -745,9 +745,9 @@ const client = new GemBack({
 
   // Specify models to use
   fallbackOrder: [
+    'gemini-3.1-flash-lite',
+    'gemini-3.5-flash',
     'gemini-3-flash-preview',
-    'gemini-2.5-flash',
-    'gemini-3.1-flash-lite-preview'
   ],
 
   // Retry settings
@@ -776,7 +776,7 @@ const client = new GemBack({
   enableRateLimitPrediction: true,       // Rate limit prediction warnings
 
   // Base settings
-  fallbackOrder: ['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-3.1-flash-lite-preview'],
+  fallbackOrder: ['gemini-3.1-flash-lite', 'gemini-3.5-flash', 'gemini-3-flash-preview'],
   maxRetries: 2,
   timeout: 30000,
   logLevel: 'info'
