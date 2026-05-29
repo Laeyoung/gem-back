@@ -66,7 +66,17 @@ export class RateLimitTracker {
     ) as Record<GeminiModel, RateLimitConfig>;
 
     if (customLimits) {
-      Object.assign(this.defaultLimits, customLimits);
+      // Per-entry field merge: callers can override just the fields they care
+      // about (e.g. `{ 'gemini-2.5-flash': { rpm: 10 } }` preserves the
+      // existing tpm/rpd). Object.assign on the outer object would replace
+      // the entire RateLimitConfig per model.
+      for (const [model, override] of Object.entries(customLimits) as [
+        GeminiModel,
+        RateLimitConfig,
+      ][]) {
+        const existing = this.defaultLimits[model];
+        this.defaultLimits[model] = existing ? { ...existing, ...override } : { ...override };
+      }
     }
   }
 

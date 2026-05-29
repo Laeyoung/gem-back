@@ -3,6 +3,12 @@ import type { DeprecationReason } from '../config/deprecated';
 
 export interface AttemptRecord {
   model: GeminiModel;
+  /**
+   * Human-readable description of why the attempt did not succeed. For
+   * structural checks (e.g. distinguishing a removed-model skip from a real
+   * upstream failure), prefer `reason` — the string here is informational and
+   * its exact wording is not part of the public contract.
+   */
   error: string;
   timestamp: Date;
   statusCode?: number;

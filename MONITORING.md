@@ -67,7 +67,7 @@ Post-migration monitoring checklist for the first week after deploying `@google/
 
 ### TPM (Tokens Per Minute) — v0.7.0+
 
-Free-tier Gemini models cap at **250K tokens/minute** in addition to RPM. `RateLimitTracker` records token usage via `recordTokens()` (called automatically by `FallbackClient` after each non-streaming `generate()` and `generateContent()` resolves), and `RateLimitStatus` surfaces three new fields:
+Free-tier Gemini models cap at **250K tokens/minute** in addition to RPM. `RateLimitTracker` records token usage via `recordTokens()` (called automatically by `FallbackClient` after each non-streaming `generate()` and `generateContent()` resolves; `chat()` also benefits since it delegates to `generate()` internally), and `RateLimitStatus` surfaces three new fields:
 
 ```ts
 const status = tracker.getStatus('gemini-3.5-flash');

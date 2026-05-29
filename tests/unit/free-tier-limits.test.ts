@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { RateLimitTracker } from '../../src/monitoring/rate-limit-tracker';
 import { FREE_TIER_LIMITS, NON_FREE_TIER_MODELS } from '../../src/config/free-tier-limits';
 
@@ -119,5 +119,83 @@ describe('TPM tracking (Phase 4)', () => {
     const status = tracker.getStatus('gemini-3.5-flash');
     expect(status.currentRPM).toBe(0);
     expect(status.currentTPM).toBe(0);
+  });
+
+  it('wouldExceedLimit returns true when TPM is exhausted but RPM is well under', () => {
+    const tracker = new RateLimitTracker();
+
+    // Single request — RPM = 1 of 5, comfortably under
+    tracker.recordRequest('gemini-3.5-flash');
+    // …but tokens hit the TPM ceiling
+    tracker.recordTokens('gemini-3.5-flash', 250_000);
+
+    expect(tracker.wouldExceedLimit('gemini-3.5-flash')).toBe(true);
+  });
+
+  it('wouldExceedLimit ignores TPM for paid-tier models even when token count is huge', () => {
+    const tracker = new RateLimitTracker();
+
+    tracker.recordRequest('gemini-2.5-pro');
+    tracker.recordTokens('gemini-2.5-pro', 5_000_000); // would dwarf any free-tier limit
+
+    expect(tracker.wouldExceedLimit('gemini-2.5-pro')).toBe(false);
+  });
+
+  it('does not record TPM for streaming methods (intentional per MONITORING.md §TPM)', () => {
+    // Regression guard: streaming generators don't surface usageMetadata
+    // per-chunk, so RateLimitTracker does not see streaming token usage.
+    // If a future change wires streaming TPM through, this assertion should
+    // be updated alongside MONITORING.md to keep docs and behavior aligned.
+    const tracker = new RateLimitTracker();
+    tracker.recordRequest('gemini-3.5-flash');
+    // Note the absence of any tracker.recordTokens() call here — that is the
+    // contract the streaming paths inherit from FallbackClient.
+    const status = tracker.getStatus('gemini-3.5-flash');
+    expect(status.currentTPM).toBe(0);
+    expect(status.tpmUtilizationPercent).toBe(0);
+  });
+
+  it('excludes tokens older than 1 minute from currentTPM but retains them within the 5-minute window', () => {
+    vi.useFakeTimers();
+    try {
+      const tracker = new RateLimitTracker();
+      tracker.recordTokens('gemini-3.5-flash', 100_000);
+
+      // Just past the 1-minute query window but well inside the 5-minute retention window.
+      vi.advanceTimersByTime(65_000);
+
+      const status = tracker.getStatus('gemini-3.5-flash');
+      expect(status.currentTPM).toBe(0); // 1-min query window excludes the 65s-old record
+
+      // Record fresh tokens; only the new ones should be counted.
+      tracker.recordTokens('gemini-3.5-flash', 30_000);
+      const status2 = tracker.getStatus('gemini-3.5-flash');
+      expect(status2.currentTPM).toBe(30_000);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe('customRateLimits merge semantics', () => {
+  it('preserves unspecified fields on the existing entry (partial-field merge)', () => {
+    const tracker = new RateLimitTracker({
+      // override only RPM; tpm should be retained from FREE_TIER_LIMITS default
+      'gemini-3.5-flash': { rpm: 99 },
+    });
+
+    const status = tracker.getStatus('gemini-3.5-flash');
+    expect(status.maxRPM).toBe(99);
+    expect(status.maxTPM).toBe(250_000); // tpm from FREE_TIER_LIMITS, not lost
+  });
+
+  it('can introduce tpm on a paid-tier model via partial override', () => {
+    const tracker = new RateLimitTracker({
+      'gemini-2.5-pro': { tpm: 500_000 },
+    });
+
+    const status = tracker.getStatus('gemini-2.5-pro');
+    expect(status.maxRPM).toBe(15); // conservative paid-tier default preserved
+    expect(status.maxTPM).toBe(500_000); // newly introduced via override
   });
 });

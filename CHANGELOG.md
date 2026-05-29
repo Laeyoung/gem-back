@@ -30,12 +30,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Paid-tier runtime warning**: `FallbackClient` emits a one-time `logger.warn` when a model in `NON_FREE_TIER_MODELS` is invoked, so free-tier API key users understand why they see 4xx.
 - **`AttemptRecord.reason?: DeprecationReason`** field — set when the call was skipped without invoking the SDK (e.g., for `removed_from_api`).
 - **`DeprecationReason`** type exported from `src/index.ts`.
+- **`REMOVED_MODELS`** export (`src/config/deprecated.ts`) — empty by default; populated when `npm run fetch-models` detects upstream model removal. `FallbackClient` now skips the SDK call entirely for any model in this list and records `AttemptRecord.reason = 'removed_from_api'`.
+- **`RateLimitConfig`** type now exported from the package root — required to type entries in `customRateLimits`.
+- **`customRateLimits`** option on `GemBackOptions` — per-model RPM/TPM/RPD overrides, merged per-field on top of `FREE_TIER_LIMITS` defaults. Only consulted when `enableMonitoring: true`; supplying it with monitoring off now emits a one-time `logger.warn`.
 
 ### Changed
 
 - `scripts/generate-models.ts` now filters out specialized variants (`*-tts-*`, `*-customtools`) and manually-deprecated entries (`gemini-3-pro-preview`) before generating `ALL_MODELS`.
 - `scripts/generate-models.ts` `targetFallbackOrder` updated to match the new free-tier composition.
 - Deprecation table updated: previously `replacement: gemini-3.1-flash-lite-preview` entries now point at the stable `gemini-3.1-flash-lite`.
+- **`gemini-3.1-flash-lite-preview` added to `DEPRECATED_MODELS`** (shutdownDate `2026-05-29`, replacement `gemini-3.1-flash-lite`, reason `replaced_by_newer`). Runtime deprecation warning now fires when this preview model is used; callers should migrate to the stable variant.
 
 ### Migration
 

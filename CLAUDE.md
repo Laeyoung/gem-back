@@ -154,7 +154,7 @@ npm run prepublishOnly
 
 #### 5. Config Layer (`src/config/`)
 - **`models.ts`** - **AUTO-GENERATED** model metadata (priority, capabilities) sourced from the Gemini API. Regenerate via `npm run update-models`.
-- **`deprecated.ts`** - Hand-maintained `DEPRECATED_MODELS` map: shutdown dates, replacement suggestions, deprecation messaging. Drives runtime deprecation warnings.
+- **`deprecated.ts`** - Hand-maintained `DEPRECATED_MODELS` map (shutdown dates, replacement, structured `reason`) and `REMOVED_MODELS` list (IDs removed from the upstream API — `FallbackClient` skips the SDK call entirely for these and records `AttemptRecord.reason = 'removed_from_api'`). Drives runtime deprecation warnings.
 - **`defaults.ts`** - Default configuration values used by `FallbackClient` when options are omitted.
 
 ### Key Architectural Patterns

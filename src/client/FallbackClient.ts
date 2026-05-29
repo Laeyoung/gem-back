@@ -22,7 +22,7 @@ import {
   isAuthError,
   getErrorStatusCode,
 } from '../utils/error-handler';
-import { DEPRECATED_MODELS } from '../config/deprecated';
+import { DEPRECATED_MODELS, REMOVED_MODELS } from '../config/deprecated';
 import { NON_FREE_TIER_MODELS } from '../config/free-tier-limits';
 
 export class GemBack {
@@ -38,6 +38,7 @@ export class GemBack {
   private healthMonitor: HealthMonitor | null;
   private warnedDeprecatedModels: Set<string> = new Set();
   private warnedNonFreeTierModels: Set<string> = new Set();
+  private erroredRemovedModels: Set<string> = new Set();
 
   constructor(options: GemBackOptions) {
     if (!options.apiKey && (!options.apiKeys || options.apiKeys.length === 0)) {
@@ -69,6 +70,16 @@ export class GemBack {
       ? new RateLimitTracker(options.customRateLimits)
       : null;
     this.healthMonitor = options.enableMonitoring ? new HealthMonitor() : null;
+
+    if (
+      !options.enableMonitoring &&
+      options.customRateLimits &&
+      Object.keys(options.customRateLimits).length > 0
+    ) {
+      this.logger.warn(
+        '`customRateLimits` was provided but `enableMonitoring` is false — the overrides will be ignored. Set `enableMonitoring: true` to activate rate-limit tracking.'
+      );
+    }
 
     if (this.rateLimitTracker || this.healthMonitor) {
       this.logger.info('Monitoring enabled: Rate limit tracking and health monitoring');
@@ -151,6 +162,15 @@ export class GemBack {
       this.logger.debug(
         `Attempting: ${model}${keyIndex !== null ? ` (API Key #${keyIndex + 1})` : ''}`
       );
+
+      // Skip the SDK call entirely if the model was removed from the upstream API.
+      if (this.skipIfRemoved(model, attempts)) {
+        const idx = modelsToTry.indexOf(model);
+        if (idx < modelsToTry.length - 1) {
+          this.logger.info(`Fallback to: ${modelsToTry[idx + 1]}`);
+        }
+        continue;
+      }
 
       // Check rate limit prediction before making request
       if (this.rateLimitTracker) {
@@ -300,6 +320,30 @@ export class GemBack {
     this.warnedNonFreeTierModels.add(model);
   }
 
+  /**
+   * Removed-from-API guard. If the model is listed in `REMOVED_MODELS`, log
+   * once, push an `AttemptRecord` with `reason: 'removed_from_api'`, and
+   * return `true` so the caller skips the SDK call and falls through to the
+   * next model. Runs ahead of the non-free-tier warn so a removed model that
+   * also appears in `NON_FREE_TIER_MODELS` only surfaces the removal error.
+   */
+  private skipIfRemoved(model: GeminiModel, attempts: AttemptRecord[]): boolean {
+    if (!REMOVED_MODELS.includes(model)) return false;
+    if (!this.erroredRemovedModels.has(model)) {
+      this.logger.error(
+        `Model "${model}" was removed from the Gemini API. Skipping SDK call and falling back.`
+      );
+      this.erroredRemovedModels.add(model);
+    }
+    attempts.push({
+      model,
+      error: 'Model removed from upstream API',
+      timestamp: new Date(),
+      reason: 'removed_from_api',
+    });
+    return true;
+  }
+
   async *generateStream(prompt: string, options?: GenerateOptions): AsyncGenerator<StreamChunk> {
     if (options?.model) {
       this.checkDeprecatedModel(options.model);
@@ -315,6 +359,15 @@ export class GemBack {
       this.logger.debug(
         `Attempting stream: ${model}${keyIndex !== null ? ` (API Key #${keyIndex + 1})` : ''}`
       );
+
+      // Skip the SDK call entirely if the model was removed from the upstream API.
+      if (this.skipIfRemoved(model, attempts)) {
+        const idx = modelsToTry.indexOf(model);
+        if (idx < modelsToTry.length - 1) {
+          this.logger.info(`Fallback to: ${modelsToTry[idx + 1]}`);
+        }
+        continue;
+      }
 
       // Check rate limit prediction before making request
       if (this.rateLimitTracker) {
@@ -448,6 +501,15 @@ export class GemBack {
       this.logger.debug(
         `Attempting multimodal: ${model}${keyIndex !== null ? ` (API Key #${keyIndex + 1})` : ''}`
       );
+
+      // Skip the SDK call entirely if the model was removed from the upstream API.
+      if (this.skipIfRemoved(model, attempts)) {
+        const idx = modelsToTry.indexOf(model);
+        if (idx < modelsToTry.length - 1) {
+          this.logger.info(`Fallback to: ${modelsToTry[idx + 1]}`);
+        }
+        continue;
+      }
 
       // Check rate limit prediction before making request
       if (this.rateLimitTracker) {
@@ -587,6 +649,15 @@ export class GemBack {
       this.logger.debug(
         `Attempting multimodal stream: ${model}${keyIndex !== null ? ` (API Key #${keyIndex + 1})` : ''}`
       );
+
+      // Skip the SDK call entirely if the model was removed from the upstream API.
+      if (this.skipIfRemoved(model, attempts)) {
+        const idx = modelsToTry.indexOf(model);
+        if (idx < modelsToTry.length - 1) {
+          this.logger.info(`Fallback to: ${modelsToTry[idx + 1]}`);
+        }
+        continue;
+      }
 
       // Check rate limit prediction before making request
       if (this.rateLimitTracker) {
