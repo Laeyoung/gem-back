@@ -278,13 +278,24 @@ A `GEMINI.md` file mirrors this CLAUDE.md for the Gemini CLI. When making non-tr
 
 ## Release Process
 
+Releases are automated via `.github/workflows/release.yml` — pushing a tag matching `v*` triggers the workflow, which verifies the tag matches `package.json` version, runs `prepublishOnly`, publishes to npm with `--provenance`, and opens a GitHub Release. To cut a release:
+
 1. Update version in `package.json`
 2. Update `CHANGELOG.md` with changes
-3. Run `npm run prepublishOnly` (builds + tests)
+3. Run `npm run prepublishOnly` locally as a smoke test (the workflow re-runs it)
 4. Commit changes following conventional commits format
 5. Create git tag: `git tag v0.x.x`
-6. Push with tags: `git push origin main --tags`
-7. `npm publish` (must pass all checks)
+6. Push with tags: `git push origin master --tags`
+7. The release workflow handles `npm publish` and GitHub Release creation
+
+**Prerequisites (one-time setup):**
+- `NPM_TOKEN` repo secret with publish access to the `gemback` package (Settings → Secrets and variables → Actions). Use an **automation token** (npm CLI) so 2FA doesn't block CI.
+- For `--provenance` to work, the package must be public on npm and the workflow needs `id-token: write` (already set).
+
+**Manual fallback** (if the workflow can't publish — token expired, etc.):
+1. `npm whoami` → if empty, `npm login`
+2. `npm run prepublishOnly`
+3. `npm publish --access public` (add `--otp=<code>` if 2FA prompts)
 
 ## TypeScript Configuration
 
