@@ -689,6 +689,8 @@ export class GemBack {
           tools: request.tools,
           toolConfig: request.toolConfig,
           safetySettings: request.safetySettings,
+          responseMimeType: request.responseMimeType,
+          responseSchema: request.responseSchema,
         });
         let hasYielded = false;
 

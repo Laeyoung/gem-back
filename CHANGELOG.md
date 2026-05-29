@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`generateContentStream` now forwards `responseMimeType` and `responseSchema`** to the underlying SDK call. Previously these options on `GenerateContentRequest` were silently dropped on the streaming multimodal path (pre-existing in master), so JSON-mode streaming requests fell back to plain-text output. The non-streaming `generateContent` was already correct.
+
 ## [0.7.0] - 2026-05-29
 
 ### BREAKING CHANGES

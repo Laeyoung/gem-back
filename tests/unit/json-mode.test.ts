@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GeminiClient } from '../../src/client/GeminiClient';
+import { GemBack } from '../../src';
 import type { ResponseSchema } from '../../src/types/config';
 
 // Mock @google/genai
@@ -359,6 +360,65 @@ describe('JSON Mode', () => {
       );
 
       expect(response.json).toEqual(jsonData);
+    });
+  });
+
+  describe('generateContentStream with JSON mode', () => {
+    const makeStream = () => ({
+      async *[Symbol.asyncIterator]() {
+        yield { text: '{"ok":true}', candidates: [{ finishReason: 'STOP' }] };
+      },
+    });
+
+    it('should forward responseMimeType to SDK in generateContentStream', async () => {
+      mockGenerateContentStream.mockReturnValue(makeStream());
+      const fallbackClient = new GemBack({ apiKey: 'test-key' });
+
+      const stream = fallbackClient.generateContentStream({
+        contents: [{ role: 'user', parts: [{ text: 'Test' }] }],
+        responseMimeType: 'application/json',
+      });
+      for await (const _ of stream) {
+        // consume
+      }
+
+      expect(mockGenerateContentStream).toHaveBeenCalledWith(
+        expect.objectContaining({
+          config: expect.objectContaining({
+            responseMimeType: 'application/json',
+          }),
+        })
+      );
+    });
+
+    it('should forward responseSchema to SDK in generateContentStream', async () => {
+      const schema: ResponseSchema = {
+        type: 'object' as any,
+        properties: {
+          ok: { type: 'boolean' as any },
+        },
+        required: ['ok'],
+      };
+      mockGenerateContentStream.mockReturnValue(makeStream());
+      const fallbackClient = new GemBack({ apiKey: 'test-key' });
+
+      const stream = fallbackClient.generateContentStream({
+        contents: [{ role: 'user', parts: [{ text: 'Test' }] }],
+        responseMimeType: 'application/json',
+        responseSchema: schema,
+      });
+      for await (const _ of stream) {
+        // consume
+      }
+
+      expect(mockGenerateContentStream).toHaveBeenCalledWith(
+        expect.objectContaining({
+          config: expect.objectContaining({
+            responseMimeType: 'application/json',
+            responseSchema: schema,
+          }),
+        })
+      );
     });
   });
 });
