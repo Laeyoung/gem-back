@@ -198,4 +198,25 @@ describe('customRateLimits merge semantics', () => {
     expect(status.maxRPM).toBe(15); // conservative paid-tier default preserved
     expect(status.maxTPM).toBe(500_000); // newly introduced via override
   });
+
+  it('accepts overrides for unlisted model IDs with rpm supplied', () => {
+    const tracker = new RateLimitTracker({
+      ['future-unknown-model' as any]: { rpm: 7, tpm: 100_000 },
+    });
+
+    const status = tracker.getStatus('future-unknown-model' as any);
+    expect(status.maxRPM).toBe(7);
+    expect(status.maxTPM).toBe(100_000);
+  });
+
+  it('accepts partial overrides for unlisted model IDs, falling back to rpm=15', () => {
+    const tracker = new RateLimitTracker({
+      ['future-unknown-model' as any]: { tpm: 100_000 },
+    });
+
+    const status = tracker.getStatus('future-unknown-model' as any);
+    // No rpm supplied → conservative paid-tier default kicks in.
+    expect(status.maxRPM).toBe(15);
+    expect(status.maxTPM).toBe(100_000);
+  });
 });

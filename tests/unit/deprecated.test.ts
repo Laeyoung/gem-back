@@ -257,6 +257,21 @@ describe('Non-free-tier warning', () => {
     warnSpy.mockRestore();
   });
 
+  it('fires at construction time when a non-free-tier model is in fallbackOrder', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    new GemBack({
+      apiKey: 'test-key',
+      fallbackOrder: ['gemini-2.0-flash'],
+      logLevel: 'warn',
+    });
+
+    const nonFreeTierWarnings = warnSpy.mock.calls.filter(
+      c => typeof c[0] === 'string' && c[0].includes('gemini-2.0-flash') && c[0].includes('not on the free tier')
+    );
+    expect(nonFreeTierWarnings).toHaveLength(1);
+    warnSpy.mockRestore();
+  });
+
   it('does not fire for free-tier models', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const client = new GemBack({

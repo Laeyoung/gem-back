@@ -1,5 +1,11 @@
 import type { GeminiModel } from './models';
-import type { DeprecationReason } from '../config/deprecated';
+
+/**
+ * Structural reason an attempt was skipped without calling the SDK. Distinct
+ * from `DeprecationReason` (which classifies deprecation kinds, not skip
+ * paths). New skip paths will be added to this union as needed.
+ */
+export type AttemptSkipReason = 'removed_from_api';
 
 export interface AttemptRecord {
   model: GeminiModel;
@@ -13,10 +19,9 @@ export interface AttemptRecord {
   timestamp: Date;
   statusCode?: number;
   /**
-   * Set when the attempt was skipped without calling the SDK
-   * (e.g. model removed from upstream API).
+   * Set when the attempt was skipped without calling the SDK.
    */
-  reason?: DeprecationReason;
+  reason?: AttemptSkipReason;
 }
 
 export class GeminiBackError extends Error {

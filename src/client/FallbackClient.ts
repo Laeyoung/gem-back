@@ -424,6 +424,22 @@ export class GemBack {
           this.logger.info(`Stream success: ${model} (${responseTime}ms)`);
           return;
         }
+
+        // Stream completed without yielding any chunk: treat as a soft failure
+        // so callers see *why* fallback occurred via AttemptRecord.
+        const emptyResponseTime = Date.now() - startTime;
+        if (this.healthMonitor) {
+          this.healthMonitor.recordRequest(model, emptyResponseTime, false, 'empty stream');
+        }
+        attempts.push({
+          model,
+          error: 'Empty stream response (no chunks yielded)',
+          timestamp: new Date(),
+        });
+        this.logger.warn(`Empty stream from ${model}, falling back`);
+        if (modelsToTry.indexOf(model) < modelsToTry.length - 1) {
+          this.logger.info(`Fallback to: ${modelsToTry[modelsToTry.indexOf(model) + 1]}`);
+        }
       } catch (error) {
         const err = error as Error;
         const statusCode = getErrorStatusCode(err);
@@ -724,6 +740,22 @@ export class GemBack {
           }
           this.logger.info(`Stream success: ${model} (${responseTime}ms)`);
           return;
+        }
+
+        // Stream completed without yielding any chunk: treat as a soft failure
+        // so callers see *why* fallback occurred via AttemptRecord.
+        const emptyResponseTime = Date.now() - startTime;
+        if (this.healthMonitor) {
+          this.healthMonitor.recordRequest(model, emptyResponseTime, false, 'empty stream');
+        }
+        attempts.push({
+          model,
+          error: 'Empty stream response (no chunks yielded)',
+          timestamp: new Date(),
+        });
+        this.logger.warn(`Empty stream from ${model}, falling back`);
+        if (modelsToTry.indexOf(model) < modelsToTry.length - 1) {
+          this.logger.info(`Fallback to: ${modelsToTry[modelsToTry.indexOf(model) + 1]}`);
         }
       } catch (error) {
         const err = error as Error;

@@ -503,4 +503,62 @@ describe('Monitoring Integration Tests', () => {
       expect(flashHealth?.metrics.failedRequests).toBeGreaterThan(0);
     });
   });
+
+  describe('TPM Tracking End-to-End', () => {
+    it('flows response.usage.totalTokens through to rateLimitStatus.currentTPM', async () => {
+      mockGeminiClient.generate.mockResolvedValue({
+        text: 'ok',
+        model: 'gemini-3.5-flash',
+        finishReason: 'STOP',
+        usage: { promptTokens: 40_000, completionTokens: 60_000, totalTokens: 100_000 },
+      });
+
+      const client = new GemBack({
+        apiKey: 'test-key',
+        fallbackOrder: ['gemini-3.5-flash'],
+        enableMonitoring: true,
+        logLevel: 'silent',
+      });
+
+      await client.generate('Test');
+
+      const stats = client.getFallbackStats();
+      const flashStatus = stats.monitoring?.rateLimitStatus?.find(
+        (s) => s.model === 'gemini-3.5-flash'
+      );
+
+      expect(flashStatus).toBeDefined();
+      expect(flashStatus?.currentTPM).toBe(100_000);
+      expect(flashStatus?.tpmUtilizationPercent).toBeCloseTo(40, 1); // 100K / 250K
+    });
+
+    it('flows totalTokens through generateContent() path as well', async () => {
+      mockGeminiClient.generateContent = vi.fn().mockResolvedValue({
+        text: 'ok',
+        model: 'gemini-3.5-flash',
+        finishReason: 'STOP',
+        usage: { promptTokens: 30_000, completionTokens: 45_000, totalTokens: 75_000 },
+      });
+
+      const client = new GemBack({
+        apiKey: 'test-key',
+        fallbackOrder: ['gemini-3.5-flash'],
+        enableMonitoring: true,
+        logLevel: 'silent',
+      });
+
+      await client.generateContent({
+        contents: [{ role: 'user', parts: [{ text: 'Test' }] }],
+      });
+
+      const stats = client.getFallbackStats();
+      const flashStatus = stats.monitoring?.rateLimitStatus?.find(
+        (s) => s.model === 'gemini-3.5-flash'
+      );
+
+      expect(flashStatus).toBeDefined();
+      expect(flashStatus?.currentTPM).toBe(75_000);
+      expect(flashStatus?.tpmUtilizationPercent).toBeCloseTo(30, 1); // 75K / 250K
+    });
+  });
 });

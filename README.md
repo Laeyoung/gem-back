@@ -46,13 +46,13 @@ If output quality matters more than daily throughput, pass an explicit `fallback
 
 **Free-Tier Quota Snapshot** (2026-05-28):
 
-| Model | RPM | TPM | RPD |
-|---|---|---|---|
-| `gemini-3.1-flash-lite` | 15 | 250K | 500 |
-| `gemini-2.5-flash-lite` | 10 | 250K | 20 | ⚠️ deprecated (shutdown 2026-07-22 → `gemini-3.1-flash-lite`)
-| `gemini-3.5-flash` | 5 | 250K | 20 |
-| `gemini-3-flash-preview` | 5 | 250K | 20 | ⚠️ preview
-| `gemini-2.5-flash` | 5 | 250K | 20 | ⚠️ deprecated (shutdown 2026-06-17 → `gemini-3.1-flash-lite`)
+| Model | RPM | TPM | RPD | Notes |
+|---|---|---|---|---|
+| `gemini-3.1-flash-lite` | 15 | 250K | 500 | |
+| `gemini-2.5-flash-lite` | 10 | 250K | 20 | ⚠️ deprecated (shutdown 2026-07-22 → `gemini-3.1-flash-lite`) |
+| `gemini-3.5-flash` | 5 | 250K | 20 | |
+| `gemini-3-flash-preview` | 5 | 250K | 20 | ⚠️ preview |
+| `gemini-2.5-flash` | 5 | 250K | 20 | ⚠️ deprecated (shutdown 2026-06-17 → `gemini-3.1-flash-lite`) |
 
 **Paid-Only Models** (still in `ALL_MODELS`; runtime warning when used on free-tier keys):
 - `gemini-3.1-pro-preview`
@@ -657,7 +657,7 @@ interface GemBackOptions {
   apiKeyRotationStrategy?: 'round-robin' | 'least-used'; // Key rotation strategy (default: round-robin)
   enableMonitoring?: boolean;        // Optional: Enable monitoring (default: false)
   enableRateLimitPrediction?: boolean; // Optional: Rate limit prediction warnings (default: false)
-  customRateLimits?: Partial<Record<GeminiModel, RateLimitConfig>>; // Optional: per-model
+  customRateLimits?: Partial<Record<GeminiModel, Partial<RateLimitConfig>>>; // Optional: per-model
                                      // RPM/TPM/RPD overrides applied on top of
                                      // FREE_TIER_LIMITS defaults. Per-entry field merge,
                                      // so { 'gemini-2.5-flash': { rpm: 10 } } preserves

@@ -174,6 +174,81 @@ describe('GemBack', () => {
       expect(chunks[2]).toEqual({ text: '', model: 'gemini-3.1-flash-lite', isComplete: true });
     });
 
+    it('records an AttemptRecord and falls back when stream yields zero chunks', async () => {
+      async function* emptyStream() {
+        // resolves without yielding — represents an SDK returning an empty stream
+      }
+      async function* successStream() {
+        yield { text: 'Recovered' };
+      }
+      mockGeminiClient.generateStream
+        .mockReturnValueOnce(emptyStream())
+        .mockReturnValueOnce(successStream());
+
+      const client = new GemBack({ apiKey: 'test-key', logLevel: 'silent' });
+      const chunks: any[] = [];
+      for await (const chunk of client.generateStream('Hello')) {
+        chunks.push(chunk);
+      }
+
+      expect(chunks[0].text).toBe('Recovered');
+      // Empty stream consumed the first model; the second model produced the chunk.
+      expect(mockGeminiClient.generateStream).toHaveBeenCalledTimes(2);
+    });
+
+    it('surfaces empty-stream AttemptRecord on allAttempts when every model is empty', async () => {
+      async function* emptyStream() {}
+      mockGeminiClient.generateStream.mockReturnValue(emptyStream());
+
+      const client = new GemBack({
+        apiKey: 'test-key',
+        fallbackOrder: ['gemini-3.5-flash'],
+        logLevel: 'silent',
+      });
+
+      const err = await (async () => {
+        try {
+          for await (const _ of client.generateStream('Hello')) {
+            // drain
+          }
+        } catch (e) {
+          return e as any;
+        }
+      })();
+
+      expect(err).toBeDefined();
+      expect(err.allAttempts).toHaveLength(1);
+      expect(err.allAttempts[0].error).toBe('Empty stream response (no chunks yielded)');
+      expect(err.allAttempts[0].model).toBe('gemini-3.5-flash');
+    });
+
+    it('records empty-stream AttemptRecord on generateContentStream path', async () => {
+      async function* emptyStream() {}
+      mockGeminiClient.generateContentStream = vi.fn().mockReturnValue(emptyStream());
+
+      const client = new GemBack({
+        apiKey: 'test-key',
+        fallbackOrder: ['gemini-3.5-flash'],
+        logLevel: 'silent',
+      });
+
+      const err = await (async () => {
+        try {
+          for await (const _ of client.generateContentStream({
+            contents: [{ role: 'user', parts: [{ text: 'Hello' }] }],
+          })) {
+            // drain
+          }
+        } catch (e) {
+          return e as any;
+        }
+      })();
+
+      expect(err).toBeDefined();
+      expect(err.allAttempts).toHaveLength(1);
+      expect(err.allAttempts[0].error).toBe('Empty stream response (no chunks yielded)');
+    });
+
     it('should fallback on stream error', async () => {
       async function* failStream() {
         throw new Error('429 Rate limit');

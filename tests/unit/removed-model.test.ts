@@ -77,7 +77,8 @@ describe('REMOVED_MODELS skip path', () => {
     );
     expect(removedAttempt).toBeDefined();
     expect(removedAttempt?.reason).toBe('removed_from_api');
-    expect(removedAttempt?.error).toBeTruthy();
+    expect(removedAttempt?.error).toBe('Model removed from upstream API');
+    expect(removedAttempt?.statusCode).toBeUndefined();
   });
 
   it('skips SDK call in generateStream() for a removed model', async () => {
@@ -106,6 +107,21 @@ describe('REMOVED_MODELS skip path', () => {
       expect.any(String),
       undefined
     );
+  });
+
+  it('skips SDK call in chat() for a removed model', async () => {
+    const client = new GemBack({
+      apiKey: 'test-key',
+      fallbackOrder: ['legacy-removed-model' as any, 'gemini-3.5-flash'],
+      logLevel: 'silent',
+    });
+
+    const response = await client.chat([{ role: 'user', content: 'Hello' }]);
+
+    expect(response.text).toBe('ok');
+    // chat() delegates to generate(); the removed model is skipped without an SDK call.
+    expect(mockGeminiClient.generate).toHaveBeenCalledTimes(1);
+    expect(mockGeminiClient.generate.mock.calls[0][1]).toBe('gemini-3.5-flash');
   });
 
   it('skips SDK call in generateContent() for a removed model', async () => {

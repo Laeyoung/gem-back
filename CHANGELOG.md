@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **`generateContentStream` now forwards `responseMimeType` and `responseSchema`** to the underlying SDK call. Previously these options on `GenerateContentRequest` were silently dropped on the streaming multimodal path (pre-existing in master), so JSON-mode streaming requests fell back to plain-text output. The non-streaming `generateContent` was already correct.
+- **Empty-stream fallback**: when the SDK returns a stream that resolves without yielding any chunk, `generateStream`/`generateContentStream` now record an `AttemptRecord` (`error: 'Empty stream response (no chunks yielded)'`) and a failed health-monitor entry before falling through to the next model. Previously the loop silently advanced with no diagnostic trace.
+
+### Changed
+
+- **`FREE_TIER_LIMITS` made readonly** (`Object.freeze` + `Readonly<...>` types) to prevent accidental mutation from corrupting the tracker's initial state for subsequent `RateLimitTracker` instances.
+- **`customRateLimits` value type relaxed** from `RateLimitConfig` (rpm required) to `Partial<RateLimitConfig>`, matching the JSDoc promise that callers can override only the fields they care about (e.g. `{ 'gemini-2.5-pro': { tpm: 500_000 } }`). The internal `RateLimitTracker.constructor(customLimits)` signature was also updated to accept the same partial type, and the merge loop now falls back to `rpm: 15` when overriding an unlisted model without supplying rpm — preventing silent drops.
 
 ## [0.7.0] - 2026-05-29
 
@@ -32,8 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `RateLimitStatus.currentTPM`, `maxTPM`, `tpmUtilizationPercent` (undefined for paid-tier models)
   - `willExceedSoon` now considers RPM and TPM, whichever is closer to its limit
 - **Paid-tier runtime warning**: `FallbackClient` emits a one-time `logger.warn` when a model in `NON_FREE_TIER_MODELS` is invoked, so free-tier API key users understand why they see 4xx.
-- **`AttemptRecord.reason?: DeprecationReason`** field — set when the call was skipped without invoking the SDK (e.g., for `removed_from_api`).
-- **`DeprecationReason`** type exported from `src/index.ts`.
+- **`AttemptRecord.reason?: AttemptSkipReason`** field — set when the call was skipped without invoking the SDK (currently only `'removed_from_api'`).
+- **`AttemptRecord`, `AttemptSkipReason`, `DeprecationReason`** types exported from `src/index.ts`. `AttemptSkipReason` is the structural skip-reason union; `DeprecationReason` classifies deprecation kinds — they are intentionally separate contracts.
 - **`REMOVED_MODELS`** export (`src/config/deprecated.ts`) — empty by default; populated when `npm run fetch-models` detects upstream model removal. `FallbackClient` now skips the SDK call entirely for any model in this list and records `AttemptRecord.reason = 'removed_from_api'`.
 - **`RateLimitConfig`** type now exported from the package root — required to type entries in `customRateLimits`.
 - **`customRateLimits`** option on `GemBackOptions` — per-model RPM/TPM/RPD overrides, merged per-field on top of `FREE_TIER_LIMITS` defaults. Only consulted when `enableMonitoring: true`; supplying it with monitoring off now emits a one-time `logger.warn`.

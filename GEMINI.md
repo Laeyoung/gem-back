@@ -29,7 +29,8 @@
 │   │   ├── FallbackClient.ts    # MAIN ENTRY: Orchestrates fallback, retry, and monitoring
 │   │   └── GeminiClient.ts      # WRAPPER: Direct wrapper around Google GenAI SDK
 │   ├── config/
-│   │   ├── deprecated.ts        # Deprecated model tracking (shutdown dates, replacements)
+│   │   ├── deprecated.ts        # Deprecated model tracking + REMOVED_MODELS (skip-SDK list)
+│   │   ├── free-tier-limits.ts  # FREE_TIER_LIMITS / NON_FREE_TIER_MODELS (per-model quota source)
 │   │   ├── models.ts            # Auto-generated model metadata (priority, info)
 │   │   └── defaults.ts          # Default configuration values
 │   ├── monitoring/
@@ -52,10 +53,11 @@
 
 1.  **Fallback Chain**:
     *   Requests attempt models in a defined `fallbackOrder`.
-    *   **Default Order**: `gemini-3-flash-preview` -> `gemini-2.5-flash` -> `gemini-3.1-flash-lite-preview`.
+    *   **Default Order (v0.7.0, RPD-first)**: `gemini-3.1-flash-lite` -> `gemini-3.5-flash` -> `gemini-3-flash-preview`.
     *   **429 (Rate Limit)** -> Immediate fallback to next model.
     *   **5xx (Server Error)** -> Retry with backoff, then fallback.
     *   **401/403 (Auth)** -> Fatal error, stops chain.
+    *   **REMOVED_MODELS skip**: Models in `src/config/deprecated.ts:REMOVED_MODELS` are skipped without calling the SDK; an `AttemptRecord` with `reason: 'removed_from_api'` is pushed.
 
 2.  **Multi-Key Rotation**:
     *   Rotates through a pool of API keys to effectively increase RPM limits.
@@ -65,6 +67,9 @@
 3.  **Monitoring System**:
     *   **Predictive**: Tracks usage windows to predict 429s before they happen (80%/90% thresholds).
     *   **Health**: Classifies models as `healthy`, `degraded`, or `unhealthy` based on success rates and latency.
+    *   **TPM tracking (v0.7.0)**: `RateLimitTracker.recordTokens(model, tokens)` is called after a non-stream SDK response resolves; `willExceedSoon` now considers RPM and TPM jointly. Per-model defaults seed from `FREE_TIER_LIMITS`; paid-tier models keep the conservative `{ rpm: 15, rpd: 1500 }` fallback with no TPM.
+    *   **`customRateLimits`** option deep-merges per-field over `FREE_TIER_LIMITS` defaults. Only consulted when `enableMonitoring: true`.
+    *   **Paid-tier runtime warn (v0.7.0)**: A one-time `logger.warn` fires when a model in `NON_FREE_TIER_MODELS` is invoked.
 
 ## Key Commands
 

@@ -15,6 +15,7 @@ export type {
 export type { GeminiResponse, StreamChunk, FallbackStats, ApiKeyStats } from './types/response';
 export type { HealthStatus, ModelHealth, RateLimitStatus } from './monitoring';
 export { GeminiBackError } from './types/errors';
+export type { AttemptRecord, AttemptSkipReason } from './types/errors';
 export { ALL_MODELS, DEFAULT_FALLBACK_ORDER } from './types/models';
 export { DEPRECATED_MODELS, REMOVED_MODELS } from './config/deprecated';
 export type { DeprecatedModelInfo, DeprecationReason } from './config/deprecated';

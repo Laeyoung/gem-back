@@ -17,13 +17,14 @@ export interface FreeTierLimit {
  * Refresh this snapshot when AI Studio publishes new quotas. Long-term
  * automation: see docs/plan-auto-free-tier-update.md.
  */
-export const FREE_TIER_LIMITS: Partial<Record<GeminiModel, FreeTierLimit>> = {
-  'gemini-2.5-flash': { rpm: 5, tpm: 250_000, rpd: 20 },
-  'gemini-2.5-flash-lite': { rpm: 10, tpm: 250_000, rpd: 20 },
-  'gemini-3-flash-preview': { rpm: 5, tpm: 250_000, rpd: 20 },
-  'gemini-3.1-flash-lite': { rpm: 15, tpm: 250_000, rpd: 500 },
-  'gemini-3.5-flash': { rpm: 5, tpm: 250_000, rpd: 20 },
-};
+export const FREE_TIER_LIMITS: Readonly<Partial<Record<GeminiModel, Readonly<FreeTierLimit>>>> =
+  Object.freeze({
+    'gemini-2.5-flash': Object.freeze({ rpm: 5, tpm: 250_000, rpd: 20 }),
+    'gemini-2.5-flash-lite': Object.freeze({ rpm: 10, tpm: 250_000, rpd: 20 }),
+    'gemini-3-flash-preview': Object.freeze({ rpm: 5, tpm: 250_000, rpd: 20 }),
+    'gemini-3.1-flash-lite': Object.freeze({ rpm: 15, tpm: 250_000, rpd: 500 }),
+    'gemini-3.5-flash': Object.freeze({ rpm: 5, tpm: 250_000, rpd: 20 }),
+  });
 
 /**
  * Models that are still in the API but no longer offer a free tier

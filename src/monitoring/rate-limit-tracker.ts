@@ -51,7 +51,7 @@ export class RateLimitTracker {
   private warningThreshold = 0.8; // Warn at 80% capacity
   private predictionThreshold = 0.9; // Predict exceed at 90%
 
-  constructor(customLimits?: Partial<Record<GeminiModel, RateLimitConfig>>) {
+  constructor(customLimits?: Partial<Record<GeminiModel, Partial<RateLimitConfig>>>) {
     // Seed per-model defaults: free-tier models get their published limits,
     // everything else (paid-tier and unknown) gets a conservative fallback.
     // See docs/plan-free-tier-models-2026-05.md §5 Phase 3 for rationale.
@@ -72,10 +72,18 @@ export class RateLimitTracker {
       // the entire RateLimitConfig per model.
       for (const [model, override] of Object.entries(customLimits) as [
         GeminiModel,
-        RateLimitConfig,
+        Partial<RateLimitConfig>,
       ][]) {
         const existing = this.defaultLimits[model];
-        this.defaultLimits[model] = existing ? { ...existing, ...override } : { ...override };
+        if (existing) {
+          this.defaultLimits[model] = { ...existing, ...override };
+        } else {
+          // No baseline (model not in ALL_MODELS — usually a forward-compat ID
+          // cast via `as GeminiModel`). Seed with the conservative paid-tier
+          // rpm fallback so partial overrides (e.g. `{ tpm: ... }` only) are
+          // not silently dropped.
+          this.defaultLimits[model] = { rpm: 15, ...override };
+        }
       }
     }
   }

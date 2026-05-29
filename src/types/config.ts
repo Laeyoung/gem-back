@@ -43,7 +43,7 @@ export interface GemBackOptions {
    * fields they care about (e.g. `{ 'gemini-2.5-pro': { rpm: 50 } }`).
    * Only consulted when `enableMonitoring` is true.
    */
-  customRateLimits?: Partial<Record<GeminiModel, RateLimitConfig>>;
+  customRateLimits?: Partial<Record<GeminiModel, Partial<RateLimitConfig>>>;
 }
 
 // Deprecated: Use GemBackOptions instead
