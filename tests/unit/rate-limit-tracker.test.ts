@@ -12,7 +12,7 @@ describe('RateLimitTracker', () => {
 
   describe('Request Recording', () => {
     it('should record requests for a model', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-2.5-pro';
 
       tracker.recordRequest(model);
       tracker.recordRequest(model);
@@ -24,11 +24,11 @@ describe('RateLimitTracker', () => {
     });
 
     it('should record requests separately for different models', () => {
-      tracker.recordRequest('gemini-2.5-flash');
-      tracker.recordRequest('gemini-2.5-flash');
+      tracker.recordRequest('gemini-2.5-pro');
+      tracker.recordRequest('gemini-2.5-pro');
       tracker.recordRequest('gemini-2.5-flash-lite');
 
-      const status1 = tracker.getStatus('gemini-2.5-flash');
+      const status1 = tracker.getStatus('gemini-2.5-pro');
       const status2 = tracker.getStatus('gemini-2.5-flash-lite');
 
       expect(status1.currentRPM).toBe(2);
@@ -36,7 +36,7 @@ describe('RateLimitTracker', () => {
     });
 
     it('should track requests separately per API key index', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-2.5-pro';
 
       tracker.recordRequest(model, 0);
       tracker.recordRequest(model, 0);
@@ -52,7 +52,7 @@ describe('RateLimitTracker', () => {
 
   describe('Rate Limit Detection', () => {
     it('should detect when near rate limit', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-2.5-pro';
 
       // Record 12 requests (80% of 15 RPM limit)
       for (let i = 0; i < 12; i++) {
@@ -65,7 +65,7 @@ describe('RateLimitTracker', () => {
     });
 
     it('should detect when will exceed soon', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-2.5-pro';
 
       // Record 14 requests (93% of 15 RPM limit)
       for (let i = 0; i < 14; i++) {
@@ -78,7 +78,7 @@ describe('RateLimitTracker', () => {
     });
 
     it('should correctly calculate utilization percent', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-2.5-pro';
 
       // Record 7.5 requests (50% of 15 RPM)
       for (let i = 0; i < 7; i++) {
@@ -91,7 +91,7 @@ describe('RateLimitTracker', () => {
     });
 
     it('should return true when would exceed limit', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-2.5-pro';
 
       // Record 15 requests (at limit)
       for (let i = 0; i < 15; i++) {
@@ -102,7 +102,7 @@ describe('RateLimitTracker', () => {
     });
 
     it('should return false when under limit', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-2.5-pro';
 
       tracker.recordRequest(model);
       tracker.recordRequest(model);
@@ -113,7 +113,7 @@ describe('RateLimitTracker', () => {
 
   describe('Time Windows', () => {
     it('should clean old requests outside 1-minute window', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-2.5-pro';
 
       // Record 5 requests
       for (let i = 0; i < 5; i++) {
@@ -133,7 +133,7 @@ describe('RateLimitTracker', () => {
     });
 
     it('should track 5-minute window correctly', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-2.5-pro';
 
       // Record 3 requests
       for (let i = 0; i < 3; i++) {
@@ -157,7 +157,7 @@ describe('RateLimitTracker', () => {
       const now = new Date('2025-01-01T12:34:56.789Z');
       vi.setSystemTime(now);
 
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-2.5-pro';
       tracker.recordRequest(model);
 
       const status = tracker.getStatus(model);
@@ -169,7 +169,7 @@ describe('RateLimitTracker', () => {
 
   describe('Wait Time Recommendations', () => {
     it('should return 0 wait time when not near limit', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-2.5-pro';
 
       tracker.recordRequest(model);
       tracker.recordRequest(model);
@@ -179,7 +179,7 @@ describe('RateLimitTracker', () => {
     });
 
     it('should suggest 5 second wait when will exceed soon with high utilization', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-2.5-pro';
 
       // Record 14 requests (93% of limit)
       for (let i = 0; i < 14; i++) {
@@ -195,7 +195,7 @@ describe('RateLimitTracker', () => {
       const now = new Date('2025-01-01T12:34:56.789Z');
       vi.setSystemTime(now);
 
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-2.5-pro';
 
       // Record 15 requests (at limit)
       for (let i = 0; i < 15; i++) {
@@ -212,10 +212,10 @@ describe('RateLimitTracker', () => {
   describe('Custom Limits', () => {
     it('should accept custom rate limits', () => {
       const customTracker = new RateLimitTracker({
-        'gemini-2.5-flash': { rpm: 30 },
+        'gemini-2.5-pro': { rpm: 30 },
       });
 
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-2.5-pro';
 
       // Record 20 requests (67% of custom 30 RPM)
       for (let i = 0; i < 20; i++) {
@@ -231,20 +231,20 @@ describe('RateLimitTracker', () => {
 
   describe('Statistics', () => {
     it('should return comprehensive statistics', () => {
-      tracker.recordRequest('gemini-2.5-flash');
-      tracker.recordRequest('gemini-2.5-flash');
+      tracker.recordRequest('gemini-2.5-pro');
+      tracker.recordRequest('gemini-2.5-pro');
       tracker.recordRequest('gemini-2.5-flash-lite');
 
       const stats = tracker.getStatistics();
 
       expect(stats.totalRequests).toBe(3);
-      expect(stats.requestsByModel['gemini-2.5-flash']).toBe(2);
+      expect(stats.requestsByModel['gemini-2.5-pro']).toBe(2);
       expect(stats.requestsByModel['gemini-2.5-flash-lite']).toBe(1);
       expect(stats.peakRPM).toBe(3);
     });
 
     it('should calculate average RPM correctly', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-2.5-pro';
 
       // Record 10 requests
       for (let i = 0; i < 10; i++) {
@@ -266,12 +266,12 @@ describe('RateLimitTracker', () => {
 
   describe('Reset', () => {
     it('should reset specific model tracking', () => {
-      tracker.recordRequest('gemini-2.5-flash');
+      tracker.recordRequest('gemini-2.5-pro');
       tracker.recordRequest('gemini-2.5-flash-lite');
 
-      tracker.reset('gemini-2.5-flash');
+      tracker.reset('gemini-2.5-pro');
 
-      const status1 = tracker.getStatus('gemini-2.5-flash');
+      const status1 = tracker.getStatus('gemini-2.5-pro');
       const status2 = tracker.getStatus('gemini-2.5-flash-lite');
 
       expect(status1.currentRPM).toBe(0);
@@ -279,12 +279,12 @@ describe('RateLimitTracker', () => {
     });
 
     it('should reset all tracking', () => {
-      tracker.recordRequest('gemini-2.5-flash');
+      tracker.recordRequest('gemini-2.5-pro');
       tracker.recordRequest('gemini-2.5-flash-lite');
 
       tracker.reset();
 
-      const status1 = tracker.getStatus('gemini-2.5-flash');
+      const status1 = tracker.getStatus('gemini-2.5-pro');
       const status2 = tracker.getStatus('gemini-2.5-flash-lite');
 
       expect(status1.currentRPM).toBe(0);
@@ -292,7 +292,7 @@ describe('RateLimitTracker', () => {
     });
 
     it('should reset specific API key tracking', () => {
-      const model: GeminiModel = 'gemini-2.5-flash';
+      const model: GeminiModel = 'gemini-2.5-pro';
 
       tracker.recordRequest(model, 0);
       tracker.recordRequest(model, 1);
@@ -311,7 +311,7 @@ describe('RateLimitTracker', () => {
     it('should return only models near their limit', () => {
       // Model 1: near limit
       for (let i = 0; i < 13; i++) {
-        tracker.recordRequest('gemini-2.5-flash');
+        tracker.recordRequest('gemini-2.5-pro');
       }
 
       // Model 2: not near limit
@@ -321,7 +321,7 @@ describe('RateLimitTracker', () => {
       const nearLimit = tracker.getModelsNearLimit();
 
       expect(nearLimit.length).toBe(1);
-      expect(nearLimit[0].model).toBe('gemini-2.5-flash');
+      expect(nearLimit[0].model).toBe('gemini-2.5-pro');
       expect(nearLimit[0].isNearLimit).toBe(true);
     });
   });

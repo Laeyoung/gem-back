@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GeminiClient } from '../../src/client/GeminiClient';
+import { GemBack } from '../../src';
 import type { ResponseSchema } from '../../src/types/config';
 
 // Mock @google/genai
@@ -52,7 +53,7 @@ describe('JSON Mode', () => {
 
       const response = await client.generate(
         'Generate JSON',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         {
           responseMimeType: 'application/json',
@@ -85,7 +86,7 @@ describe('JSON Mode', () => {
 
       const response = await client.generate(
         'Generate complex JSON',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         {
           responseMimeType: 'application/json',
@@ -102,7 +103,7 @@ describe('JSON Mode', () => {
         usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 5, totalTokenCount: 15 },
       });
 
-      const response = await client.generate('Generate text', 'gemini-3-flash-preview', 'test-key');
+      const response = await client.generate('Generate text', 'gemini-3.1-flash-lite', 'test-key');
 
       expect(response.json).toBeUndefined();
       expect(response.text).toBe('{"name": "John"}');
@@ -120,7 +121,7 @@ describe('JSON Mode', () => {
 
       const response = await client.generate(
         'Generate JSON',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         {
           responseMimeType: 'application/json',
@@ -143,7 +144,7 @@ describe('JSON Mode', () => {
 
       const response = await client.generate(
         'Generate empty',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         {
           responseMimeType: 'application/json',
@@ -162,7 +163,7 @@ describe('JSON Mode', () => {
 
       const response = await client.generate(
         'Generate array',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         {
           responseMimeType: 'application/json',
@@ -181,7 +182,7 @@ describe('JSON Mode', () => {
 
       const response = await client.generate(
         'Generate null',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         {
           responseMimeType: 'application/json',
@@ -200,7 +201,7 @@ describe('JSON Mode', () => {
 
       const response = await client.generate(
         'Generate boolean',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         {
           responseMimeType: 'application/json',
@@ -219,7 +220,7 @@ describe('JSON Mode', () => {
 
       const response = await client.generate(
         'Generate number',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         {
           responseMimeType: 'application/json',
@@ -236,7 +237,7 @@ describe('JSON Mode', () => {
         usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 0, totalTokenCount: 10 },
       });
 
-      const response = await client.generate('Test', 'gemini-3-flash-preview', 'test-key', {
+      const response = await client.generate('Test', 'gemini-3.1-flash-lite', 'test-key', {
         responseMimeType: 'application/json',
       });
 
@@ -257,7 +258,7 @@ describe('JSON Mode', () => {
 
       const response = await client.generate(
         'Generate array',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         {
           responseMimeType: 'application/json',
@@ -270,7 +271,7 @@ describe('JSON Mode', () => {
 
   describe('SDK integration', () => {
     it('should pass responseMimeType to SDK', async () => {
-      await client.generate('Test', 'gemini-3-flash-preview', 'test-key', {
+      await client.generate('Test', 'gemini-3.1-flash-lite', 'test-key', {
         responseMimeType: 'application/json',
       });
 
@@ -293,7 +294,7 @@ describe('JSON Mode', () => {
         required: ['name', 'age'],
       };
 
-      await client.generate('Test', 'gemini-3-flash-preview', 'test-key', {
+      await client.generate('Test', 'gemini-3.1-flash-lite', 'test-key', {
         responseMimeType: 'application/json',
         responseSchema: schema,
       });
@@ -316,7 +317,7 @@ describe('JSON Mode', () => {
         },
       };
 
-      await client.generate('Test', 'gemini-3-flash-preview', 'test-key', {
+      await client.generate('Test', 'gemini-3.1-flash-lite', 'test-key', {
         temperature: 0.7,
         maxTokens: 1000,
         responseMimeType: 'application/json',
@@ -326,7 +327,7 @@ describe('JSON Mode', () => {
 
       expect(mockGenerateContent).toHaveBeenCalledWith(
         expect.objectContaining({
-          model: 'gemini-3-flash-preview',
+          model: 'gemini-3.1-flash-lite',
           contents: [{ role: 'user', parts: [{ text: 'Test' }] }],
           config: expect.objectContaining({
             temperature: 0.7,
@@ -351,7 +352,7 @@ describe('JSON Mode', () => {
 
       const response = await client.generateContent(
         [{ role: 'user', parts: [{ text: 'Test' }] }],
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         {
           responseMimeType: 'application/json',
@@ -359,6 +360,65 @@ describe('JSON Mode', () => {
       );
 
       expect(response.json).toEqual(jsonData);
+    });
+  });
+
+  describe('generateContentStream with JSON mode', () => {
+    const makeStream = () => ({
+      async *[Symbol.asyncIterator]() {
+        yield { text: '{"ok":true}', candidates: [{ finishReason: 'STOP' }] };
+      },
+    });
+
+    it('should forward responseMimeType to SDK in generateContentStream', async () => {
+      mockGenerateContentStream.mockReturnValue(makeStream());
+      const fallbackClient = new GemBack({ apiKey: 'test-key' });
+
+      const stream = fallbackClient.generateContentStream({
+        contents: [{ role: 'user', parts: [{ text: 'Test' }] }],
+        responseMimeType: 'application/json',
+      });
+      for await (const _ of stream) {
+        // consume
+      }
+
+      expect(mockGenerateContentStream).toHaveBeenCalledWith(
+        expect.objectContaining({
+          config: expect.objectContaining({
+            responseMimeType: 'application/json',
+          }),
+        })
+      );
+    });
+
+    it('should forward responseSchema to SDK in generateContentStream', async () => {
+      const schema: ResponseSchema = {
+        type: 'object' as any,
+        properties: {
+          ok: { type: 'boolean' as any },
+        },
+        required: ['ok'],
+      };
+      mockGenerateContentStream.mockReturnValue(makeStream());
+      const fallbackClient = new GemBack({ apiKey: 'test-key' });
+
+      const stream = fallbackClient.generateContentStream({
+        contents: [{ role: 'user', parts: [{ text: 'Test' }] }],
+        responseMimeType: 'application/json',
+        responseSchema: schema,
+      });
+      for await (const _ of stream) {
+        // consume
+      }
+
+      expect(mockGenerateContentStream).toHaveBeenCalledWith(
+        expect.objectContaining({
+          config: expect.objectContaining({
+            responseMimeType: 'application/json',
+            responseSchema: schema,
+          }),
+        })
+      );
     });
   });
 });

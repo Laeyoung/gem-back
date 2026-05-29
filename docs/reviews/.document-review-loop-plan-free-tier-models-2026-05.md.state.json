@@ -1,0 +1,17 @@
+{
+  "loop": "document-review-loop",
+  "scope": {
+    "target": "/Users/laeyoung/Documents/personal/gem-back/docs/plan-free-tier-models-2026-05.md",
+    "reference": null
+  },
+  "started_at_epoch": 1779977561,
+  "started_at_iso": "2026-05-28T14:12:41Z",
+  "last_iteration_at_epoch": 1779979369,
+  "iteration": 8,
+  "counter": 2,
+  "threshold": 92,
+  "dimensions": ["spec-parity", "code-design", "internal-consistency", "rollout-ops"],
+  "fixed_running_total": { "critical": 13, "major": 27, "minor": 6 },
+  "agent_failures_last_iter": [],
+  "status": "completed-clean"
+}

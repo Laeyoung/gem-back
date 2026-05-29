@@ -65,6 +65,29 @@ Post-migration monitoring checklist for the first week after deploying `@google/
 
 ## 🔍 Key Metrics to Monitor
 
+### TPM (Tokens Per Minute) — v0.7.0+
+
+Free-tier Gemini models cap at **250K tokens/minute** in addition to RPM. `RateLimitTracker` records token usage via `recordTokens()` (called automatically by `FallbackClient` after each non-streaming `generate()` and `generateContent()` resolves; `chat()` also benefits since it delegates to `generate()` internally), and `RateLimitStatus` surfaces three new fields:
+
+```ts
+const status = tracker.getStatus('gemini-3.5-flash');
+status.currentTPM            // number   — tokens consumed in last 60s
+status.maxTPM                // number   — 250_000 for free-tier models
+status.tpmUtilizationPercent // number   — currentTPM / maxTPM * 100
+```
+
+For paid-tier models (`gemini-2.5-pro`, `gemini-2.0-flash`, etc.) all three are `undefined` — `RateLimitTracker` only tracks TPM when `RateLimitConfig.tpm` is set.
+
+`willExceedSoon` now takes whichever of RPM/TPM is closer to its limit (>=90% utilization). A workload generating long completions can trip the TPM ceiling well before exhausting RPM — visible in logs as:
+
+```
+Rate limit warning for gemini-3.5-flash: <currentRPM>/5 RPM
+```
+
+with `status.tpmUtilizationPercent` >= 90 even when RPM is low.
+
+**Streaming caveat**: `generateStream()` and `generateContentStream()` do **not** call `recordTokens()` (per-chunk usage is unavailable). Streaming workloads should still expect TPM enforcement from the API itself but won't see local predictions.
+
 ### Error Metrics
 
 ```

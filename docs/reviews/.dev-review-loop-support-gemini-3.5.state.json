@@ -1,0 +1,22 @@
+{
+  "loop": "dev-review-loop",
+  "scope": { "branch": "support-gemini-3.5", "base": "master" },
+  "started_at_epoch": 1780014688,
+  "started_at_iso": "2026-05-29T00:31:28Z",
+  "last_iteration_at_epoch": 1780016348,
+  "iteration": 6,
+  "counter": 2,
+  "threshold": 92,
+  "dimensions": ["correctness", "api-design", "test-coverage", "docs-alignment"],
+  "fixed_running_total": { "critical": 2, "major": 15, "minor": 1 },
+  "open_questions": [
+    "TPM tracking not wired through streaming paths — intentional per MONITORING.md §TPM and guarded by tests/unit/free-tier-limits.test.ts line 144; needs StreamChunk API change.",
+    "RateLimitConfig (rpm required) vs FreeTierLimit (all 3 required) shape asymmetry — borderline; serve different purposes.",
+    "customRateLimits silently ignored when enableMonitoring=false — design choice; runtime warn already in place.",
+    "README.ko.md still shows v0.6 default fallback chain — explicitly deferred to follow-up PR per banner.",
+    "src/types/config.ts:39 GemBackOptions.enableRateLimitPrediction is declared and documented in README but never read in src/ — pre-existing in master (v0.5.0), out of branch scope.",
+    "AttemptSkipReason ('removed_from_api') and DeprecationReason both export the literal 'removed_from_api' — already documented as intentionally distinct contracts."
+  ],
+  "agent_failures_last_iter": [],
+  "status": "completed-clean"
+}

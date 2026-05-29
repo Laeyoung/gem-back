@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE - DO NOT EDIT MANUALLY
-// Generated at: 2025-12-26T14:07:46.178Z
+// Generated at: 2026-05-28T15:31:44.745Z
 // Source: Gemini API v1beta/models
 // Generator: scripts/generate-models.ts
 
@@ -10,12 +10,14 @@ import type { GeminiModel } from '../types/models';
  * Used internally for intelligent fallback selection
  */
 export const MODEL_PRIORITY: Record<GeminiModel, number> = {
-  'gemini-3-flash-preview': 0, // 5 RPM (free) - highest priority
-  'gemini-2.5-flash': 1, // 5 RPM (free)
-  'gemini-2.5-flash-lite': 2, // 10 RPM (free)
+  'gemini-3.5-flash': 0,
+  'gemini-3.1-flash-lite': 10,
+  'gemini-2.5-flash': 100,
   'gemini-2.5-pro': 105,
+  'gemini-2.5-flash-lite': 110,
   'gemini-2.0-flash': 200,
   'gemini-2.0-flash-lite': 210,
+  'gemini-3-flash-preview': 1000,
   'gemini-3.1-pro-preview': 1005,
   'gemini-3.1-flash-lite-preview': 1010,
 };
@@ -31,6 +33,16 @@ export const MODEL_INFO: Record<
     maxTokens: number;
   }
 > = {
+  'gemini-3.5-flash': {
+    name: 'Gemini 3.5 Flash',
+    description: 'Gemini 3.5 Flash',
+    maxTokens: 65536,
+  },
+  'gemini-3.1-flash-lite': {
+    name: 'Gemini 3.1 Flash Lite',
+    description: 'Gemini 3.1 Flash Lite',
+    maxTokens: 65536,
+  },
   'gemini-2.5-flash': {
     name: 'Gemini 2.5 Flash',
     description:
@@ -64,13 +76,12 @@ export const MODEL_INFO: Record<
   },
   'gemini-3.1-pro-preview': {
     name: 'Gemini 3.1 Pro Preview',
-    description:
-      'Advanced intelligence, complex problem-solving with powerful agentic and coding capabilities',
+    description: 'Gemini 3.1 Pro Preview',
     maxTokens: 65536,
   },
   'gemini-3.1-flash-lite-preview': {
-    name: 'Gemini 3.1 Flash-Lite Preview',
-    description: 'Most cost-efficient model, optimized for low latency high-volume use cases',
+    name: 'Gemini 3.1 Flash Lite Preview',
+    description: 'Gemini 3.1 Flash Lite Preview',
     maxTokens: 65536,
   },
 };

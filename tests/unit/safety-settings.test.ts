@@ -76,7 +76,7 @@ describe('Safety Settings', () => {
 
       expect(mockGenerate).toHaveBeenCalledWith(
         'Test prompt',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         expect.objectContaining({
           safetySettings,
@@ -111,7 +111,7 @@ describe('Safety Settings', () => {
 
       expect(mockGenerate).toHaveBeenCalledWith(
         'Test prompt',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         expect.objectContaining({
           safetySettings,
@@ -127,7 +127,7 @@ describe('Safety Settings', () => {
 
       expect(mockGenerate).toHaveBeenCalledWith(
         'Test prompt',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         undefined
       );
@@ -153,7 +153,7 @@ describe('Safety Settings', () => {
 
       expect(mockGenerate).toHaveBeenCalledWith(
         'Test prompt',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         expect.objectContaining({
           safetySettings,
@@ -192,7 +192,7 @@ describe('Safety Settings', () => {
 
       expect(mockGenerateStream).toHaveBeenCalledWith(
         'Test prompt',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         expect.objectContaining({
           safetySettings,
@@ -231,7 +231,7 @@ describe('Safety Settings', () => {
 
       expect(mockGenerateContent).toHaveBeenCalledWith(
         request.contents,
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         expect.any(String),
         expect.objectContaining({
           safetySettings,
@@ -277,7 +277,7 @@ describe('Safety Settings', () => {
 
       expect(mockGenerateContentStream).toHaveBeenCalledWith(
         request.contents,
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         expect.any(String),
         expect.objectContaining({
           safetySettings,
@@ -307,7 +307,7 @@ describe('Safety Settings', () => {
 
       const client2 = new GemBack({
         apiKey: 'test-key',
-        fallbackOrder: ['gemini-2.5-flash', 'gemini-2.5-flash-lite'],
+        fallbackOrder: ['gemini-3.5-flash', 'gemini-2.5-flash-lite'],
       });
       (client2 as any).client.generate = mockGenerate;
 
@@ -319,7 +319,7 @@ describe('Safety Settings', () => {
       expect(mockGenerate).toHaveBeenNthCalledWith(
         1,
         'Test prompt',
-        'gemini-2.5-flash',
+        'gemini-3.5-flash',
         'test-key',
         expect.objectContaining({ safetySettings })
       );
@@ -342,7 +342,7 @@ describe('Safety Settings', () => {
 
       expect(mockGenerate).toHaveBeenCalledWith(
         'Test prompt',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         expect.objectContaining({
           safetySettings: [],
@@ -365,7 +365,7 @@ describe('Safety Settings', () => {
 
       expect(mockGenerate).toHaveBeenCalledWith(
         'Test prompt',
-        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
         'test-key',
         expect.objectContaining({
           safetySettings,

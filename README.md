@@ -37,15 +37,26 @@ The Gemini API has **RPM (Requests Per Minute) limits** on the free tier, causin
 
 Gem Back supports automatic fallback across Gemini models:
 
-**Default Fallback Chain** (Optimized for Free Tier):
-1. `gemini-3-flash-preview` (Free quota available) ⚠️
-2. `gemini-2.5-flash` (Stable, high performance)
-3. `gemini-3.1-flash-lite-preview` (Lightweight fallback) ⚠️
+**Default Fallback Chain** (Optimized for Free Tier — v0.7.0, RPD-first):
+1. `gemini-3.1-flash-lite` — stable, 500 RPD (dominant daily quota)
+2. `gemini-3.5-flash` — newest, highest quality (20 RPD)
+3. `gemini-3-flash-preview` — backup (20 RPD) ⚠️
 
-**Other Supported Models**:
+If output quality matters more than daily throughput, pass an explicit `fallbackOrder` putting `gemini-3.5-flash` first.
+
+**Free-Tier Quota Snapshot** (2026-05-28):
+
+| Model | RPM | TPM | RPD | Notes |
+|---|---|---|---|---|
+| `gemini-3.1-flash-lite` | 15 | 250K | 500 | |
+| `gemini-2.5-flash-lite` | 10 | 250K | 20 | ⚠️ deprecated (shutdown 2026-07-22 → `gemini-3.1-flash-lite`) |
+| `gemini-3.5-flash` | 5 | 250K | 20 | |
+| `gemini-3-flash-preview` | 5 | 250K | 20 | ⚠️ preview |
+| `gemini-2.5-flash` | 5 | 250K | 20 | ⚠️ deprecated (shutdown 2026-06-17 → `gemini-3.1-flash-lite`) |
+
+**Paid-Only Models** (still in `ALL_MODELS`; runtime warning when used on free-tier keys):
 - `gemini-3.1-pro-preview`
 - `gemini-2.5-pro`
-- `gemini-2.5-flash-lite`
 - `gemini-2.0-flash`
 - `gemini-2.0-flash-lite`
 
@@ -76,6 +87,52 @@ pnpm add gemback
 
 ---
 
+## 🔄 Migrating from v0.6 to v0.7
+
+v0.7.0 includes one always-on breaking change and one conditional one. Most call sites need no update.
+
+### Confirmed breaking change
+
+- **`DeprecatedModelInfo.reason` is now a string-literal union** (`'replaced_by_newer' | 'removed_from_api' | 'tier_change'`) instead of free-form `string`. If you read `reason`, switch to the union. The old prose strings on existing entries were moved to a new optional `notes: string` field.
+
+  ```ts
+  // Before (v0.6)
+  const reason: string = info.reason; // e.g. "Gemini 2.0 series end of life"
+
+  // After (v0.7)
+  const reason: DeprecationReason = info.reason; // 'replaced_by_newer' | ...
+  const detail: string | undefined = info.notes; // original prose, if any
+  ```
+
+### Default fallback order changed
+
+If you didn't pass `fallbackOrder` to `GemBack`, the default sequence now optimizes for daily RPD instead of model quality:
+
+```
+gemini-3.1-flash-lite → gemini-3.5-flash → gemini-3-flash-preview
+```
+
+To keep the v0.6 quality-first behavior, pass it explicitly:
+
+```ts
+new GemBack({
+  apiKey: process.env.GEMINI_API_KEY,
+  fallbackOrder: ['gemini-3.5-flash', 'gemini-3-flash-preview', 'gemini-3.1-flash-lite'],
+});
+```
+
+### New utilities you can adopt
+
+- `REMOVED_MODELS` and `DEPRECATED_MODELS` exports are the single source of truth for what was removed/replaced.
+- `RateLimitStatus.currentTPM` / `maxTPM` / `tpmUtilizationPercent` are now populated for free-tier models.
+- `gemini-3.5-flash` and stable `gemini-3.1-flash-lite` are available.
+
+### Paid-only models on free-tier keys
+
+If you invoke `gemini-2.5-pro`, `gemini-2.0-flash`, `gemini-2.0-flash-lite`, or `gemini-3.1-pro-preview` on a free-tier API key, you'll see a one-time `logger.warn` explaining the 4xx you can expect. Either upgrade the key or pin `fallbackOrder` to free-tier models.
+
+---
+
 ## ⚡ Quick Start
 
 ### Basic Usage
@@ -100,13 +157,13 @@ console.log(response.text);
 const client = new GemBack({
   apiKey: process.env.GEMINI_API_KEY,
   fallbackOrder: [
-    'gemini-3.1-pro-preview',  // Optional: Include preview models explicitly
-    'gemini-2.5-flash',
-    'gemini-3.1-flash-lite-preview'
+    'gemini-3.5-flash',       // Optional: top-quality first if quality > daily throughput
+    'gemini-3.1-flash-lite',  // Stable, highest free-tier RPD (500/day)
+    'gemini-3-flash-preview', // Last-resort backup
   ],
   maxRetries: 3,
   timeout: 30000,
-  debug: true // Enable detailed logging
+  debug: true, // Enable detailed logging
 });
 ```
 
@@ -231,7 +288,7 @@ console.log(stats.monitoring?.summary);
 
 ```typescript
 // Automatically falls back through the fallback chain
-// when a model hits rate limit (e.g. gemini-3-flash-preview → gemini-2.5-flash → gemini-3.1-flash-lite-preview)
+// when a model hits rate limit (default v0.7.0: gemini-3.1-flash-lite → gemini-3.5-flash → gemini-3-flash-preview)
 const response = await client.generate('Complex question');
 ```
 
@@ -586,6 +643,8 @@ const blogPostSchema: ResponseSchema = {
 #### Constructor Options
 
 ```typescript
+import type { GeminiModel, RateLimitConfig } from 'gemback';
+
 interface GemBackOptions {
   apiKey?: string;                   // Gemini API key (single key)
   apiKeys?: string[];                // Multiple API keys (multi-key mode)
@@ -598,6 +657,12 @@ interface GemBackOptions {
   apiKeyRotationStrategy?: 'round-robin' | 'least-used'; // Key rotation strategy (default: round-robin)
   enableMonitoring?: boolean;        // Optional: Enable monitoring (default: false)
   enableRateLimitPrediction?: boolean; // Optional: Rate limit prediction warnings (default: false)
+  customRateLimits?: Partial<Record<GeminiModel, Partial<RateLimitConfig>>>; // Optional: per-model
+                                     // RPM/TPM/RPD overrides applied on top of
+                                     // FREE_TIER_LIMITS defaults. Per-entry field merge,
+                                     // so { 'gemini-2.5-flash': { rpm: 10 } } preserves
+                                     // the existing tpm/rpd. Only consulted when
+                                     // `enableMonitoring: true`.
 }
 ```
 
@@ -688,9 +753,9 @@ const client = new GemBack({
 
   // Specify models to use
   fallbackOrder: [
+    'gemini-3.1-flash-lite',
+    'gemini-3.5-flash',
     'gemini-3-flash-preview',
-    'gemini-2.5-flash',
-    'gemini-3.1-flash-lite-preview'
   ],
 
   // Retry settings
@@ -719,7 +784,7 @@ const client = new GemBack({
   enableRateLimitPrediction: true,       // Rate limit prediction warnings
 
   // Base settings
-  fallbackOrder: ['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-3.1-flash-lite-preview'],
+  fallbackOrder: ['gemini-3.1-flash-lite', 'gemini-3.5-flash', 'gemini-3-flash-preview'],
   maxRetries: 2,
   timeout: 30000,
   logLevel: 'info'

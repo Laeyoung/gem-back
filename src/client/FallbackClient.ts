@@ -22,7 +22,8 @@ import {
   isAuthError,
   getErrorStatusCode,
 } from '../utils/error-handler';
-import { DEPRECATED_MODELS } from '../config/deprecated';
+import { DEPRECATED_MODELS, REMOVED_MODELS } from '../config/deprecated';
+import { NON_FREE_TIER_MODELS } from '../config/free-tier-limits';
 
 export class GemBack {
   private options: Required<Omit<GemBackOptions, 'apiKey' | 'apiKeys'>> & {
@@ -36,6 +37,8 @@ export class GemBack {
   private rateLimitTracker: RateLimitTracker | null;
   private healthMonitor: HealthMonitor | null;
   private warnedDeprecatedModels: Set<string> = new Set();
+  private warnedNonFreeTierModels: Set<string> = new Set();
+  private erroredRemovedModels: Set<string> = new Set();
 
   constructor(options: GemBackOptions) {
     if (!options.apiKey && (!options.apiKeys || options.apiKeys.length === 0)) {
@@ -63,8 +66,20 @@ export class GemBack {
     );
 
     // Initialize monitoring if enabled
-    this.rateLimitTracker = options.enableMonitoring ? new RateLimitTracker() : null;
+    this.rateLimitTracker = options.enableMonitoring
+      ? new RateLimitTracker(options.customRateLimits)
+      : null;
     this.healthMonitor = options.enableMonitoring ? new HealthMonitor() : null;
+
+    if (
+      !options.enableMonitoring &&
+      options.customRateLimits &&
+      Object.keys(options.customRateLimits).length > 0
+    ) {
+      this.logger.warn(
+        '`customRateLimits` was provided but `enableMonitoring` is false — the overrides will be ignored. Set `enableMonitoring: true` to activate rate-limit tracking.'
+      );
+    }
 
     if (this.rateLimitTracker || this.healthMonitor) {
       this.logger.info('Monitoring enabled: Rate limit tracking and health monitoring');
@@ -78,9 +93,10 @@ export class GemBack {
       apiKeyStats: this.apiKeyRotator ? this.apiKeyRotator.getStats() : undefined,
     };
 
-    // Check for deprecated models in fallback order
+    // Check for deprecated / non-free-tier models in fallback order
     for (const model of this.options.fallbackOrder) {
       this.checkDeprecatedModel(model);
+      this.checkNonFreeTierModel(model);
     }
   }
 
@@ -134,6 +150,7 @@ export class GemBack {
   async generate(prompt: string, options?: GenerateOptions): Promise<GeminiResponse> {
     if (options?.model) {
       this.checkDeprecatedModel(options.model);
+      this.checkNonFreeTierModel(options.model);
     }
     this.stats.totalRequests++;
 
@@ -145,6 +162,15 @@ export class GemBack {
       this.logger.debug(
         `Attempting: ${model}${keyIndex !== null ? ` (API Key #${keyIndex + 1})` : ''}`
       );
+
+      // Skip the SDK call entirely if the model was removed from the upstream API.
+      if (this.skipIfRemoved(model, attempts)) {
+        const idx = modelsToTry.indexOf(model);
+        if (idx < modelsToTry.length - 1) {
+          this.logger.info(`Fallback to: ${modelsToTry[idx + 1]}`);
+        }
+        continue;
+      }
 
       // Check rate limit prediction before making request
       if (this.rateLimitTracker) {
@@ -187,6 +213,11 @@ export class GemBack {
         );
 
         const responseTime = Date.now() - startTime;
+
+        // Record TPM (free-tier models only — paid-tier has no tpm in defaults)
+        if (this.rateLimitTracker && response.usage?.totalTokens) {
+          this.rateLimitTracker.recordTokens(model, response.usage.totalTokens);
+        }
 
         // Record health monitoring
         if (this.healthMonitor) {
@@ -270,9 +301,53 @@ export class GemBack {
     }
   }
 
+  /**
+   * Warn (once per instance) when the caller is invoking a model that exists
+   * in the API but has no free-tier quota as of the latest snapshot.
+   *
+   * `NON_FREE_TIER_MODELS` is the single authoritative signal here — independent
+   * of `DEPRECATED_MODELS` (deprecation and tier classification are orthogonal).
+   * If a model is also `removed_from_api`, that case is handled by the removal
+   * pipeline (Phase 1.5) before reaching this check.
+   */
+  private checkNonFreeTierModel(model: GeminiModel): void {
+    if (this.warnedNonFreeTierModels.has(model)) return;
+    if (!(NON_FREE_TIER_MODELS as readonly string[]).includes(model)) return;
+    this.logger.warn(
+      `[GemBack] Model "${model}" is not on the free tier as of 2026-05-28; ` +
+        `expect 4xx on free-tier API keys.`
+    );
+    this.warnedNonFreeTierModels.add(model);
+  }
+
+  /**
+   * Removed-from-API guard. If the model is listed in `REMOVED_MODELS`, log
+   * once, push an `AttemptRecord` with `reason: 'removed_from_api'`, and
+   * return `true` so the caller skips the SDK call and falls through to the
+   * next model. Runs ahead of the non-free-tier warn so a removed model that
+   * also appears in `NON_FREE_TIER_MODELS` only surfaces the removal error.
+   */
+  private skipIfRemoved(model: GeminiModel, attempts: AttemptRecord[]): boolean {
+    if (!REMOVED_MODELS.includes(model)) return false;
+    if (!this.erroredRemovedModels.has(model)) {
+      this.logger.error(
+        `Model "${model}" was removed from the Gemini API. Skipping SDK call and falling back.`
+      );
+      this.erroredRemovedModels.add(model);
+    }
+    attempts.push({
+      model,
+      error: 'Model removed from upstream API',
+      timestamp: new Date(),
+      reason: 'removed_from_api',
+    });
+    return true;
+  }
+
   async *generateStream(prompt: string, options?: GenerateOptions): AsyncGenerator<StreamChunk> {
     if (options?.model) {
       this.checkDeprecatedModel(options.model);
+      this.checkNonFreeTierModel(options.model);
     }
     this.stats.totalRequests++;
 
@@ -284,6 +359,15 @@ export class GemBack {
       this.logger.debug(
         `Attempting stream: ${model}${keyIndex !== null ? ` (API Key #${keyIndex + 1})` : ''}`
       );
+
+      // Skip the SDK call entirely if the model was removed from the upstream API.
+      if (this.skipIfRemoved(model, attempts)) {
+        const idx = modelsToTry.indexOf(model);
+        if (idx < modelsToTry.length - 1) {
+          this.logger.info(`Fallback to: ${modelsToTry[idx + 1]}`);
+        }
+        continue;
+      }
 
       // Check rate limit prediction before making request
       if (this.rateLimitTracker) {
@@ -339,6 +423,22 @@ export class GemBack {
           }
           this.logger.info(`Stream success: ${model} (${responseTime}ms)`);
           return;
+        }
+
+        // Stream completed without yielding any chunk: treat as a soft failure
+        // so callers see *why* fallback occurred via AttemptRecord.
+        const emptyResponseTime = Date.now() - startTime;
+        if (this.healthMonitor) {
+          this.healthMonitor.recordRequest(model, emptyResponseTime, false, 'empty stream');
+        }
+        attempts.push({
+          model,
+          error: 'Empty stream response (no chunks yielded)',
+          timestamp: new Date(),
+        });
+        this.logger.warn(`Empty stream from ${model}, falling back`);
+        if (modelsToTry.indexOf(model) < modelsToTry.length - 1) {
+          this.logger.info(`Fallback to: ${modelsToTry[modelsToTry.indexOf(model) + 1]}`);
         }
       } catch (error) {
         const err = error as Error;
@@ -405,6 +505,7 @@ export class GemBack {
   async generateContent(request: GenerateContentRequest): Promise<GeminiResponse> {
     if (request.model) {
       this.checkDeprecatedModel(request.model);
+      this.checkNonFreeTierModel(request.model);
     }
     this.stats.totalRequests++;
 
@@ -416,6 +517,15 @@ export class GemBack {
       this.logger.debug(
         `Attempting multimodal: ${model}${keyIndex !== null ? ` (API Key #${keyIndex + 1})` : ''}`
       );
+
+      // Skip the SDK call entirely if the model was removed from the upstream API.
+      if (this.skipIfRemoved(model, attempts)) {
+        const idx = modelsToTry.indexOf(model);
+        if (idx < modelsToTry.length - 1) {
+          this.logger.info(`Fallback to: ${modelsToTry[idx + 1]}`);
+        }
+        continue;
+      }
 
       // Check rate limit prediction before making request
       if (this.rateLimitTracker) {
@@ -470,6 +580,11 @@ export class GemBack {
         );
 
         const responseTime = Date.now() - startTime;
+
+        // Record TPM (free-tier models only)
+        if (this.rateLimitTracker && response.usage?.totalTokens) {
+          this.rateLimitTracker.recordTokens(model, response.usage.totalTokens);
+        }
 
         // Record health monitoring
         if (this.healthMonitor) {
@@ -538,6 +653,7 @@ export class GemBack {
   async *generateContentStream(request: GenerateContentRequest): AsyncGenerator<StreamChunk> {
     if (request.model) {
       this.checkDeprecatedModel(request.model);
+      this.checkNonFreeTierModel(request.model);
     }
     this.stats.totalRequests++;
 
@@ -549,6 +665,15 @@ export class GemBack {
       this.logger.debug(
         `Attempting multimodal stream: ${model}${keyIndex !== null ? ` (API Key #${keyIndex + 1})` : ''}`
       );
+
+      // Skip the SDK call entirely if the model was removed from the upstream API.
+      if (this.skipIfRemoved(model, attempts)) {
+        const idx = modelsToTry.indexOf(model);
+        if (idx < modelsToTry.length - 1) {
+          this.logger.info(`Fallback to: ${modelsToTry[idx + 1]}`);
+        }
+        continue;
+      }
 
       // Check rate limit prediction before making request
       if (this.rateLimitTracker) {
@@ -580,6 +705,8 @@ export class GemBack {
           tools: request.tools,
           toolConfig: request.toolConfig,
           safetySettings: request.safetySettings,
+          responseMimeType: request.responseMimeType,
+          responseSchema: request.responseSchema,
         });
         let hasYielded = false;
 
@@ -613,6 +740,22 @@ export class GemBack {
           }
           this.logger.info(`Stream success: ${model} (${responseTime}ms)`);
           return;
+        }
+
+        // Stream completed without yielding any chunk: treat as a soft failure
+        // so callers see *why* fallback occurred via AttemptRecord.
+        const emptyResponseTime = Date.now() - startTime;
+        if (this.healthMonitor) {
+          this.healthMonitor.recordRequest(model, emptyResponseTime, false, 'empty stream');
+        }
+        attempts.push({
+          model,
+          error: 'Empty stream response (no chunks yielded)',
+          timestamp: new Date(),
+        });
+        this.logger.warn(`Empty stream from ${model}, falling back`);
+        if (modelsToTry.indexOf(model) < modelsToTry.length - 1) {
+          this.logger.info(`Fallback to: ${modelsToTry[modelsToTry.indexOf(model) + 1]}`);
         }
       } catch (error) {
         const err = error as Error;

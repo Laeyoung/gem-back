@@ -24,7 +24,7 @@ describe('System Instructions', () => {
 
     client = new GemBack({
       apiKey: 'test-api-key',
-      fallbackOrder: ['gemini-2.5-flash'],
+      fallbackOrder: ['gemini-3.5-flash'],
     });
   });
 
@@ -32,7 +32,7 @@ describe('System Instructions', () => {
     it('should pass system instruction as string to SDK', async () => {
       const mockResponse: GeminiResponse = {
         text: 'Formal response',
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.5-flash',
       };
 
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -44,7 +44,7 @@ describe('System Instructions', () => {
       expect(result.text).toBe('Formal response');
       expect(mockGeminiClient.generate).toHaveBeenCalledWith(
         'Hello',
-        'gemini-2.5-flash',
+        'gemini-3.5-flash',
         'test-api-key',
         expect.objectContaining({
           systemInstruction: 'You are a formal assistant. Always respond professionally.',
@@ -55,7 +55,7 @@ describe('System Instructions', () => {
     it('should pass system instruction as Content object to SDK', async () => {
       const mockResponse: GeminiResponse = {
         text: 'Creative response',
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.5-flash',
       };
 
       const systemInstruction: Content = {
@@ -72,7 +72,7 @@ describe('System Instructions', () => {
       expect(result.text).toBe('Creative response');
       expect(mockGeminiClient.generate).toHaveBeenCalledWith(
         'Tell me a story',
-        'gemini-2.5-flash',
+        'gemini-3.5-flash',
         'test-api-key',
         expect.objectContaining({
           systemInstruction,
@@ -83,7 +83,7 @@ describe('System Instructions', () => {
     it('should work without system instruction', async () => {
       const mockResponse: GeminiResponse = {
         text: 'Normal response',
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.5-flash',
       };
 
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -93,7 +93,7 @@ describe('System Instructions', () => {
       expect(result.text).toBe('Normal response');
       expect(mockGeminiClient.generate).toHaveBeenCalledWith(
         'Hello',
-        'gemini-2.5-flash',
+        'gemini-3.5-flash',
         'test-api-key',
         undefined
       );
@@ -120,7 +120,7 @@ describe('System Instructions', () => {
       expect(chunks).toContain('Chunk 2');
       expect(mockGeminiClient.generateStream).toHaveBeenCalledWith(
         'Test prompt',
-        'gemini-2.5-flash',
+        'gemini-3.5-flash',
         'test-api-key',
         expect.objectContaining({
           systemInstruction: 'You are a helpful assistant.',
@@ -133,7 +133,7 @@ describe('System Instructions', () => {
     it('should pass system instruction in multimodal requests', async () => {
       const mockResponse: GeminiResponse = {
         text: 'Analyzed image',
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.5-flash',
       };
 
       mockGeminiClient.generateContent.mockResolvedValue(mockResponse);
@@ -151,7 +151,7 @@ describe('System Instructions', () => {
       expect(result.text).toBe('Analyzed image');
       expect(mockGeminiClient.generateContent).toHaveBeenCalledWith(
         expect.any(Array),
-        'gemini-2.5-flash',
+        'gemini-3.5-flash',
         'test-api-key',
         expect.objectContaining({
           systemInstruction: 'You are an expert image analyst.',
@@ -162,7 +162,7 @@ describe('System Instructions', () => {
     it('should work with Content object as system instruction', async () => {
       const mockResponse: GeminiResponse = {
         text: 'Technical analysis',
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.5-flash',
       };
 
       const systemInstruction: Content = {
@@ -185,7 +185,7 @@ describe('System Instructions', () => {
       expect(result.text).toBe('Technical analysis');
       expect(mockGeminiClient.generateContent).toHaveBeenCalledWith(
         expect.any(Array),
-        'gemini-2.5-flash',
+        'gemini-3.5-flash',
         'test-api-key',
         expect.objectContaining({
           systemInstruction,
@@ -220,7 +220,7 @@ describe('System Instructions', () => {
       expect(chunks).toContain('Stream 2');
       expect(mockGeminiClient.generateContentStream).toHaveBeenCalledWith(
         expect.any(Array),
-        'gemini-2.5-flash',
+        'gemini-3.5-flash',
         'test-api-key',
         expect.objectContaining({
           systemInstruction: 'You are a data analyst.',
@@ -233,7 +233,7 @@ describe('System Instructions', () => {
     it('should pass system instruction through chat interface', async () => {
       const mockResponse: GeminiResponse = {
         text: 'Polite response',
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.5-flash',
       };
 
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -252,7 +252,7 @@ describe('System Instructions', () => {
       expect(result.text).toBe('Polite response');
       expect(mockGeminiClient.generate).toHaveBeenCalledWith(
         expect.stringContaining('How are you?'),
-        'gemini-2.5-flash',
+        'gemini-3.5-flash',
         'test-api-key',
         expect.objectContaining({
           systemInstruction: 'You are a polite conversational assistant.',
@@ -265,7 +265,7 @@ describe('System Instructions', () => {
     it('should maintain system instruction across model fallbacks', async () => {
       const client = new GemBack({
         apiKey: 'test-api-key',
-        fallbackOrder: ['gemini-2.5-flash', 'gemini-2.5-flash-lite'],
+        fallbackOrder: ['gemini-3.5-flash', 'gemini-2.5-flash-lite'],
       });
 
       // First model fails
@@ -286,7 +286,7 @@ describe('System Instructions', () => {
       expect(mockGeminiClient.generate).toHaveBeenNthCalledWith(
         1,
         'Test',
-        'gemini-2.5-flash',
+        'gemini-3.5-flash',
         'test-api-key',
         expect.objectContaining({
           systemInstruction: 'You are a helpful assistant.',
@@ -308,7 +308,7 @@ describe('System Instructions', () => {
     it('should handle empty string system instruction', async () => {
       const mockResponse: GeminiResponse = {
         text: 'Response',
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.5-flash',
       };
 
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -319,7 +319,7 @@ describe('System Instructions', () => {
 
       expect(mockGeminiClient.generate).toHaveBeenCalledWith(
         'Test',
-        'gemini-2.5-flash',
+        'gemini-3.5-flash',
         'test-api-key',
         expect.objectContaining({
           systemInstruction: '',
@@ -330,7 +330,7 @@ describe('System Instructions', () => {
     it('should handle undefined system instruction', async () => {
       const mockResponse: GeminiResponse = {
         text: 'Response',
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.5-flash',
       };
 
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -341,7 +341,7 @@ describe('System Instructions', () => {
 
       expect(mockGeminiClient.generate).toHaveBeenCalledWith(
         'Test',
-        'gemini-2.5-flash',
+        'gemini-3.5-flash',
         'test-api-key',
         expect.objectContaining({
           systemInstruction: undefined,

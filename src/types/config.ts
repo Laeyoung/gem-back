@@ -1,4 +1,5 @@
 import type { GeminiModel } from './models';
+import type { RateLimitConfig } from '../monitoring/rate-limit-tracker';
 import type {
   FunctionDeclaration as SDKFunctionDeclaration,
   FunctionCall as SDKFunctionCall,
@@ -36,6 +37,13 @@ export interface GemBackOptions {
   apiKeyRotationStrategy?: 'round-robin' | 'least-used';
   enableMonitoring?: boolean; // Enable rate limit tracking and health monitoring
   enableRateLimitPrediction?: boolean; // Enable predictive rate limit warnings
+  /**
+   * Per-model rate limit overrides applied on top of FREE_TIER_LIMITS / paid-tier
+   * defaults. Merged with `Object.assign`, so callers can override just the
+   * fields they care about (e.g. `{ 'gemini-2.5-pro': { rpm: 50 } }`).
+   * Only consulted when `enableMonitoring` is true.
+   */
+  customRateLimits?: Partial<Record<GeminiModel, Partial<RateLimitConfig>>>;
 }
 
 // Deprecated: Use GemBackOptions instead

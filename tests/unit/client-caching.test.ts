@@ -25,12 +25,12 @@ describe('GeminiClient Caching', () => {
     const apiKey = 'test-key-1';
 
     // First call
-    await client.generate('test', 'gemini-2.5-flash', apiKey);
+    await client.generate('test', 'gemini-3.5-flash', apiKey);
     expect(GoogleGenAI).toHaveBeenCalledTimes(1);
     expect(GoogleGenAI).toHaveBeenCalledWith({ apiKey });
 
     // Second call with same key
-    await client.generate('test', 'gemini-2.5-flash', apiKey);
+    await client.generate('test', 'gemini-3.5-flash', apiKey);
     expect(GoogleGenAI).toHaveBeenCalledTimes(1); // Should still be 1
   });
 
@@ -39,17 +39,17 @@ describe('GeminiClient Caching', () => {
     const key2 = 'test-key-2';
 
     // Call with key1
-    await client.generate('test', 'gemini-2.5-flash', key1);
+    await client.generate('test', 'gemini-3.5-flash', key1);
     expect(GoogleGenAI).toHaveBeenCalledTimes(1);
     expect(GoogleGenAI).toHaveBeenLastCalledWith({ apiKey: key1 });
 
     // Call with key2
-    await client.generate('test', 'gemini-2.5-flash', key2);
+    await client.generate('test', 'gemini-3.5-flash', key2);
     expect(GoogleGenAI).toHaveBeenCalledTimes(2);
     expect(GoogleGenAI).toHaveBeenLastCalledWith({ apiKey: key2 });
 
     // Call with key1 again (should be cached)
-    await client.generate('test', 'gemini-2.5-flash', key1);
+    await client.generate('test', 'gemini-3.5-flash', key1);
     expect(GoogleGenAI).toHaveBeenCalledTimes(2); // Should still be 2
   });
 
@@ -57,14 +57,14 @@ describe('GeminiClient Caching', () => {
     const apiKey = 'test-key-1';
 
     // First call
-    await client.generate('test', 'gemini-2.5-flash', apiKey);
+    await client.generate('test', 'gemini-3.5-flash', apiKey);
     expect(GoogleGenAI).toHaveBeenCalledTimes(1);
 
     // Clear cache
     client.clearCache();
 
     // Second call with same key
-    await client.generate('test', 'gemini-2.5-flash', apiKey);
+    await client.generate('test', 'gemini-3.5-flash', apiKey);
     expect(GoogleGenAI).toHaveBeenCalledTimes(2); // Should be 2 now
   });
 
@@ -72,7 +72,7 @@ describe('GeminiClient Caching', () => {
     const apiKey = 'test-key-1';
 
     // Call with model A
-    await client.generate('test', 'gemini-2.5-flash', apiKey);
+    await client.generate('test', 'gemini-3.5-flash', apiKey);
     expect(GoogleGenAI).toHaveBeenCalledTimes(1);
 
     // Call with model B, same key
