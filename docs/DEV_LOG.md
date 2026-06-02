@@ -5,6 +5,38 @@
 
 ---
 
+## 2026-06-03 ~00:20 — fix: 구조화된 429(RESOURCE_EXHAUSTED) quota 오류 fallback 누락
+
+### 배경 (다운스트림 버그 리포트)
+GemBack 사용 프로젝트에서 `gemini-3.5-flash`의 free-tier RPD(20) 소진 후 **`fallbackOrder`가 설정되어 있음에도 `gemini-3.1-flash-lite`로 fallback하지 않고 3.5-flash만 재시도하다 실패**하는 현상 보고.
+
+### 근본 원인 (systematic-debugging Phase 1~3)
+실제 `@google/genai` ApiError 메시지를 실 API 키로 재현하여 확인:
+- 비스트리밍 경로의 `error.message`는 `JSON.stringify({error:{code:429, message, status:"RESOURCE_EXHAUSTED"}})` 형태.
+- `normalizeErrorMessage`가 내부 `error.message`(산문)만 추출하고 **권위 있는 `code`(429)·`status`("RESOURCE_EXHAUSTED")를 버림**.
+- Gemini가 메시지에 "* Quota exceeded for metric…" 상세 줄을 붙이지 않는 **base 형태**에서는 `isRateLimitError`의 부분 문자열("429"/"rate limit"/"quota exceeded"/"too many requests")이 **하나도 매칭되지 않음** → 429인데도 rate-limit으로 분류 실패.
+- 이때 `isRetryableError`의 `message.includes('5')`가 retry-delay 초("…5s") 등 임의의 숫자 5에 매칭 → **소진된 모델을 재시도**(설계상 429는 retry 없이 즉시 fallback이어야 함).
+- 추가로 구조화된 503(UNAVAILABLE)도 산문에 "5"가 없으면 retryable로 인식되지 않는 역(逆) 결함 발견.
+
+### 수정 (`src/utils/error-handler.ts`)
+- `parseErrorBody()` 신설: 비스트리밍/스트리밍("got status: …. {json}") 양쪽 형태에서 `{code, message, status}` 구조 추출.
+- `getErrorStatusCode()`: ① SDK `ApiError.status`(숫자) → ② JSON `error.code` → ③ 메시지 정규식 순으로 권위 신호 우선.
+- `getErrorStatusName()` 신설: `RESOURCE_EXHAUSTED`/`UNAVAILABLE`/`PERMISSION_DENIED` 등 RPC status 이름 해석.
+- `isRateLimitError`: statusCode 429 또는 status `RESOURCE_EXHAUSTED` 우선 판정 후 산문 매칭(`quota` 단독 추가).
+- `isAuthError`: 401/403 또는 `UNAUTHENTICATED`/`PERMISSION_DENIED` 우선.
+- `isRetryableError`: **`includes('5')` 제거** → `code>=500 && <600` 정밀 판정 + `UNAVAILABLE`/`INTERNAL`/`DEADLINE_EXCEEDED` + 네트워크/타임아웃 토큰.
+
+### 검토한 대안
+- "메시지 부분 문자열에 'resource_exhausted' 추가"만 하기 → 근본(코드 무시) 미해결·여전히 산문 의존이라 기각.
+- 다운스트림에서 `fallbackOrder` 재설정 권고 → 라이브러리 결함이므로 부적합.
+
+### 검증
+- 실 API 키로 재현 스크립트: base-form 429 주입 시 1순위 모델 호출 **정확히 1회**(재시도 0) 후 `gemini-3.1-flash-lite` 성공 fallback 확인(PASS).
+- 회귀 테스트 추가: `error-handler.test.ts`(구조화 429/503/streaming/stray-5 6건), `fallback.test.ts`(구조화 429 즉시 fallback 1건).
+- 전체 292 tests pass · typecheck clean · lint clean.
+
+---
+
 ## 2026-05-29 — v0.7.0 Free Tier 지원 업데이트 (Phase 1~7)
 
 ### 배경

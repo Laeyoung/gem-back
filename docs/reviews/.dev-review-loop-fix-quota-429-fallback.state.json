@@ -1,0 +1,14 @@
+{
+  "loop": "dev-review-loop",
+  "scope": { "branch": "fix/quota-429-fallback", "base": "master" },
+  "started_at_epoch": 1780415110,
+  "started_at_iso": "2026-06-02T15:45:10Z",
+  "last_iteration_at_epoch": 1780416521,
+  "iteration": 7,
+  "counter": 2,
+  "threshold": 92,
+  "dimensions": ["root-cause-fit", "regression-risk", "test-coverage", "side-effects"],
+  "fixed_running_total": { "critical": 0, "major": 11, "minor": 2 },
+  "agent_failures_last_iter": [],
+  "status": "completed-clean"
+}
