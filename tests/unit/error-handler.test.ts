@@ -44,8 +44,16 @@ describe('error-handler utility', () => {
       expect(isRetryableError(new Error('503 Service Unavailable'))).toBe(true);
     });
 
-    it('should detect rate limit errors as retryable', () => {
-      expect(isRetryableError(new Error('429 Too Many Requests'))).toBe(true);
+    it('should NOT mark rate-limit errors as retryable (429 triggers immediate fallback, not retry)', () => {
+      // By design a 429 must fall back to the next model rather than retry the
+      // exhausted one; FallbackClient gates on isRateLimitError before ever
+      // consulting isRetryableError, so this helper must report 429 as non-retryable.
+      expect(isRetryableError(new Error('429 Too Many Requests'))).toBe(false);
+      expect(
+        isRetryableError(
+          new Error(JSON.stringify({ error: { code: 429, message: 'quota', status: 'RESOURCE_EXHAUSTED' } }))
+        )
+      ).toBe(false);
     });
 
     it('should return false for non-retryable errors', () => {
@@ -122,10 +130,53 @@ describe('error-handler utility', () => {
       expect(isRateLimitError(apiError)).toBe(true);
     });
 
+    it('classifies a string `.status` of RESOURCE_EXHAUSTED as a rate-limit (non-retryable) error', () => {
+      // Mirrors the UNAVAILABLE/INTERNAL retryable cases: the SDK string status
+      // path must drive isRateLimitError even when no HTTP code is present.
+      const apiError = Object.assign(new Error('quota hit'), { status: 'RESOURCE_EXHAUSTED' });
+      expect(isRateLimitError(apiError)).toBe(true);
+      expect(isRetryableError(apiError)).toBe(false);
+    });
+
     it('classifies the streaming-form RESOURCE_EXHAUSTED error as a rate-limit error', () => {
       // The streaming path prefixes the JSON with "got status: <STATUS>."
       const streamMsg = `got status: RESOURCE_EXHAUSTED. ${baseQuotaBody}`;
+      const error = new Error(streamMsg);
+      // The embedded-brace parse path must still recover the structured code.
+      expect(getErrorStatusCode(error)).toBe(429);
+      expect(isRateLimitError(error)).toBe(true);
+    });
+
+    it('recovers the structured body even with trailing text after the JSON', () => {
+      const streamMsg = `got status: RESOURCE_EXHAUSTED. ${baseQuotaBody} (request id: abc-123)`;
+      expect(getErrorStatusCode(new Error(streamMsg))).toBe(429);
       expect(isRateLimitError(new Error(streamMsg))).toBe(true);
+    });
+
+    it('returns undefined status code when the embedded brace is not valid JSON', () => {
+      expect(getErrorStatusCode(new Error('got status: UNKNOWN. {not json}'))).toBeUndefined();
+    });
+
+    it('classifies structured 401/403 bodies and gRPC auth status names as auth errors', () => {
+      const unauthenticated = new Error(
+        JSON.stringify({ error: { code: 401, message: 'Request had invalid credentials.', status: 'UNAUTHENTICATED' } })
+      );
+      const permissionDenied = new Error(
+        JSON.stringify({ error: { code: 403, message: 'The caller does not have permission.', status: 'PERMISSION_DENIED' } })
+      );
+      expect(isAuthError(unauthenticated)).toBe(true);
+      expect(isAuthError(permissionDenied)).toBe(true);
+      // Status name alone (no parseable HTTP code in prose) must still classify.
+      expect(isAuthError(Object.assign(new Error('credentials rejected'), { status: 'PERMISSION_DENIED' }))).toBe(true);
+    });
+
+    it('treats UNAVAILABLE / INTERNAL / DEADLINE_EXCEEDED status names as retryable', () => {
+      for (const status of ['UNAVAILABLE', 'INTERNAL', 'DEADLINE_EXCEEDED']) {
+        const structured = new Error(JSON.stringify({ error: { message: 'transient', status } }));
+        expect(isRetryableError(structured)).toBe(true);
+        // And via the SDK ApiError-style string `.status` property.
+        expect(isRetryableError(Object.assign(new Error('transient'), { status }))).toBe(true);
+      }
     });
 
     it('does NOT retry a 4xx error just because its message contains the digit 5', () => {
@@ -137,6 +188,24 @@ describe('error-handler utility', () => {
         })
       );
       expect(isRetryableError(badRequest)).toBe(false);
+    });
+
+    it('does NOT treat a non-auth error as auth just because its prose contains a "401"/"403" digit run', () => {
+      // A 400 whose prose mentions a "4013 token" count must not be misread as a
+      // 401 auth error (which would abort the whole fallback chain).
+      const badRequest = new Error(
+        JSON.stringify({
+          error: { code: 400, message: 'Input has 4013 tokens, exceeds the 403-token cap', status: 'INVALID_ARGUMENT' },
+        })
+      );
+      expect(getErrorStatusCode(badRequest)).toBe(400);
+      expect(isAuthError(badRequest)).toBe(false);
+    });
+
+    it('still classifies prose auth errors (unauthorized / forbidden / invalid api key) without a status code', () => {
+      expect(isAuthError(new Error('Request was Unauthorized'))).toBe(true);
+      expect(isAuthError(new Error('Forbidden: caller lacks access'))).toBe(true);
+      expect(isAuthError(new Error('API key not valid. Please pass a valid API key.'))).toBe(true);
     });
 
     it('does NOT misclassify a structured 503 as auth even though no "503" prose is present', () => {

@@ -26,11 +26,14 @@ function parseErrorBody(error: Error): ErrorBody | undefined {
   } catch {
     // Not pure JSON — fall through to the embedded-object path.
   }
-  // Streaming form: "got status: RESOURCE_EXHAUSTED. {<json>}".
+  // Streaming form: "got status: RESOURCE_EXHAUSTED. {<json>} [trailing]".
+  // Bound the slice to the last `}` so trailing text after the JSON object
+  // doesn't make JSON.parse throw and silently drop the structured body.
   const braceIndex = raw.indexOf('{');
-  if (braceIndex !== -1) {
+  const lastBrace = raw.lastIndexOf('}');
+  if (braceIndex !== -1 && lastBrace > braceIndex) {
     try {
-      const json = JSON.parse(raw.slice(braceIndex)) as ErrorResponse;
+      const json = JSON.parse(raw.slice(braceIndex, lastBrace + 1)) as ErrorResponse;
       if (json.error) return json.error;
     } catch {
       // Embedded payload wasn't parseable JSON.
@@ -95,12 +98,15 @@ export function isRateLimitError(error: Error): boolean {
   if (getErrorStatusCode(error) === 429) return true;
   if (getErrorStatusName(error) === 'RESOURCE_EXHAUSTED') return true;
 
+  // Prose fallbacks for non-structured errors. We intentionally do NOT match a
+  // bare "429" digit substring here: a real 429 is already caught by the
+  // authoritative checks above (and getErrorStatusCode's bounded regex), while
+  // matching "429" in arbitrary prose (e.g. a "4290 token" count) would
+  // false-positive into an unwanted fallback.
   const message = normalizeErrorMessage(error);
   return (
-    message.includes('429') ||
     message.includes('rate limit') ||
     message.includes('quota exceeded') ||
-    message.includes('quota') ||
     message.includes('too many requests')
   );
 }
@@ -112,10 +118,14 @@ export function isAuthError(error: Error): boolean {
   const status = getErrorStatusName(error);
   if (status === 'UNAUTHENTICATED' || status === 'PERMISSION_DENIED') return true;
 
+  // Prose fallbacks only. As with the bare "429" match in isRateLimitError, we
+  // deliberately avoid matching bare "401"/"403" digit substrings: a real auth
+  // error is caught by the authoritative code/status checks above, whereas
+  // matching "401"/"403" inside arbitrary prose (e.g. a "4013 token" count)
+  // would false-positive into an auth failure — which aborts the whole fallback
+  // chain (no retry, no fallback), a strictly worse outcome than a 429 misfire.
   const message = normalizeErrorMessage(error);
   return (
-    message.includes('401') ||
-    message.includes('403') ||
     message.includes('unauthorized') ||
     message.includes('forbidden') ||
     message.includes('invalid api key') ||
@@ -145,5 +155,10 @@ export function isRetryableError(error: Error): boolean {
     return true;
   }
 
-  return isRateLimitError(error);
+  // A 429 / rate limit is intentionally NOT retryable here: by design it
+  // triggers immediate fallback to the next model rather than retrying the
+  // exhausted one (see FallbackClient `shouldRetry`). Returning the rate-limit
+  // verdict from this exported helper would let any direct caller re-introduce
+  // the very bug this module guards against.
+  return false;
 }

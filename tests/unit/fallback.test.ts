@@ -311,6 +311,109 @@ describe('GemBack', () => {
 
       expect(chunks[0].model).toBe('gemini-3.5-flash');
     });
+
+    it('should fall back on a structured 429 quota error thrown from the stream', async () => {
+      // Streaming-path regression: the quota 429 carries its signal in the
+      // structured code/status, not in prose. The stream must fall back to the
+      // next model instead of surfacing the error.
+      const quota429 = new Error(
+        JSON.stringify({
+          error: {
+            code: 429,
+            message:
+              'You exceeded your current quota, please check your plan and billing details. ' +
+              'For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.',
+            status: 'RESOURCE_EXHAUSTED',
+          },
+        })
+      );
+      async function* failStream() {
+        throw quota429;
+      }
+      async function* successStream() {
+        yield { text: 'Recovered' };
+      }
+
+      mockGeminiClient.generateStream
+        .mockReturnValueOnce(failStream())
+        .mockReturnValueOnce(successStream());
+
+      const client = new GemBack({
+        apiKey: 'test-key',
+        fallbackOrder: ['gemini-3.1-flash-lite', 'gemini-3.5-flash'],
+      });
+      const stream = client.generateStream('Hello');
+
+      const chunks = [];
+      for await (const chunk of stream) {
+        chunks.push(chunk);
+      }
+
+      expect(chunks[0].model).toBe('gemini-3.5-flash');
+      expect(mockGeminiClient.generateStream).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('generateContent (multimodal) structured 429 fallback', () => {
+    const quota429 = new Error(
+      JSON.stringify({
+        error: {
+          code: 429,
+          message:
+            'You exceeded your current quota, please check your plan and billing details. ' +
+            'For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.',
+          status: 'RESOURCE_EXHAUSTED',
+        },
+      })
+    );
+
+    it('should fall back on a structured 429 without retrying the exhausted model (generateContent)', async () => {
+      mockGeminiClient.generateContent = vi
+        .fn()
+        .mockRejectedValueOnce(quota429)
+        .mockResolvedValueOnce({ text: 'Recovered', model: 'gemini-3.5-flash', finishReason: 'STOP' });
+
+      const client = new GemBack({
+        apiKey: 'test-key',
+        fallbackOrder: ['gemini-3.1-flash-lite', 'gemini-3.5-flash'],
+        maxRetries: 3,
+      });
+      const response = await client.generateContent({
+        contents: [{ role: 'user', parts: [{ text: 'Hello' }] }],
+      });
+
+      expect(response.model).toBe('gemini-3.5-flash');
+      // One call to the exhausted model (no retries) + one to the fallback.
+      expect(mockGeminiClient.generateContent).toHaveBeenCalledTimes(2);
+    });
+
+    it('should fall back on a structured 429 thrown from generateContentStream', async () => {
+      async function* failStream() {
+        throw quota429;
+      }
+      async function* successStream() {
+        yield { text: 'Recovered' };
+      }
+      mockGeminiClient.generateContentStream = vi
+        .fn()
+        .mockReturnValueOnce(failStream())
+        .mockReturnValueOnce(successStream());
+
+      const client = new GemBack({
+        apiKey: 'test-key',
+        fallbackOrder: ['gemini-3.1-flash-lite', 'gemini-3.5-flash'],
+      });
+
+      const chunks = [];
+      for await (const chunk of client.generateContentStream({
+        contents: [{ role: 'user', parts: [{ text: 'Hello' }] }],
+      })) {
+        chunks.push(chunk);
+      }
+
+      expect(chunks[0].model).toBe('gemini-3.5-flash');
+      expect(mockGeminiClient.generateContentStream).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe('chat', () => {
@@ -339,6 +442,33 @@ describe('GemBack', () => {
         'test-key',
         undefined
       );
+    });
+
+    it('should fall back on a structured 429 quota error (chat delegates to generate)', async () => {
+      const quota429 = new Error(
+        JSON.stringify({
+          error: {
+            code: 429,
+            message:
+              'You exceeded your current quota, please check your plan and billing details. ' +
+              'For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.',
+            status: 'RESOURCE_EXHAUSTED',
+          },
+        })
+      );
+      mockGeminiClient.generate
+        .mockRejectedValueOnce(quota429)
+        .mockResolvedValueOnce({ text: 'Recovered', model: 'gemini-3.5-flash', finishReason: 'STOP' });
+
+      const client = new GemBack({
+        apiKey: 'test-key',
+        fallbackOrder: ['gemini-3.1-flash-lite', 'gemini-3.5-flash'],
+        maxRetries: 3,
+      });
+      const response = await client.chat([{ role: 'user', content: 'Hello' }]);
+
+      expect(response.model).toBe('gemini-3.5-flash');
+      expect(mockGeminiClient.generate).toHaveBeenCalledTimes(2);
     });
   });
 
