@@ -75,6 +75,46 @@ describe('GemBack', () => {
       expect(mockGeminiClient.generate).toHaveBeenCalledTimes(2);
     });
 
+    it('should fall back immediately on a structured 429 quota error without retrying the exhausted model', async () => {
+      // Regression: a real Gemini free-tier RPD 429 whose prose `error.message`
+      // contains none of "429" / "rate limit" / "too many requests". The
+      // authoritative signals are the structured code (429) and status
+      // ("RESOURCE_EXHAUSTED"). Previously this slipped past isRateLimitError
+      // and the model was retried instead of being skipped via fallback.
+      const quota429 = new Error(
+        JSON.stringify({
+          error: {
+            code: 429,
+            message:
+              'You exceeded your current quota, please check your plan and billing details. ' +
+              'For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.',
+            status: 'RESOURCE_EXHAUSTED',
+          },
+        })
+      );
+      const successResponse = {
+        text: 'Recovered',
+        model: 'gemini-3.5-flash' as const,
+        finishReason: 'STOP',
+      };
+
+      mockGeminiClient.generate
+        .mockRejectedValueOnce(quota429)
+        .mockResolvedValueOnce(successResponse);
+
+      // maxRetries > 0 to prove the 429 does NOT consume the retry budget.
+      const client = new GemBack({
+        apiKey: 'test-key',
+        fallbackOrder: ['gemini-3.1-flash-lite', 'gemini-3.5-flash'],
+        maxRetries: 3,
+      });
+      const response = await client.generate('Hello');
+
+      expect(response.model).toBe('gemini-3.5-flash');
+      // Exactly one call to the exhausted model (no retries) + one to the fallback.
+      expect(mockGeminiClient.generate).toHaveBeenCalledTimes(2);
+    });
+
     it('should throw auth error immediately without fallback', async () => {
       const authError = new Error('401 Invalid API key');
       mockGeminiClient.generate.mockRejectedValue(authError);

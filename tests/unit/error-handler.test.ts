@@ -75,6 +75,80 @@ describe('error-handler utility', () => {
     });
   });
 
+  describe('real Gemini API error shapes (regression)', () => {
+    // The base `error.message` field Gemini returns for a free-tier quota 429.
+    // Note it does NOT contain "429", "rate limit", "quota exceeded", or
+    // "too many requests" as substrings — the authoritative signals are the
+    // structured `code` (429) and `status` ("RESOURCE_EXHAUSTED") fields.
+    const baseQuotaBody = JSON.stringify({
+      error: {
+        code: 429,
+        message:
+          'You exceeded your current quota, please check your plan and billing details. ' +
+          'For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. ' +
+          'To monitor your current usage, head to: https://ai.dev/rate-limit.',
+        status: 'RESOURCE_EXHAUSTED',
+      },
+    });
+
+    // The richer form, where Gemini appends the metric detail line that happens
+    // to contain "Quota exceeded for metric".
+    const detailedQuotaBody = JSON.stringify({
+      error: {
+        code: 429,
+        message:
+          'You exceeded your current quota, please check your plan and billing details. ' +
+          '\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, ' +
+          'limit: 20, model: gemini-3.5-flash\nPlease retry in 29.6s.',
+        status: 'RESOURCE_EXHAUSTED',
+      },
+    });
+
+    it('classifies a structured 429 RESOURCE_EXHAUSTED as a rate-limit error (base message)', () => {
+      const error = new Error(baseQuotaBody);
+      expect(getErrorStatusCode(error)).toBe(429);
+      expect(isRateLimitError(error)).toBe(true);
+      expect(isAuthError(error)).toBe(false);
+    });
+
+    it('classifies the detailed quota message as a rate-limit error', () => {
+      const error = new Error(detailedQuotaBody);
+      expect(isRateLimitError(error)).toBe(true);
+    });
+
+    it('honors the numeric `status` property the @google/genai ApiError exposes', () => {
+      const apiError = Object.assign(new Error(baseQuotaBody), { status: 429 });
+      expect(getErrorStatusCode(apiError)).toBe(429);
+      expect(isRateLimitError(apiError)).toBe(true);
+    });
+
+    it('classifies the streaming-form RESOURCE_EXHAUSTED error as a rate-limit error', () => {
+      // The streaming path prefixes the JSON with "got status: <STATUS>."
+      const streamMsg = `got status: RESOURCE_EXHAUSTED. ${baseQuotaBody}`;
+      expect(isRateLimitError(new Error(streamMsg))).toBe(true);
+    });
+
+    it('does NOT retry a 4xx error just because its message contains the digit 5', () => {
+      // A 400 whose prose mentions a "512" token limit must not be treated as a
+      // retryable 5xx error (the old `includes("5")` heuristic wrongly did this).
+      const badRequest = new Error(
+        JSON.stringify({
+          error: { code: 400, message: 'Input exceeds 512 token limit', status: 'INVALID_ARGUMENT' },
+        })
+      );
+      expect(isRetryableError(badRequest)).toBe(false);
+    });
+
+    it('does NOT misclassify a structured 503 as auth even though no "503" prose is present', () => {
+      const unavailable = new Error(
+        JSON.stringify({ error: { code: 503, message: 'The service is currently unavailable.', status: 'UNAVAILABLE' } })
+      );
+      expect(getErrorStatusCode(unavailable)).toBe(503);
+      expect(isRetryableError(unavailable)).toBe(true);
+      expect(isAuthError(unavailable)).toBe(false);
+    });
+  });
+
   describe('getErrorStatusCode', () => {
     it('should extract 4xx status codes', () => {
       expect(getErrorStatusCode(new Error('400 Bad Request'))).toBe(400);
