@@ -7,13 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-06-03
+
 ### Fixed
 
+- **Structured `429` / `RESOURCE_EXHAUSTED` quota errors now reliably trigger model fallback.** Real Gemini free-tier quota errors carry their signal in the structured `code` (429) / `status` (`RESOURCE_EXHAUSTED`) fields, but classification previously matched only the human-readable message — which for the base-form quota error contains none of `429` / `rate limit` / `too many requests`. The 429 slipped past `isRateLimitError`, so the exhausted model was retried (via a too-broad `includes('5')` in `isRetryableError`) instead of falling back to the next model in `fallbackOrder`. Classification is now driven by the authoritative HTTP status code and gRPC status name, covering the non-streaming, streaming (`got status: …. {json}`), and SDK `ApiError.status` shapes.
 - **`generateContentStream` now forwards `responseMimeType` and `responseSchema`** to the underlying SDK call. Previously these options on `GenerateContentRequest` were silently dropped on the streaming multimodal path (pre-existing in master), so JSON-mode streaming requests fell back to plain-text output. The non-streaming `generateContent` was already correct.
 - **Empty-stream fallback**: when the SDK returns a stream that resolves without yielding any chunk, `generateStream`/`generateContentStream` now record an `AttemptRecord` (`error: 'Empty stream response (no chunks yielded)'`) and a failed health-monitor entry before falling through to the next model. Previously the loop silently advanced with no diagnostic trace.
 
 ### Changed
 
+- **Error classification (`error-handler`) is now status-code-driven.** `getErrorStatusCode` resolves the code from `ApiError.status` → JSON `error.code` → bounded regex; `isRateLimitError`/`isAuthError`/`isRetryableError` key off the status code and gRPC status name first. Brittle bare-numeric substring matches (`429`/`401`/`403`, and the catch-all `includes('5')`) were removed so incidental digit runs in prose (e.g. a `4013`-token count) no longer false-positive. `isRetryableError` now reports `429` as non-retryable — a rate limit is an immediate-fallback signal, not a same-model retry.
 - **`FREE_TIER_LIMITS` made readonly** (`Object.freeze` + `Readonly<...>` types) to prevent accidental mutation from corrupting the tracker's initial state for subsequent `RateLimitTracker` instances.
 - **`customRateLimits` value type relaxed** from `RateLimitConfig` (rpm required) to `Partial<RateLimitConfig>`, matching the JSDoc promise that callers can override only the fields they care about (e.g. `{ 'gemini-2.5-pro': { tpm: 500_000 } }`). The internal `RateLimitTracker.constructor(customLimits)` signature was also updated to accept the same partial type, and the merge loop now falls back to `rpm: 15` when overriding an unlisted model without supplying rpm — preventing silent drops.
 
