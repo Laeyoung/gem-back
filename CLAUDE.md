@@ -289,8 +289,8 @@ Releases are automated via `.github/workflows/release.yml` — pushing a tag mat
 7. The release workflow handles `npm publish` and GitHub Release creation
 
 **Prerequisites (one-time setup):**
-- `NPM_TOKEN` repo secret with publish access to the `gemback` package (Settings → Secrets and variables → Actions). Use an **automation token** (npm CLI) so 2FA doesn't block CI.
-- For `--provenance` to work, the package must be public on npm and the workflow needs `id-token: write` (already set).
+- **OIDC trusted publishing** — no `NPM_TOKEN` secret. The `gemback` package on npmjs.com has a Trusted Publisher configured for this repo + `release.yml`, and the workflow authenticates via its OIDC `id-token` (the workflow upgrades to npm ≥ 11.5.1, which is required). Nothing to leak or rotate.
+- For `--provenance` to work, the package must be public on npm and the workflow needs `id-token: write` (already set). OIDC trusted publishing also satisfies the publish auth, so the publish step passes no token.
 
 **Manual fallback** (if the workflow can't publish — token expired, etc.):
 1. `npm whoami` → if empty, `npm login`
