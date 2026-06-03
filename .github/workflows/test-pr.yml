@@ -3,7 +3,7 @@ name: Run Tests on PR
 on:
   pull_request:
     branches:
-      - main
+      - master
       - develop
 
 permissions:
@@ -16,10 +16,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'npm'
@@ -52,7 +52,7 @@ jobs:
         continue-on-error: true
 
       - name: Comment on PR
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         if: always() # Run even if tests failed (which they technically won't cause of continue-on-error, but good practice)
         with:
           script: |
