@@ -1,8 +1,5 @@
 # 💎 Gem Back
 
-> ⚠️ **v0.7.0 변경 사항 미반영** — 본 한국어 문서는 v0.6.0 기준입니다.
-> v0.7.0의 신규 모델(`gemini-3.5-flash`, stable `gemini-3.1-flash-lite`), TPM 추적, 변경된 DEFAULT_FALLBACK_ORDER, breaking change 사항은 영문 [README.md](./README.md)와 [CHANGELOG.md](./CHANGELOG.md)를 참조해 주세요. 한국어 문서 갱신은 후속 PR 예정입니다.
-
 > Smart Gemini API Fallback Library with Multi-Key Rotation & Monitoring
 
 [![npm version](https://badge.fury.io/js/gemback.svg)](https://www.npmjs.com/package/gemback)
@@ -11,6 +8,8 @@
 [![Tests](https://img.shields.io/badge/tests-248%20passing-brightgreen.svg)](https://github.com/Laeyoung/gem-back)
 
 **Gem Back**은 Google Gemini API의 RPM(Requests Per Minute) 제한을 자동으로 처리하는 Fallback 시스템과 프로덕션급 모니터링 기능을 제공하는 NPM 라이브러리입니다.
+
+**[English](./README.md)** | **[예제](./examples)** | **[Changelog](./CHANGELOG.md)**
 
 ---
 
@@ -36,17 +35,28 @@ Gemini API는 무료 티어에서 **RPM(분당 요청 수) 제한**이 있어, �
 
 ## 🚀 지원 모델
 
-Gem Back은 다음 모델들의 자동 Fallback을 지원합니다:
+Gem Back은 Gemini 모델 전반에 걸친 자동 Fallback을 지원합니다:
 
-**기본 Fallback 체인** (무료 티어 최적화):
-1. `gemini-3-flash-preview` (무료 쿼터 제공) ⚠️
-2. `gemini-2.5-flash` (안정적, 고성능)
-3. `gemini-3.1-flash-lite-preview` (경량 Fallback) ⚠️
+**기본 Fallback 체인** (무료 티어 최적화 — v0.7.0, RPD 우선):
+1. `gemini-3.1-flash-lite` — stable, 500 RPD (일일 쿼터 최대)
+2. `gemini-3.5-flash` — 최신, 최고 품질 (20 RPD)
+3. `gemini-3-flash-preview` — 백업 (20 RPD) ⚠️
 
-**기타 지원 모델**:
+일일 처리량보다 출력 품질이 더 중요하다면, `gemini-3.5-flash`를 앞에 둔 `fallbackOrder`를 명시적으로 전달하세요.
+
+**무료 티어 쿼터 스냅샷** (2026-05-28):
+
+| 모델 | RPM | TPM | RPD | 비고 |
+|---|---|---|---|---|
+| `gemini-3.1-flash-lite` | 15 | 250K | 500 | |
+| `gemini-2.5-flash-lite` | 10 | 250K | 20 | ⚠️ deprecated (2026-07-22 종료 → `gemini-3.1-flash-lite`) |
+| `gemini-3.5-flash` | 5 | 250K | 20 | |
+| `gemini-3-flash-preview` | 5 | 250K | 20 | ⚠️ preview |
+| `gemini-2.5-flash` | 5 | 250K | 20 | ⚠️ deprecated (2026-06-17 종료 → `gemini-3.1-flash-lite`) |
+
+**유료 전용 모델** (`ALL_MODELS`에는 포함되지만, 무료 티어 키로 사용 시 런타임 경고):
 - `gemini-3.1-pro-preview`
 - `gemini-2.5-pro`
-- `gemini-2.5-flash-lite`
 - `gemini-2.0-flash`
 - `gemini-2.0-flash-lite`
 
@@ -77,6 +87,52 @@ pnpm add gemback
 
 ---
 
+## 🔄 v0.6 → v0.7 마이그레이션
+
+v0.7.0에는 항상 적용되는 breaking change 하나와 조건부 변경 하나가 포함되어 있습니다. 대부분의 호출부는 수정이 필요 없습니다.
+
+### 확정된 breaking change
+
+- **`DeprecatedModelInfo.reason`이 자유 형식 `string`에서 문자열 리터럴 union으로 변경**되었습니다 (`'replaced_by_newer' | 'removed_from_api' | 'tier_change'`). `reason`을 읽고 있다면 union 타입으로 전환하세요. 기존 항목의 산문형 설명 문자열은 새로운 선택적 `notes: string` 필드로 이동되었습니다.
+
+  ```ts
+  // 이전 (v0.6)
+  const reason: string = info.reason; // 예: "Gemini 2.0 series end of life"
+
+  // 이후 (v0.7)
+  const reason: DeprecationReason = info.reason; // 'replaced_by_newer' | ...
+  const detail: string | undefined = info.notes; // 원본 산문형 설명 (있는 경우)
+  ```
+
+### 기본 Fallback 순서 변경
+
+`GemBack`에 `fallbackOrder`를 전달하지 않았다면, 기본 순서가 이제 모델 품질이 아닌 일일 RPD에 최적화됩니다:
+
+```
+gemini-3.1-flash-lite → gemini-3.5-flash → gemini-3-flash-preview
+```
+
+v0.6의 품질 우선 동작을 유지하려면 명시적으로 전달하세요:
+
+```ts
+new GemBack({
+  apiKey: process.env.GEMINI_API_KEY,
+  fallbackOrder: ['gemini-3.5-flash', 'gemini-3-flash-preview', 'gemini-3.1-flash-lite'],
+});
+```
+
+### 새롭게 도입한 유틸리티
+
+- `REMOVED_MODELS`와 `DEPRECATED_MODELS` export는 무엇이 제거/대체되었는지에 대한 단일 진실 공급원(single source of truth)입니다.
+- `RateLimitStatus.currentTPM` / `maxTPM` / `tpmUtilizationPercent`이 이제 무료 티어 모델에 대해 채워집니다.
+- `gemini-3.5-flash`와 stable `gemini-3.1-flash-lite`를 사용할 수 있습니다.
+
+### 무료 티어 키에서의 유료 전용 모델
+
+무료 티어 API 키로 `gemini-2.5-pro`, `gemini-2.0-flash`, `gemini-2.0-flash-lite`, `gemini-3.1-pro-preview`를 호출하면, 예상되는 4xx를 설명하는 일회성 `logger.warn`이 출력됩니다. 키를 업그레이드하거나 `fallbackOrder`를 무료 티어 모델로 고정하세요.
+
+---
+
 ## ⚡ 빠른 시작
 
 ### 기본 사용법
@@ -92,7 +148,7 @@ const client = new GemBack({
 // 텍스트 생성
 const response = await client.generate('안녕하세요, Gemini!');
 console.log(response.text);
-// 자동으로 최적의 모델을 선택하여 응답
+// 자동으로 최적의 모델을 선택하여 Fallback 처리
 ```
 
 ### 커스텀 Fallback 순서
@@ -101,19 +157,20 @@ console.log(response.text);
 const client = new GemBack({
   apiKey: process.env.GEMINI_API_KEY,
   fallbackOrder: [
-    'gemini-2.5-flash',
-    'gemini-2.0-flash'
+    'gemini-3.5-flash',       // 선택: 품질이 일일 처리량보다 중요하면 최고 품질 모델을 먼저
+    'gemini-3.1-flash-lite',  // stable, 무료 티어 RPD 최대 (500/일)
+    'gemini-3-flash-preview', // 최후 백업
   ],
   maxRetries: 3,
   timeout: 30000,
-  debug: true // 상세 로그 출력
+  debug: true, // 상세 로그 출력
 });
 ```
 
 ### 스트리밍 응답
 
 ```typescript
-const stream = await client.generateStream('긴 이야기를 들려주세요');
+const stream = client.generateStream('긴 이야기를 들려주세요');
 
 for await (const chunk of stream) {
   process.stdout.write(chunk.text);
@@ -230,8 +287,8 @@ console.log(stats.monitoring?.summary);
 ### 1. 자동 Fallback
 
 ```typescript
-// 모델이 RPM 제한에 걸리면 자동으로 다음 모델로 전환
-// (예: gemini-3-flash-preview → gemini-2.5-flash → gemini-3.1-flash-lite-preview)
+// 모델이 RPM 제한에 걸리면 자동으로 Fallback 체인을 따라 다음 모델로 전환
+// (v0.7.0 기본값: gemini-3.1-flash-lite → gemini-3.5-flash → gemini-3-flash-preview)
 const response = await client.generate('복잡한 질문');
 ```
 
@@ -240,7 +297,7 @@ const response = await client.generate('복잡한 질문');
 ```typescript
 const client = new GemBack({
   apiKey: 'YOUR_KEY',
-  maxRetries: 3, // 각 모델당 최대 3번 재시도
+  maxRetries: 3, // 각 모델당 최대 재시도 횟수
   retryDelay: 1000 // 초기 재시도 대기 시간 (ms)
 });
 ```
@@ -346,7 +403,7 @@ const weatherFunction: FunctionDeclaration = {
     properties: {
       location: {
         type: 'string',
-        description: '도시 이름 (예: 서울, 부산)',
+        description: '도시 이름 (예: Tokyo, London)',
       },
       unit: {
         type: 'string',
@@ -496,80 +553,86 @@ const response = await client.generate('이름, 나이, 이메일이 포함된 �
   responseMimeType: 'application/json',
 });
 
-console.log(response.json); // 자동 파싱된 JSON 객체
-// { name: "홍길동", age: 25, email: "hong@example.com" }
+console.log(response.json);  // 파싱된 JSON 객체
+console.log(response.text);  // 원본 JSON 문자열
 
-// 스키마로 JSON 구조 정의
+// 스키마 검증을 사용한 JSON 모드
 const userSchema: ResponseSchema = {
   type: 'object',
   properties: {
-    name: { type: 'string', description: '사용자 이름' },
-    age: { type: 'number', description: '사용자 나이' },
-    email: { type: 'string', description: '이메일 주소' },
-    address: {
-      type: 'object',
-      properties: {
-        city: { type: 'string' },
-        country: { type: 'string' },
-      },
-    },
+    name: { type: 'string' },
+    age: { type: 'number' },
+    email: { type: 'string' },
   },
   required: ['name', 'age', 'email'],
 };
 
-const response2 = await client.generate(
-  '30대 한국인 사용자 프로필을 생성하세요',
-  {
-    responseMimeType: 'application/json',
-    responseSchema: userSchema,
-  }
-);
+const response2 = await client.generate('사용자 프로필을 생성하세요', {
+  responseMimeType: 'application/json',
+  responseSchema: userSchema,
+});
 
-// TypeScript 타입 안전성
+// 타입 안전한 사용
 interface User {
   name: string;
   age: number;
   email: string;
-  address?: {
-    city: string;
-    country: string;
-  };
 }
 
 const user = response2.json as User;
 console.log(user.name, user.age, user.email);
 
-// 배열 응답
-const listSchema: ResponseSchema = {
+// 객체 배열
+const productsSchema: ResponseSchema = {
   type: 'array',
   items: {
     type: 'object',
     properties: {
-      title: { type: 'string' },
-      priority: { type: 'string', enum: ['low', 'medium', 'high'] },
+      id: { type: 'number' },
+      name: { type: 'string' },
+      price: { type: 'number' },
     },
+    required: ['id', 'name', 'price'],
   },
 };
 
-const todos = await client.generate('5개의 할 일 목록을 만들어주세요', {
+const products = await client.generate('제품 3개를 생성하세요', {
   responseMimeType: 'application/json',
-  responseSchema: listSchema,
+  responseSchema: productsSchema,
 });
+
+// 복잡한 중첩 구조
+const blogPostSchema: ResponseSchema = {
+  type: 'object',
+  properties: {
+    title: { type: 'string' },
+    author: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        email: { type: 'string' },
+      },
+    },
+    tags: {
+      type: 'array',
+      items: { type: 'string' },
+    },
+  },
+  required: ['title', 'author'],
+};
 ```
 
-**JSON Mode 기능:**
-- ✅ **보장된 JSON**: 항상 유효한 JSON 출력
-- ✅ **자동 파싱**: `response.json` 필드에서 자동 파싱된 객체 제공
-- ✅ **스키마 검증**: OpenAPI 3.0 스타일 JSON Schema 지원
-- ✅ **타입 안전성**: TypeScript 인터페이스와 원활하게 통합
-- ✅ **복잡한 구조**: 중첩된 객체, 배열, 모든 JSON 타입 지원
+**지원하는 스키마 타입:**
+- `object`: 정의된 속성을 가진 객체
+- `array`: 항목들의 배열
+- `string`, `number`, `boolean`, `null`: 원시 타입
 
 **활용 사례:**
 - API 응답 포맷팅
-- 비구조화된 텍스트에서 데이터 추출
+- 데이터 추출 및 구조화
 - 타입 안전한 API 통합
-- 데이터베이스 레코드 생성
-- 구조화된 콘텐츠 생성 (제품 목록, 설정 파일 등)
+- 구조화된 콘텐츠 생성
+- 데이터베이스 저장용 출력
 
 ---
 
@@ -580,6 +643,8 @@ const todos = await client.generate('5개의 할 일 목록을 만들어주세�
 #### Constructor Options
 
 ```typescript
+import type { GeminiModel, RateLimitConfig } from 'gemback';
+
 interface GemBackOptions {
   apiKey?: string;                   // Gemini API 키 (단일 키)
   apiKeys?: string[];                // 여러 API 키 (멀티 키 모드)
@@ -592,6 +657,11 @@ interface GemBackOptions {
   apiKeyRotationStrategy?: 'round-robin' | 'least-used'; // 키 로테이션 전략 (기본: round-robin)
   enableMonitoring?: boolean;        // 선택: 모니터링 활성화 (기본: false)
   enableRateLimitPrediction?: boolean; // 선택: Rate limit 예측 경고 (기본: false)
+  customRateLimits?: Partial<Record<GeminiModel, Partial<RateLimitConfig>>>; // 선택: 모델별
+                                     // RPM/TPM/RPD 오버라이드. FREE_TIER_LIMITS 기본값 위에
+                                     // 적용됩니다. 항목별 필드 병합이므로
+                                     // { 'gemini-2.5-flash': { rpm: 10 } }는 기존
+                                     // tpm/rpd를 유지합니다. `enableMonitoring: true`일 때만 사용됩니다.
 }
 ```
 
@@ -607,8 +677,36 @@ interface GemBackOptions {
 const response = await client.generate('Hello!', {
   model: 'gemini-2.5-flash',  // 특정 모델 지정
   temperature: 0.7,
-  maxTokens: 1000
+  maxTokens: 1000,
+  systemInstruction: 'You are a helpful assistant',  // v0.5.0+
+  tools: [weatherFunction],  // v0.5.0+
+  toolConfig: { functionCallingMode: 'auto' },  // v0.5.0+
+  safetySettings: [{ category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE }],  // v0.5.0+
+  responseMimeType: 'application/json',  // v0.5.0+
+  responseSchema: { type: 'object', properties: { ... } }  // v0.5.0+
 });
+```
+
+**GenerateOptions:**
+```typescript
+interface GenerateOptions {
+  model?: GeminiModel;
+  temperature?: number;           // 0.0 - 2.0
+  maxTokens?: number;            // 최대 출력 토큰 수
+  topP?: number;                 // 0.0 - 1.0
+  topK?: number;                 // Top-K 샘플링
+  systemInstruction?: string | Content;  // v0.5.0+: 모델 동작 제어
+  tools?: FunctionDeclaration[];         // v0.5.0+: 사용 가능한 함수
+  toolConfig?: ToolConfig;               // v0.5.0+: 함수 호출 설정
+  safetySettings?: SafetySetting[];      // v0.5.0+: 콘텐츠 필터링
+  responseMimeType?: string;             // v0.5.0+: 응답 형식 (예: 'application/json')
+  responseSchema?: ResponseSchema;       // v0.5.0+: JSON 스키마 검증
+}
+
+interface ToolConfig {
+  functionCallingMode?: 'auto' | 'any' | 'none';
+  allowedFunctionNames?: string[];
+}
 ```
 
 ##### `generateStream(prompt, options?)`
@@ -616,7 +714,7 @@ const response = await client.generate('Hello!', {
 스트리밍 텍스트 생성
 
 ```typescript
-const stream = await client.generateStream('Tell me a story');
+const stream = client.generateStream('Tell me a story');
 for await (const chunk of stream) {
   console.log(chunk.text);
 }
@@ -654,9 +752,9 @@ const client = new GemBack({
 
   // 사용할 모델만 지정
   fallbackOrder: [
+    'gemini-3.1-flash-lite',
+    'gemini-3.5-flash',
     'gemini-3-flash-preview',
-    'gemini-2.5-flash',
-    'gemini-3.1-flash-lite-preview'
   ],
 
   // 재시도 설정
@@ -685,7 +783,7 @@ const client = new GemBack({
   enableRateLimitPrediction: true,       // Rate limit 예측 경고
 
   // 기본 설정
-  fallbackOrder: ['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-3.1-flash-lite-preview'],
+  fallbackOrder: ['gemini-3.1-flash-lite', 'gemini-3.5-flash', 'gemini-3-flash-preview'],
   maxRetries: 2,
   timeout: 30000,
   logLevel: 'info'
@@ -781,59 +879,60 @@ Phase 2에서는 프로덕션 환경에서의 안정성을 향상시키는 고�
 
 ### Phase 2.5: Advanced Content Generation ✅ (완료 - v0.5.0)
 
-Phase 2.5에서는 Google GenAI SDK의 고급 콘텐츠 생성 기능을 완벽하게 지원하여, 프로덕션 환경에서 안전하고 구조화된 AI 콘텐츠 생성을 가능하게 했습니다.
+Phase 2.5에서는 Google GenAI SDK의 프로덕션급 콘텐츠 생성 기능(Function Calling, System Instructions, 안전 제어, 구조화된 출력)을 추가했습니다.
 
-#### 🎯 Function Calling / Tool Use ✅
-- [x] **AI가 외부 함수를 호출할 수 있는 Tool Use 지원**
-  - JSON Schema 기반 함수 정의
-  - 3가지 호출 모드: `auto`, `any`, `none`
-  - 특정 함수만 허용하는 `allowedFunctionNames` 옵션
-  - 멀티턴 대화에서 함수 결과 반환 지원
-  - 모든 생성 메서드에서 동작 (`generate`, `generateStream`, `generateContent`)
+#### 🎯 System Instructions ✅
+- [x] **모델의 동작 및 응답 스타일 제어**
+  - 모델의 성격, 톤, 출력 형식 가이드
+  - 문자열 및 구조화된 Content 형식 지원
+  - 모든 생성 메서드에 명령어 적용
+  - Fallback 체인 전반에 걸쳐 명령어 유지
 
-#### 📝 System Instructions ✅
-- [x] **모델의 동작, 톤, 출력 형식 제어**
-  - 문자열 및 구조화된 `Content` 형식 지원
-  - 모든 생성 메서드에 적용
-  - Fallback 시에도 명령어 유지
-  - 다른 옵션과 자유롭게 조합
+#### 🔧 Function Calling (Tool Use) ✅
+- [x] **AI가 외부 함수를 호출할 수 있도록 지원**
+  - 구조화된 매개변수로 함수 정의 (JSON Schema)
+  - 여러 함수 호출 모드: auto, any, none
+  - allowedFunctionNames로 허용 함수 제한
+  - 모델 응답에서 함수 호출 추출
+  - 함수 결과를 포함한 멀티턴 대화 지원
 
 #### 🛡️ Safety Settings ✅
-- [x] **프로덕션 준수 콘텐츠 안전 제어**
-  - 4가지 유해 카테고리 지원 (괴롭힘, 혐오 발언, 성적 콘텐츠, 위험 콘텐츠)
-  - 4단계 차단 임계값 (없음, 높음만, 중간 이상, 낮음 이상)
-  - 안전 차단 시 자동 Fallback
-  - 여러 설정 조합 가능
+- [x] **콘텐츠 필터링 및 검열**
+  - 다양한 유해 카테고리에 대한 안전 임계값 설정
+  - 괴롭힘, 혐오 발언, 성적 콘텐츠, 위험 콘텐츠 필터링 지원
+  - 여러 차단 수준: none, low, medium, high
+  - 어린이에게 안전한 콘텐츠 생성
+  - 콘텐츠 정책 준수
 
-#### 🎨 JSON Mode (Structured Outputs) ✅
-- [x] **신뢰할 수 있는 구조화된 데이터 추출**
-  - `responseMimeType: 'application/json'`으로 JSON 모드 활성화
-  - OpenAPI 3.0 스타일 JSON Schema 검증
-  - 자동 JSON 파싱 (`response.json` 필드)
+#### 📊 JSON Mode ✅
+- [x] **구조화된 JSON 응답**
+  - `response.json` 필드를 통한 자동 JSON 파싱
+  - OpenAPI 호환 스키마로 검증
   - 객체, 배열, 중첩 구조 지원
-  - TypeScript 인터페이스와 타입 안전하게 통합
+  - TypeScript 인터페이스와 타입 안전한 통합
+  - 구조화된 데이터 추출 및 API 응답 포맷팅
 
 **Phase 2.5 주요 성과:**
 - ✅ 248개의 포괄적인 테스트
-- ✅ 4가지 주요 기능 추가 (Function Calling, System Instructions, Safety Settings, JSON Mode)
-- ✅ ESLint 완전 클린 (20 에러 → 0 에러)
-- ✅ TypeScript strict mode 100% 준수
-- ✅ 프로덕션급 콘텐츠 생성 지원
+- ✅ 모든 고급 기능에 대한 완전한 GenAI SDK 호환성
+- ✅ 프로덕션 준비 완료된 콘텐츠 안전 제어
+- ✅ 스키마 검증을 통한 타입 안전 구조화 출력
+- ✅ 모든 기능에 대한 종합 예제
 
 ### Phase 3: Performance & Ecosystem (향후 계획)
 
 Phase 3에서는 성능 최적화와 생태계 확장에 집중할 예정입니다.
 
 #### ⚡ 성능 최적화
-- [ ] **응답 캐싱 (중복 요청 최적화)**
-  - 동일 요청에 대한 캐싱으로 API 호출 절감
-  - TTL 기반 캐시 만료 관리
+- [ ] **응답 캐싱**
+  - 캐싱으로 API 호출 절감
+  - TTL 기반 캐시 만료
   - 메모리 효율적인 캐시 전략
 
 - [ ] **Connection Pooling**
-  - HTTP 연결 재사용으로 성능 향상
+  - 연결 재사용으로 성능 향상
   - 동시 요청 처리 최적화
-  - 리소스 사용 효율화
+  - 효율적인 리소스 사용
 
 #### 🛡️ 고급 안정성 패턴
 - [ ] **Circuit Breaker 패턴**
@@ -890,6 +989,19 @@ A: `fallbackOrder` 옵션에 원하는 모델만 배열로 전달하세요.
 
 ### Q: 비용은 어떻게 되나요?
 A: Gemini API 자체 비용만 발생하며, Gem Back은 무료 오픈소스입니다.
+
+---
+
+<!-- PROJECTS_SHOWCASE_START -->
+## 🌟 Gem Back을 사용하는 프로젝트
+
+**Gem Back을 사용하는 프로젝트를 가장 먼저 소개해보세요!**
+
+Gem Back을 프로젝트에서 사용하고 계신다면, 여기에 소개해 드리고 싶습니다.
+여러분의 프로젝트가 첫 번째로 등록될 수 있습니다!
+
+*업데이트: 2025-11-29*
+<!-- PROJECTS_SHOWCASE_END -->
 
 ---
 
