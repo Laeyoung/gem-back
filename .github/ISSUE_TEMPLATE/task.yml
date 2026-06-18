@@ -1,0 +1,16 @@
+name: Task
+description: A unit of work for the agent orchestration pipeline
+labels: ["status:triage"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What needs doing
+      description: Describe the task and the desired outcome.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context / acceptance criteria
+      description: Links, constraints, how we'll know it's done.
