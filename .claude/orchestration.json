@@ -1,0 +1,20 @@
+{
+  "repo": "Laeyoung/gem-back",
+  "bot": "laeyoung-tester",
+  "candidateN": 5,
+  "wipLimit": 5,
+  "reclaim": {
+    "timeoutMinutes": 120,
+    "heartbeatMinutes": 15
+  },
+  "commands": {
+    "test": "npm test",
+    "build": "npm run build",
+    "lint": "npm run lint"
+  },
+  "worktreeBaseDir": "../",
+  "project": {
+    "number": null,
+    "statusField": "Status"
+  }
+}
