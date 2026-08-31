@@ -1001,8 +1001,8 @@ A: Only Gemini API costs apply. Gem Back is free and open-source.
 If you're using Gem Back in your project, we'd love to feature it here.
 Your project could be the first one listed!
 
-*Updated: 2026-08-17*
-<!-- PROJECTS_SHOWCASE_END --><!-- PROJECTS_SHOWCASE_END -->
+*Updated: 2026-08-31*
+<!-- PROJECTS_SHOWCASE_END --><!-- PROJECTS_SHOWCASE_END --><!-- PROJECTS_SHOWCASE_END -->
 
 ---
 
