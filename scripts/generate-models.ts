@@ -114,16 +114,15 @@ function processModels(models: ModelMetadata[]): ProcessedModel[] {
  * Generate src/types/models.ts content
  */
 function generateTypesFile(models: ProcessedModel[]): string {
-  // Default fallback order (v0.7.0 — Phase 1 confirmed IDs, RPD-first strategy)
-  // See docs/plan-free-tier-models-2026-05.md §4 for rationale.
-  // 1) gemini-3.1-flash-lite (stable, 500 RPD — dominant daily quota)
-  // 2) gemini-3.5-flash      (20 RPD  — newest/highest quality)
-  // 3) gemini-3-flash-preview(20 RPD  — backup, no stable variant yet)
-  const targetFallbackOrder = [
-    'gemini-3.1-flash-lite',
-    'gemini-3.5-flash',
-    'gemini-3-flash-preview',
-  ];
+  // Default fallback order (v0.8.0 — current GA models with free-tier access).
+  // Free-tier quota numbers are no longer published in the docs (AI Studio
+  // dashboard only), so the order is based on a free-tier ACCESS probe run on
+  // 2026-11-10 (one generateContent call per candidate), lite model first:
+  // 1) gemini-3.5-flash-lite (GA, answered 200 on a free-tier key)
+  // 2) gemini-3.6-flash      (GA, answered 200 on a free-tier key)
+  // Not included: gemini-3.8-flash (503 UNAVAILABLE on all three probe attempts — free-tier access
+  // unconfirmed) and gemini-4-argon (429, free-tier limit: 0 — paid only).
+  const targetFallbackOrder = ['gemini-3.5-flash-lite', 'gemini-3.6-flash'];
 
   const fallbackList = targetFallbackOrder
     .map(name => models.find(m => m.name === name))
@@ -156,7 +155,7 @@ export type GeminiModel =
 ${unionType};
 
 /**
- * Default fallback order for stable models
+ * Default fallback order: current GA models with free-tier access, lite first.
  * Preview and experimental models must be explicitly specified
  */
 export const DEFAULT_FALLBACK_ORDER: GeminiModel[] = [

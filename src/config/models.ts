@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE - DO NOT EDIT MANUALLY
-// Generated at: 2026-05-28T15:31:44.745Z
+// Generated at: 2026-11-10T13:19:52.585Z
 // Source: Gemini API v1beta/models
 // Generator: scripts/generate-models.ts
 
@@ -11,12 +11,15 @@ import type { GeminiModel } from '../types/models';
  */
 export const MODEL_PRIORITY: Record<GeminiModel, number> = {
   'gemini-3.5-flash': 0,
+  'gemini-3.6-flash': 0,
+  'gemini-3.7-flash': 0,
+  'gemini-3.8-flash': 0,
+  'gemini-4-argon': 0,
   'gemini-3.1-flash-lite': 10,
+  'gemini-3.5-flash-lite': 10,
   'gemini-2.5-flash': 100,
   'gemini-2.5-pro': 105,
   'gemini-2.5-flash-lite': 110,
-  'gemini-2.0-flash': 200,
-  'gemini-2.0-flash-lite': 210,
   'gemini-3-flash-preview': 1000,
   'gemini-3.1-pro-preview': 1005,
   'gemini-3.1-flash-lite-preview': 1010,
@@ -38,9 +41,34 @@ export const MODEL_INFO: Record<
     description: 'Gemini 3.5 Flash',
     maxTokens: 65536,
   },
+  'gemini-3.6-flash': {
+    name: 'Gemini 3.6 Flash',
+    description: 'Gemini 3.6 Flash',
+    maxTokens: 65536,
+  },
+  'gemini-3.7-flash': {
+    name: 'Gemini 3.7 Flash',
+    description: 'Gemini 3.7 Flash',
+    maxTokens: 65536,
+  },
+  'gemini-3.8-flash': {
+    name: 'Gemini 3.8 Flash',
+    description: 'Gemini 3.8 Flash',
+    maxTokens: 65536,
+  },
+  'gemini-4-argon': {
+    name: 'Gemini 4 Argon',
+    description: 'Gemini 4 Argon',
+    maxTokens: 32768,
+  },
   'gemini-3.1-flash-lite': {
     name: 'Gemini 3.1 Flash Lite',
     description: 'Gemini 3.1 Flash Lite',
+    maxTokens: 65536,
+  },
+  'gemini-3.5-flash-lite': {
+    name: 'Gemini 3.5 Flash Lite',
+    description: 'Gemini 3.5 Flash Lite',
     maxTokens: 65536,
   },
   'gemini-2.5-flash': {
@@ -58,16 +86,6 @@ export const MODEL_INFO: Record<
     name: 'Gemini 2.5 Flash-Lite',
     description: 'Stable version of Gemini 2.5 Flash-Lite, released in July of 2025',
     maxTokens: 65536,
-  },
-  'gemini-2.0-flash': {
-    name: 'Gemini 2.0 Flash',
-    description: 'Gemini 2.0 Flash',
-    maxTokens: 8192,
-  },
-  'gemini-2.0-flash-lite': {
-    name: 'Gemini 2.0 Flash-Lite',
-    description: 'Gemini 2.0 Flash-Lite',
-    maxTokens: 8192,
   },
   'gemini-3-flash-preview': {
     name: 'Gemini 3 Flash Preview',

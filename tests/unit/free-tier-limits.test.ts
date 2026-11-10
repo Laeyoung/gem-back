@@ -38,19 +38,51 @@ describe('Free-tier limits (Phase 3)', () => {
     // Overridden model
     expect(tracker.getStatus('gemini-2.5-pro').maxRPM).toBe(50);
     // Sibling paid-tier model still on default
-    expect(tracker.getStatus('gemini-2.0-flash').maxRPM).toBe(15);
+    expect(tracker.getStatus('gemini-3.1-pro-preview').maxRPM).toBe(15);
     // Free-tier model unaffected
     expect(tracker.getStatus('gemini-3.5-flash').maxRPM).toBe(5);
   });
 
   it('NON_FREE_TIER_MODELS lists the expected paid-only set', () => {
-    expect(NON_FREE_TIER_MODELS).toContain('gemini-2.5-pro');
-    expect(NON_FREE_TIER_MODELS).toContain('gemini-2.0-flash');
-    expect(NON_FREE_TIER_MODELS).toContain('gemini-2.0-flash-lite');
-    expect(NON_FREE_TIER_MODELS).toContain('gemini-3.1-pro-preview');
+    expect(NON_FREE_TIER_MODELS).toEqual([
+      'gemini-2.5-pro',
+      'gemini-3.1-pro-preview',
+      'gemini-4-argon', // 429 with free-tier `limit: 0` on 2026-11-10
+    ]);
     // Free-tier models should NOT be in NON_FREE_TIER_MODELS
     expect(NON_FREE_TIER_MODELS).not.toContain('gemini-3.5-flash' as never);
     expect(NON_FREE_TIER_MODELS).not.toContain('gemini-3.1-flash-lite' as never);
+    expect(NON_FREE_TIER_MODELS).not.toContain('gemini-3.5-flash-lite' as never);
+    expect(NON_FREE_TIER_MODELS).not.toContain('gemini-3.6-flash' as never);
+  });
+
+  it('does not invent limits for models whose free-tier quota is unknown', () => {
+    // Quotas for these were not readable on 2026-11-10 (dashboard-only); they
+    // must fall back to the tracker default instead of carrying guessed numbers.
+    for (const model of [
+      'gemini-3.5-flash-lite',
+      'gemini-3.6-flash',
+      'gemini-3.7-flash',
+      'gemini-3.8-flash',
+      'gemini-4-argon',
+    ] as const) {
+      expect(FREE_TIER_LIMITS[model]).toBeUndefined();
+      const status = new RateLimitTracker().getStatus(model);
+      expect(status.maxRPM).toBe(15);
+      expect(status.maxTPM).toBeUndefined();
+    }
+  });
+
+  it('falls back to the conservative default for IDs outside ALL_MODELS instead of throwing', () => {
+    const tracker = new RateLimitTracker();
+    for (const model of ['gemini-2.0-flash', 'some-future-model']) {
+      tracker.recordRequest(model as any);
+      const status = tracker.getStatus(model as any);
+      expect(status.maxRPM).toBe(15);
+      expect(status.currentRPM).toBe(1);
+      expect(status.maxTPM).toBeUndefined();
+      expect(tracker.wouldExceedLimit(model as any)).toBe(false);
+    }
   });
 
   it('FREE_TIER_LIMITS covers all expected free-tier models', () => {
