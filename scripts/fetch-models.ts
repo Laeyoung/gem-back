@@ -9,10 +9,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { GeminiModelsApiResponse, ModelMetadata } from './types';
+import { detectLatestVersion, selectLibraryModels } from './model-filters';
 
 const API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
 const OUTPUT_FILE = path.join(__dirname, 'models-data.json');
 const CACHE_FILE = path.join(__dirname, '.models-cache.json');
+const LIBRARY_TYPES_FILE = path.join(__dirname, '../src/types/models.ts');
 
 /**
  * Fetch models from Gemini API with retry logic
@@ -79,6 +81,21 @@ async function fetchModelsFromAPI(apiKey: string): Promise<ModelMetadata[]> {
   }
 
   throw lastError || new Error('Failed to fetch models after multiple attempts');
+}
+
+/**
+ * Model IDs the library currently ships, read from the generated
+ * src/types/models.ts. Used to keep already-shipped previews while the API
+ * still serves them and to report shipped models the API dropped.
+ */
+function loadLibraryModels(): Set<string> {
+  try {
+    const source = fs.readFileSync(LIBRARY_TYPES_FILE, 'utf-8');
+    return new Set(Array.from(source.matchAll(/'(gemini-[a-z0-9.-]+)'/g), (m) => m[1]));
+  } catch (error) {
+    console.warn('⚠️  Could not read current library models:', (error as Error).message);
+    return new Set();
+  }
 }
 
 /**
@@ -169,67 +186,31 @@ async function main() {
     if (!fetchAll) {
       console.log('\n🔍 Filtering models (use --all to fetch everything)...');
       const initialCount = models.length;
+      const names = models.map((m) => m.name);
+      const knownModels = loadLibraryModels();
 
-      // Determine the latest version to allow previews/experimental for it
-      let maxMajor = 0;
-      let maxMinor = 0;
-      
-      models.forEach(m => {
-        const name = m.name.toLowerCase();
-        if (!name.startsWith('gemini')) return;
-        
-        // Extract version (e.g., 2.5 from gemini-2.5-flash or 3 from gemini-3-pro)
-        const match = name.match(/gemini-(\d+)(?:\.(\d+))?/);
-        if (match) {
-          const major = parseInt(match[1]);
-          const minor = match[2] ? parseInt(match[2]) : 0;
-          if (major > maxMajor) {
-            maxMajor = major;
-            maxMinor = minor;
-          } else if (major === maxMajor && minor > maxMinor) {
-            maxMinor = minor;
-          }
-        }
-      });
-      
+      const [maxMajor, maxMinor] = detectLatestVersion(names);
       if (maxMajor > 0) {
-        console.log(`   Latest version detected: Gemini ${maxMajor}.${maxMinor} (Previews allowed for this version)`);
+        console.log(
+          `   Latest version detected: Gemini ${maxMajor}.${maxMinor} ` +
+            '(new previews allowed for this major; already-shipped previews are kept while the API serves them)'
+        );
       }
-      
-      models = models.filter(m => {
-        const name = m.name.toLowerCase();
-        // Criteria 1: Must be a Gemini model
-        const isGemini = name.startsWith('gemini');
-        if (!isGemini) return false;
 
-        // Criteria 2: No image models
-        const noImage = !name.includes('image');
-        if (!noImage) return false;
-
-        // Criteria 3: No '-latest' aliases or fixed versions (numeric/date suffixes)
-        const isLatestAlias = name.endsWith('-latest');
-        const isFixedVersion = name.match(/-\d{3,}$/) || name.match(/-\d{2}-\d{4}$/);
-        if (isLatestAlias || isFixedVersion) return false;
-
-        // Criteria 4: Version check
-        const match = name.match(/gemini-(\d+)(?:\.(\d+))?/);
-        let isLatest = false;
-        if (match) {
-          const major = parseInt(match[1]);
-          const minor = match[2] ? parseInt(match[2]) : 0;
-          isLatest = major === maxMajor;
-        }
-
-        // Criteria 5: Stability
-        const isStable = !name.includes('preview') && 
-                        !name.includes('experimental') && 
-                        !name.includes('-exp');
-        
-        // Allow if stable OR if it's the latest version (to include its previews/experimental)
-        return isStable || isLatest;
-      });
+      const selected = new Set(selectLibraryModels(names, knownModels));
+      models = models.filter((m) => selected.has(m.name));
 
       console.log(`   Filtered out ${initialCount - models.length} models`);
+
+      // Models the library ships that the API no longer lists at all.
+      const served = new Set(names);
+      const missing = [...knownModels].filter((m) => !served.has(m));
+      if (missing.length > 0) {
+        console.warn(
+          `\n⚠️  Shipped models no longer listed by the API: ${missing.join(', ')}\n` +
+            '   Add them to REMOVED_MODELS in src/config/deprecated.ts.'
+        );
+      }
     } else {
       console.log('\n🔍 Fetching ALL models (--all flag detected)');
     }

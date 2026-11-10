@@ -9,6 +9,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { ModelMetadata, ModelClassification, ProcessedModel } from './types';
+import { extractVersion, isGeneralTextModel } from './model-filters';
 
 const MODELS_DATA_FILE = path.join(__dirname, 'models-data.json');
 const TYPES_OUTPUT = path.join(__dirname, '../src/types/models.ts');
@@ -29,18 +30,6 @@ function classifyModel(modelName: string): ModelClassification {
 }
 
 /**
- * Extract version number from model name
- * Returns [major, minor] or [0, 0] if not found
- */
-function extractVersion(modelName: string): [number, number] {
-  const match = modelName.match(/gemini-(\d+)(?:\.(\d+))?/);
-  if (match) {
-    return [parseInt(match[1]), parseInt(match[2] ?? '0')];
-  }
-  return [0, 0];
-}
-
-/**
  * Calculate priority for model (lower = higher priority)
  */
 function calculatePriority(modelName: string, classification: ModelClassification): number {
@@ -49,8 +38,8 @@ function calculatePriority(modelName: string, classification: ModelClassificatio
   // Base priority by version
   let priority = 0;
 
-  // Gemini 3.x = 0-99
-  if (major === 3) {
+  // Gemini 3.x and newer = 0-99
+  if (major >= 3) {
     priority = 0;
   }
   // Gemini 2.x = 100-199
@@ -76,13 +65,6 @@ function calculatePriority(modelName: string, classification: ModelClassificatio
 }
 
 /**
- * Specialized variants that should NOT appear in the general ALL_MODELS list.
- * These are domain-specific models (TTS, custom-tools optimized) that don't
- * fit the gem-back fallback chain semantics (generic chat / generate).
- */
-const EXCLUDED_VARIANT_PATTERN = /-tts-|-customtools$/;
-
-/**
  * Models manually deprecated in prior releases that should be excluded from
  * ALL_MODELS even though the upstream API still returns them.
  * See src/config/deprecated.ts for DEPRECATED_MODELS metadata.
@@ -97,8 +79,10 @@ const MANUAL_EXCLUDES = new Set<string>([
 function processModels(models: ModelMetadata[]): ProcessedModel[] {
   return models
     .filter((model) => {
-      if (EXCLUDED_VARIANT_PATTERN.test(model.name)) {
-        console.log(`   ↪ Excluding specialized variant: ${model.name}`);
+      // Non-text families (omni, nano-banana, ...) and specialized variants
+      // (tts, transcribe, image, customtools) — see scripts/model-filters.ts.
+      if (!isGeneralTextModel(model.name)) {
+        console.log(`   ↪ Excluding non-text / specialized model: ${model.name}`);
         return false;
       }
       if (MANUAL_EXCLUDES.has(model.name)) {
