@@ -22,6 +22,7 @@ import {
   isAuthError,
   getErrorStatusCode,
 } from '../utils/error-handler';
+import { buildAllModelsFailedMessage } from '../utils/attempt-summary';
 import { DEPRECATED_MODELS, REMOVED_MODELS } from '../config/deprecated';
 import { NON_FREE_TIER_MODELS } from '../config/free-tier-limits';
 
@@ -277,7 +278,7 @@ export class GemBack {
       this.apiKeyRotator.recordFailure(keyIndex);
     }
     throw new GeminiBackError(
-      'All models failed. Please try again later.',
+      buildAllModelsFailedMessage('All models failed. Please try again later.', attempts),
       'ALL_MODELS_FAILED',
       attempts
     );
@@ -486,7 +487,10 @@ export class GemBack {
       this.apiKeyRotator.recordFailure(keyIndex);
     }
     throw new GeminiBackError(
-      'All models failed for streaming. Please try again later.',
+      buildAllModelsFailedMessage(
+        'All models failed for streaming. Please try again later.',
+        attempts
+      ),
       'ALL_MODELS_FAILED',
       attempts
     );
@@ -644,7 +648,7 @@ export class GemBack {
       this.apiKeyRotator.recordFailure(keyIndex);
     }
     throw new GeminiBackError(
-      'All models failed. Please try again later.',
+      buildAllModelsFailedMessage('All models failed. Please try again later.', attempts),
       'ALL_MODELS_FAILED',
       attempts
     );
@@ -803,7 +807,10 @@ export class GemBack {
       this.apiKeyRotator.recordFailure(keyIndex);
     }
     throw new GeminiBackError(
-      'All models failed for streaming. Please try again later.',
+      buildAllModelsFailedMessage(
+        'All models failed for streaming. Please try again later.',
+        attempts
+      ),
       'ALL_MODELS_FAILED',
       attempts
     );
