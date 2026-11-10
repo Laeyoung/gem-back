@@ -5,7 +5,7 @@
 [![npm version](https://badge.fury.io/js/gemback.svg)](https://www.npmjs.com/package/gemback)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/tests-248%20passing-brightgreen.svg)](https://github.com/Laeyoung/gem-back)
+[![Tests](https://img.shields.io/badge/tests-371%20passing-brightgreen.svg)](https://github.com/Laeyoung/gem-back)
 
 **Gem Back** is an NPM library that provides an intelligent fallback system and production-grade monitoring for Google Gemini API, automatically handling RPM (Requests Per Minute) rate limits.
 
@@ -28,7 +28,7 @@ The Gemini API has **RPM (Requests Per Minute) limits** on the free tier, causin
 - ✅ **Zero Configuration**: Works out of the box with sensible defaults
 - ✅ **Full TypeScript Support**: Complete type definitions and autocomplete
 - ✅ **Dual Module Format**: CommonJS + ESM support
-- ✅ **Extensively Tested**: 248 tests verify reliability
+- ✅ **Extensively Tested**: 371 tests verify reliability
 - ✅ **Monitoring & Tracking**: Rate limit prediction and model health monitoring
 
 ---
@@ -37,37 +37,62 @@ The Gemini API has **RPM (Requests Per Minute) limits** on the free tier, causin
 
 Gem Back supports automatic fallback across Gemini models:
 
-**Default Fallback Chain** (Optimized for Free Tier — v0.7.0, RPD-first):
-1. `gemini-3.1-flash-lite` — stable, 500 RPD (dominant daily quota)
-2. `gemini-3.5-flash` — newest, highest quality (20 RPD)
-3. `gemini-3-flash-preview` — backup (20 RPD) ⚠️
+**Default Fallback Chain** (v0.8.0 — current GA models with free-tier access, lite first):
+1. `gemini-3.5-flash-lite` — GA, lightweight
+2. `gemini-3.6-flash` — GA, higher quality
 
-If output quality matters more than daily throughput, pass an explicit `fallbackOrder` putting `gemini-3.5-flash` first.
+Both answered on a free-tier API key when probed on 2026-11-10. Their free-tier quotas are **not** bundled (see below), so pass an explicit `fallbackOrder` if you know which model has the larger daily quota on your account.
 
-**Free-Tier Quota Snapshot** (2026-05-28):
+**Supported Models** (`ALL_MODELS`, synced with `v1beta/models` on 2026-11-10):
 
-| Model | RPM | TPM | RPD | Notes |
-|---|---|---|---|---|
-| `gemini-3.1-flash-lite` | 15 | 250K | 500 | |
-| `gemini-2.5-flash-lite` | 10 | 250K | 20 | ⚠️ deprecated (shutdown 2026-07-22 → `gemini-3.1-flash-lite`) |
-| `gemini-3.5-flash` | 5 | 250K | 20 | |
-| `gemini-3-flash-preview` | 5 | 250K | 20 | ⚠️ preview |
-| `gemini-2.5-flash` | 5 | 250K | 20 | ⚠️ deprecated (shutdown 2026-06-17 → `gemini-3.1-flash-lite`) |
+| Model | Status | Notes |
+|---|---|---|
+| `gemini-3.5-flash-lite` | GA | default #1 |
+| `gemini-3.6-flash` | GA | default #2 |
+| `gemini-3.8-flash` | GA | free-tier access unconfirmed (probe returned 503) |
+| `gemini-4-argon` | GA | 💳 paid only (free-tier limit: 0); 32,768 output tokens |
+| `gemini-3.7-flash` | superseded | endpoint stays up; requests auto-route to `gemini-3.8-flash` |
+| `gemini-3.5-flash` | superseded | endpoint stays up; requests auto-route to `gemini-3.6-flash` |
+| `gemini-3.1-flash-lite` | GA, ⚠️ shutdown 2027-05-07 | → `gemini-3.5-flash-lite` |
+| `gemini-2.5-flash-lite` | GA | no shutdown date announced |
+| `gemini-2.5-flash` | ⚠️ deprecated | rerouted to `gemini-3.5-flash-lite` from 2026-12-01 |
+| `gemini-2.5-pro` | ⚠️ deprecated, 💳 paid only | rerouted to `gemini-3.8-flash` from 2026-12-01 |
+| `gemini-3-flash-preview` | ⚠️ preview | no shutdown date; recommended replacement `gemini-3.6-flash` |
+| `gemini-3.1-pro-preview` | ⚠️ preview, 💳 paid only | no shutdown date |
+| `gemini-3.1-flash-lite-preview` | ⚠️ deprecated preview | announced shutdown 2026-05-25 (still listed) → `gemini-3.1-flash-lite` |
 
-**Paid-Only Models** (still in `ALL_MODELS`; runtime warning when used on free-tier keys):
+Shutdown dates are the earliest possible retirement dates from the [official deprecations table](https://aistudio.google.com/docs/deprecations).
+
+**Removed Models** (`REMOVED_MODELS` — no longer in `GeminiModel`; skipped at runtime without an API call):
+- `gemini-2.0-flash` (shut down 2026-06-01) → `gemini-3.6-flash`
+- `gemini-2.0-flash-lite` (shut down 2026-06-01) → `gemini-3.1-flash-lite`
+
+**Free-Tier Quota Snapshot** (observed 2026-05-28, not re-verified since):
+
+| Model | RPM | TPM | RPD |
+|---|---|---|---|
+| `gemini-3.1-flash-lite` | 15 | 250K | 500 |
+| `gemini-2.5-flash-lite` | 10 | 250K | 20 |
+| `gemini-3.5-flash` | 5 | 250K | 20 |
+| `gemini-3-flash-preview` | 5 | 250K | 20 |
+| `gemini-2.5-flash` | 5 | 250K | 20 |
+
+Google no longer publishes per-model free-tier quotas in the docs (AI Studio dashboard only), so the newer models (`gemini-3.5-flash-lite`, `gemini-3.6-flash`, `gemini-3.7-flash`, `gemini-3.8-flash`) have no bundled limits and use the tracker default (15 RPM). Supply your own numbers with `customRateLimits` when monitoring is enabled.
+
+**Paid-Only Models** (`NON_FREE_TIER_MODELS`; runtime warning when used on free-tier keys):
+- `gemini-4-argon`
 - `gemini-3.1-pro-preview`
 - `gemini-2.5-pro`
-- `gemini-2.0-flash`
-- `gemini-2.0-flash-lite`
 
-**Deprecation Warnings** (v0.6.0+): Models scheduled for shutdown are automatically tracked. Enable `logLevel: 'warn'` to see deprecation warnings, or use the `DEPRECATED_MODELS` export for programmatic access.
+**Deprecation Warnings** (v0.6.0+): Models scheduled for shutdown or superseded are automatically tracked. Enable `logLevel: 'warn'` to see deprecation warnings, or use the `DEPRECATED_MODELS` export for programmatic access.
 
 ```typescript
 import { DEPRECATED_MODELS } from 'gemback';
 
 // Check which models are deprecated
 DEPRECATED_MODELS.forEach(({ model, shutdownDate, replacement }) => {
-  console.log(`${model} → ${replacement} (by ${shutdownDate})`);
+  // shutdownDate is undefined when a model is superseded without an announced date (v0.8.0+)
+  console.log(`${model} → ${replacement} (${shutdownDate ? `by ${shutdownDate}` : 'no date announced'})`);
 });
 ```
 
@@ -84,6 +109,38 @@ yarn add gemback
 # or
 pnpm add gemback
 ```
+
+---
+
+## 🔄 Migrating from v0.7 to v0.8
+
+v0.8.0 re-syncs the model list with the Gemini API (2026-11-10). Explicit `fallbackOrder` chains made of models that still exist keep working unchanged.
+
+### Breaking changes
+
+- **`gemini-2.0-flash` and `gemini-2.0-flash-lite` left the `GeminiModel` union** (shut down upstream on 2026-06-01). TypeScript callers naming them get a compile error; at runtime (JavaScript, or `as any`) they are skipped without an API call and the next model in `fallbackOrder` is used. Replace them with `gemini-3.6-flash` / `gemini-3.1-flash-lite`.
+- **Default fallback order changed** to current GA models:
+
+  ```
+  gemini-3.5-flash-lite → gemini-3.6-flash
+  ```
+
+  To keep the v0.7 chain, pass it explicitly (all three still work, but now emit deprecation warnings at `logLevel: 'warn'`):
+
+  ```ts
+  new GemBack({
+    apiKey: process.env.GEMINI_API_KEY,
+    fallbackOrder: ['gemini-3.1-flash-lite', 'gemini-3.5-flash', 'gemini-3-flash-preview'],
+  });
+  ```
+
+- **`DeprecatedModelInfo.shutdownDate` is now optional** (`string | undefined`): some models are superseded without an announced shutdown date.
+- **`@google/genai` dependency range moved from `^1.33.0` to `^2.32.0`** (only relevant if you also import the SDK directly, e.g. for `HarmCategory`).
+
+### Behavior changes
+
+- The `ALL_MODELS_FAILED` error message now ends with a short per-model cause summary, e.g. `All models failed. Please try again later. [gemini-3.5-flash-lite: 429 RESOURCE_EXHAUSTED; gemini-3.6-flash: 503 UNAVAILABLE]`. It still starts with `All models failed`; match on the prefix or on `error.code`, not on the full string.
+- `gemini-4-argon` is paid-only; `gemini-2.5-flash-lite` no longer triggers a deprecation warning.
 
 ---
 
@@ -129,7 +186,7 @@ new GemBack({
 
 ### Paid-only models on free-tier keys
 
-If you invoke `gemini-2.5-pro`, `gemini-2.0-flash`, `gemini-2.0-flash-lite`, or `gemini-3.1-pro-preview` on a free-tier API key, you'll see a one-time `logger.warn` explaining the 4xx you can expect. Either upgrade the key or pin `fallbackOrder` to free-tier models.
+If you invoke a model listed in `NON_FREE_TIER_MODELS` (`gemini-2.5-pro`, `gemini-3.1-pro-preview`, and as of v0.8.0 `gemini-4-argon`) on a free-tier API key, you'll see a one-time `logger.warn` explaining the 4xx you can expect. Either upgrade the key or pin `fallbackOrder` to free-tier models.
 
 ---
 
@@ -157,9 +214,9 @@ console.log(response.text);
 const client = new GemBack({
   apiKey: process.env.GEMINI_API_KEY,
   fallbackOrder: [
-    'gemini-3.5-flash',       // Optional: top-quality first if quality > daily throughput
-    'gemini-3.1-flash-lite',  // Stable, highest free-tier RPD (500/day)
-    'gemini-3-flash-preview', // Last-resort backup
+    'gemini-3.6-flash',       // Optional: higher quality first
+    'gemini-3.5-flash-lite',  // Lightweight GA model
+    'gemini-3.1-flash-lite',  // Last-resort backup (500 RPD free tier as of 2026-05; shutdown 2027-05-07)
   ],
   maxRetries: 3,
   timeout: 30000,
@@ -288,7 +345,7 @@ console.log(stats.monitoring?.summary);
 
 ```typescript
 // Automatically falls back through the fallback chain
-// when a model hits rate limit (default v0.7.0: gemini-3.1-flash-lite → gemini-3.5-flash → gemini-3-flash-preview)
+// when a model hits rate limit (default v0.8.0: gemini-3.5-flash-lite → gemini-3.6-flash)
 const response = await client.generate('Complex question');
 ```
 
@@ -310,6 +367,8 @@ try {
 } catch (error) {
   if (error instanceof GeminiBackError) {
     console.log('Models attempted:', error.allAttempts);
+    // v0.8.0+: for ALL_MODELS_FAILED the message ends with a short per-model summary,
+    // e.g. "All models failed. Please try again later. [gemini-3.6-flash: 429 RESOURCE_EXHAUSTED]"
     console.log('Last error:', error.message);
   }
 }
@@ -753,9 +812,8 @@ const client = new GemBack({
 
   // Specify models to use
   fallbackOrder: [
-    'gemini-3.1-flash-lite',
-    'gemini-3.5-flash',
-    'gemini-3-flash-preview',
+    'gemini-3.5-flash-lite',
+    'gemini-3.6-flash',
   ],
 
   // Retry settings
@@ -784,7 +842,7 @@ const client = new GemBack({
   enableRateLimitPrediction: true,       // Rate limit prediction warnings
 
   // Base settings
-  fallbackOrder: ['gemini-3.1-flash-lite', 'gemini-3.5-flash', 'gemini-3-flash-preview'],
+  fallbackOrder: ['gemini-3.5-flash-lite', 'gemini-3.6-flash'],
   maxRetries: 2,
   timeout: 30000,
   logLevel: 'info'
