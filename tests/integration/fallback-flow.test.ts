@@ -22,7 +22,7 @@ describe('Fallback Flow Integration Tests', () => {
       const calls: string[] = [];
       mockGeminiClient.generate.mockImplementation((prompt: string, model: string) => {
         calls.push(model);
-        if (model === 'gemini-3.6-flash') {
+        if (model === 'gemini-3.8-flash') {
           return Promise.resolve({
             text: 'Success from last model',
             model,
@@ -40,10 +40,10 @@ describe('Fallback Flow Integration Tests', () => {
 
       const response = await client.generate('Hello');
 
-      // Default chain (v0.8.0): gemini-3.5-flash-lite → gemini-3.6-flash
-      expect(calls).toEqual(['gemini-3.5-flash-lite', 'gemini-3.6-flash']);
+      // Default chain (v0.8.0): gemini-3.5-flash-lite → gemini-3.6-flash → gemini-3.8-flash
+      expect(calls).toEqual(['gemini-3.5-flash-lite', 'gemini-3.6-flash', 'gemini-3.8-flash']);
       expect(response.text).toBe('Success from last model');
-      expect(response.model).toBe('gemini-3.6-flash');
+      expect(response.model).toBe('gemini-3.8-flash');
     });
 
     it('should stop fallback on auth error', async () => {
@@ -64,7 +64,7 @@ describe('Fallback Flow Integration Tests', () => {
 
       await expect(client.generate('Hello')).rejects.toThrow(GeminiBackError);
 
-      // Should stop at gemini-3.5-flash (second model) due to auth error
+      // Should stop at gemini-3.6-flash (second model) due to auth error — never reaches gemini-3.8-flash
       expect(calls).toEqual(['gemini-3.5-flash-lite', 'gemini-3.6-flash']);
     });
 

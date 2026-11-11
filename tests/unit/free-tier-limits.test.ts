@@ -47,25 +47,30 @@ describe('Free-tier limits (Phase 3)', () => {
     expect(NON_FREE_TIER_MODELS).toEqual([
       'gemini-2.5-pro',
       'gemini-3.1-pro-preview',
-      'gemini-4-argon', // 429 with free-tier `limit: 0` on 2026-11-10
+      'gemini-4-argon', // dashboard limit 0 on 2026-11-11
     ]);
     // Free-tier models should NOT be in NON_FREE_TIER_MODELS
     expect(NON_FREE_TIER_MODELS).not.toContain('gemini-3.5-flash' as never);
     expect(NON_FREE_TIER_MODELS).not.toContain('gemini-3.1-flash-lite' as never);
     expect(NON_FREE_TIER_MODELS).not.toContain('gemini-3.5-flash-lite' as never);
     expect(NON_FREE_TIER_MODELS).not.toContain('gemini-3.6-flash' as never);
+    expect(NON_FREE_TIER_MODELS).not.toContain('gemini-3.8-flash' as never);
   });
 
-  it('does not invent limits for models whose free-tier quota is unknown', () => {
-    // Quotas for these were not readable on 2026-11-10 (dashboard-only); they
-    // must fall back to the tracker default instead of carrying guessed numbers.
-    for (const model of [
-      'gemini-3.5-flash-lite',
-      'gemini-3.6-flash',
-      'gemini-3.7-flash',
-      'gemini-3.8-flash',
-      'gemini-4-argon',
-    ] as const) {
+  it('applies dashboard limits to the default-chain models', () => {
+    const tracker = new RateLimitTracker();
+    // AI Studio dashboard, 2026-11-11 (Free tier)
+    expect(tracker.getStatus('gemini-3.5-flash-lite').maxRPM).toBe(15);
+    expect(tracker.getStatus('gemini-3.5-flash-lite').maxTPM).toBe(250_000);
+    expect(tracker.getStatus('gemini-3.6-flash').maxRPM).toBe(5);
+    expect(tracker.getStatus('gemini-3.6-flash').maxTPM).toBe(250_000);
+    expect(tracker.getStatus('gemini-3.8-flash').maxRPM).toBe(5);
+    expect(tracker.getStatus('gemini-3.8-flash').maxTPM).toBe(250_000);
+  });
+
+  it('does not bundle free-tier limits for paid-only models', () => {
+    // Dashboard shows limit 0 for these; they keep the tracker default.
+    for (const model of NON_FREE_TIER_MODELS) {
       expect(FREE_TIER_LIMITS[model]).toBeUndefined();
       const status = new RateLimitTracker().getStatus(model);
       expect(status.maxRPM).toBe(15);
@@ -85,12 +90,24 @@ describe('Free-tier limits (Phase 3)', () => {
     }
   });
 
-  it('FREE_TIER_LIMITS covers all expected free-tier models', () => {
-    expect(FREE_TIER_LIMITS['gemini-2.5-flash']).toEqual({ rpm: 5, tpm: 250_000, rpd: 20 });
-    expect(FREE_TIER_LIMITS['gemini-2.5-flash-lite']).toEqual({ rpm: 10, tpm: 250_000, rpd: 20 });
-    expect(FREE_TIER_LIMITS['gemini-3-flash-preview']).toEqual({ rpm: 5, tpm: 250_000, rpd: 20 });
-    expect(FREE_TIER_LIMITS['gemini-3.1-flash-lite']).toEqual({ rpm: 15, tpm: 250_000, rpd: 500 });
-    expect(FREE_TIER_LIMITS['gemini-3.5-flash']).toEqual({ rpm: 5, tpm: 250_000, rpd: 20 });
+  it('FREE_TIER_LIMITS matches the AI Studio dashboard (2026-11-11, Free tier)', () => {
+    expect(FREE_TIER_LIMITS).toEqual({
+      'gemini-3.5-flash-lite': { rpm: 15, tpm: 250_000, rpd: 500 },
+      'gemini-3.1-flash-lite': { rpm: 15, tpm: 250_000, rpd: 500 },
+      'gemini-3.6-flash': { rpm: 5, tpm: 250_000, rpd: 20 },
+      'gemini-3.8-flash': { rpm: 5, tpm: 250_000, rpd: 20 },
+      'gemini-3-flash-preview': { rpm: 5, tpm: 250_000, rpd: 20 },
+      'gemini-2.5-flash': { rpm: 5, tpm: 250_000, rpd: 20 },
+      'gemini-2.5-flash-lite': { rpm: 10, tpm: 250_000, rpd: 20 },
+      // Not on the dashboard; requests auto-route, so they inherit the target's limits.
+      'gemini-3.5-flash': { rpm: 5, tpm: 250_000, rpd: 20 }, // → gemini-3.6-flash
+      'gemini-3.7-flash': { rpm: 5, tpm: 250_000, rpd: 20 }, // → gemini-3.8-flash
+    });
+  });
+
+  it('superseded models carry the limits of the model their requests route to', () => {
+    expect(FREE_TIER_LIMITS['gemini-3.5-flash']).toEqual(FREE_TIER_LIMITS['gemini-3.6-flash']);
+    expect(FREE_TIER_LIMITS['gemini-3.7-flash']).toEqual(FREE_TIER_LIMITS['gemini-3.8-flash']);
   });
 });
 

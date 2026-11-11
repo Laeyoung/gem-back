@@ -5,6 +5,49 @@
 
 ---
 
+## 2026-11-11 ~17:40 — v0.8.0 보강: 무료 티어 한도 번들, 기본 체인 3순위 `gemini-3.8-flash`, Node >= 20 (issue #36)
+
+### 배경
+2026-11-10 동기화 때는 무료 티어 수치를 읽을 수 없어 신규 모델에 한도를 넣지 않았고, `gemini-3.8-flash`는 프로브가 503만 받아 무료 티어 접근이 미확인이었음. 2026-11-11 메인테이너가 Google AI Studio 대시보드(Usage & Billing → Rate Limit, "All models" 보기)에서 수치를 직접 읽음. 계정의 모든 프로젝트가 Free tier, 확인 프로젝트는 "Gemini Project 2". 대시보드 "used / limit" 칸의 limit 값을 사용.
+
+### 1. `FREE_TIER_LIMITS`
+| 모델 | RPM | TPM | RPD |
+|---|---|---|---|
+| `gemini-3.5-flash-lite` | 15 | 250K | 500 |
+| `gemini-3.1-flash-lite` | 15 | 250K | 500 |
+| `gemini-3.6-flash` | 5 | 250K | 20 |
+| `gemini-3.8-flash` | 5 | 250K | 20 |
+| `gemini-3-flash-preview` | 5 | 250K | 20 |
+| `gemini-2.5-flash` | 5 | 250K | 20 |
+| `gemini-2.5-flash-lite` | 10 | 250K | 20 |
+| `gemini-2.5-pro`, `gemini-3.1-pro-preview`, `gemini-4-argon` | 0 | 0 | 0 |
+
+- 기존 5개 항목(2026-05-28 스냅샷)은 값이 그대로임을 확인. 신규 3개(3.5-flash-lite, 3.6-flash, 3.8-flash) 추가.
+- `gemini-3.5-flash`, `gemini-3.7-flash`는 대시보드에 없음 — deprecations 표대로 요청이 각각 3.6-flash / 3.8-flash로 자동 라우팅되기 때문. 두 항목은 라우팅 대상 모델의 한도(5/250K/20)를 그대로 씀.
+  - **검토한 대안**: 두 항목을 삭제해 트래커 기본값(15 RPM, TPM 미추적) 사용 → 실제로는 5 RPM 버킷에서 소비되는데 15 RPM으로 예측해 rate-limit 예측이 무의미해짐. 기각. 3.5-flash 항목은 이미 5/250K/20이었으므로 유지가 하위 호환에도 맞음.
+- `NON_FREE_TIER_MODELS`는 변경 없음(대시보드 limit 0으로 재확인). 대시보드의 "Gemini 4 Carbon"(0/0/0)은 라이브러리에 없는 모델이라 무시.
+
+### 2. `DEFAULT_FALLBACK_ORDER` → `gemini-3.5-flash-lite` → `gemini-3.6-flash` → `gemini-3.8-flash`
+- 3.8-flash를 뺐던 유일한 이유는 무료 티어 접근 미확인이었음. 대시보드에서 5 RPM / 20 RPD로 확인됐고 종료일도 없어 deprecation 경고 없이 별도 쿼터 버킷 하나가 늘어남.
+- **검토한 대안**
+  - 2개 유지 → 3.8-flash의 하루 20회를 기본 설정에서 버림. 근거가 사라졌으므로 기각.
+  - `gemini-3.1-flash-lite`(15 RPM / 500 RPD) 추가 → 쿼터는 가장 크지만 2027-05-07 종료 예정이라 기본 설정에서 매번 deprecation 경고. 기존 결정("경고 없는 현행 GA")과 충돌해 기각. README 예시에서 백업으로 계속 안내.
+  - 3.8-flash를 3.6-flash 앞에 두기 → 두 모델 한도가 같아 순서로 얻는 이득이 없음. 직전 릴리스에서 검증된 순서를 앞에 그대로 두는 편이 변화가 작음.
+- `scripts/generate-models.ts`의 `targetFallbackOrder`만 수정하고 `npm run generate-models`(커밋된 `scripts/models-data.json` 사용, API 미호출)로 재생성. 생성물 diff는 `DEFAULT_FALLBACK_ORDER`와 생성 시각뿐.
+
+### 3. `engines.node` `>=18.0.0` → `>=20.0.0`
+- `@google/genai`가 1.33.0부터 Node >= 20 요구(전날 기록한 불일치). gemback이 18을 약속해도 의존성이 받쳐주지 않음 → BREAKING CHANGES에 명시.
+- `.github/workflows/test.yml`이 Node 18 단일 버전으로 돌고 있어 20으로 변경(matrix 아님). release / test-pr / showcase 워크플로는 이미 20.
+- **검토한 대안**: 18 유지 + 문서 경고만 → 설치 시 엔진 불일치를 숨기는 셈이라 기각.
+
+### API 호출
+없음. `fetch-models` / `test:e2e` 미실행.
+
+### 검증
+- `npm run typecheck` / `lint` / `format:check` clean, `npm test` 374/374 (23 files), `npm run build` 성공.
+
+---
+
 ## 2026-11-10 ~22:00 — v0.8.0: Gemini API 동기화 (issue #36)
 
 ### 배경

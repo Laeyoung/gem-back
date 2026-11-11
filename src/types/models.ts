@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE - DO NOT EDIT MANUALLY
-// Generated at: 2026-11-10T13:19:52.584Z
+// Generated at: 2026-11-11T08:36:33.950Z
 // Source: Gemini API v1beta/models
 // Generator: scripts/generate-models.ts
 
@@ -28,7 +28,11 @@ export type GeminiModel =
  * Default fallback order: current GA models with free-tier access, lite first.
  * Preview and experimental models must be explicitly specified
  */
-export const DEFAULT_FALLBACK_ORDER: GeminiModel[] = ['gemini-3.5-flash-lite', 'gemini-3.6-flash'];
+export const DEFAULT_FALLBACK_ORDER: GeminiModel[] = [
+  'gemini-3.5-flash-lite',
+  'gemini-3.6-flash',
+  'gemini-3.8-flash',
+];
 
 /**
  * All supported models (including preview and experimental)

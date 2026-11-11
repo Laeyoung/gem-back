@@ -56,12 +56,23 @@ describe('Model Definitions', () => {
   });
 
   it('should default to GA models with free-tier access, lite first', () => {
-    expect(DEFAULT_FALLBACK_ORDER).toEqual(['gemini-3.5-flash-lite', 'gemini-3.6-flash']);
+    expect(DEFAULT_FALLBACK_ORDER).toEqual([
+      'gemini-3.5-flash-lite',
+      'gemini-3.6-flash',
+      'gemini-3.8-flash',
+    ]);
     const deprecated = new Set<string>(DEPRECATED_MODELS.map((d) => d.model));
     DEFAULT_FALLBACK_ORDER.forEach((model) => {
       expect(model).not.toMatch(/preview|exp/);
       expect(deprecated.has(model)).toBe(false);
       expect(NON_FREE_TIER_MODELS).not.toContain(model);
+    });
+  });
+
+  it('should only include models with bundled free-tier limits', () => {
+    // Every default-chain model has a confirmed free-tier quota (AI Studio, 2026-11-11).
+    DEFAULT_FALLBACK_ORDER.forEach((model) => {
+      expect(FREE_TIER_LIMITS[model]).toBeDefined();
     });
   });
 

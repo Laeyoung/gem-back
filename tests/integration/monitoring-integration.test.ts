@@ -248,8 +248,8 @@ describe('Monitoring Integration Tests', () => {
       mockGeminiClient.generate.mockImplementation(() => {
         callCount++;
         // Fail first 3 attempts, then succeed
-        if (callCount <= 6) {
-          // 3 requests * 2 models in default fallback chain
+        if (callCount <= 9) {
+          // 3 requests * 3 models in default fallback chain
           return Promise.reject(new Error('500 Server error'));
         }
         return Promise.resolve({

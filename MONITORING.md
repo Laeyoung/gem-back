@@ -76,7 +76,7 @@ status.maxTPM                // number   — 250_000 for free-tier models
 status.tpmUtilizationPercent // number   — currentTPM / maxTPM * 100
 ```
 
-For models without a `FREE_TIER_LIMITS` entry (paid-tier such as `gemini-2.5-pro`, or newer models whose free-tier quota is not bundled, e.g. `gemini-3.6-flash`) all three are `undefined` — `RateLimitTracker` only tracks TPM when `RateLimitConfig.tpm` is set.
+For models without a `FREE_TIER_LIMITS` entry (paid-only models such as `gemini-2.5-pro`, or IDs newer than the installed release) all three are `undefined` — `RateLimitTracker` only tracks TPM when `RateLimitConfig.tpm` is set.
 
 `willExceedSoon` now takes whichever of RPM/TPM is closer to its limit (>=90% utilization). A workload generating long completions can trip the TPM ceiling well before exhausting RPM — visible in logs as:
 

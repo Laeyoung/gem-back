@@ -15,7 +15,8 @@ const UNAVAILABLE_ERROR = JSON.stringify({
   error: { code: 503, message: 'The model is overloaded.', status: 'UNAVAILABLE' },
 });
 
-const SUMMARY = '[gemini-3.5-flash-lite: 429 RESOURCE_EXHAUSTED; gemini-3.6-flash: 503 UNAVAILABLE]';
+const SUMMARY =
+  '[gemini-3.5-flash-lite: 429 RESOURCE_EXHAUSTED; gemini-3.6-flash: 503 UNAVAILABLE; gemini-3.8-flash: 503 UNAVAILABLE]';
 const CONTENTS = [{ role: 'user' as const, parts: [{ text: 'Hello' }] }];
 
 function failingStream(message: string) {
@@ -55,7 +56,7 @@ describe('ALL_MODELS_FAILED message carries a per-model cause summary', () => {
       generateContentStream: vi.fn((_c: unknown, model: string) => failingStream(byModel(model))),
     };
     vi.mocked(GeminiClient).mockImplementation(() => mockGeminiClient);
-    // Default fallback order: gemini-3.5-flash-lite → gemini-3.6-flash
+    // Default fallback order: gemini-3.5-flash-lite → gemini-3.6-flash → gemini-3.8-flash
     client = new GemBack({ apiKey: FAKE_KEY, maxRetries: 0, logLevel: 'silent' });
   });
 
@@ -106,6 +107,7 @@ describe('ALL_MODELS_FAILED message carries a per-model cause summary', () => {
     expect(err.allAttempts.map((a) => [a.model, a.error, a.statusCode])).toEqual([
       ['gemini-3.5-flash-lite', QUOTA_ERROR, 429],
       ['gemini-3.6-flash', UNAVAILABLE_ERROR, 503],
+      ['gemini-3.8-flash', UNAVAILABLE_ERROR, 503],
     ]);
   });
 

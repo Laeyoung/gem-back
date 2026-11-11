@@ -12,7 +12,7 @@
 ## Tech Stack
 
 *   **Language**: TypeScript (ES2020 target, Strict mode)
-*   **Runtime**: Node.js (>= 18.0.0)
+*   **Runtime**: Node.js (>= 20.0.0)
 *   **Bundler**: `tsup` (Builds to CJS and ESM)
 *   **Testing**: `vitest` (Unit and Integration tests)
 *   **Linting/Formatting**: `eslint`, `prettier`
@@ -54,7 +54,7 @@
 
 1.  **Fallback Chain**:
     *   Requests attempt models in a defined `fallbackOrder`.
-    *   **Default Order (v0.8.0, GA models with confirmed free-tier access, lite first)**: `gemini-3.5-flash-lite` -> `gemini-3.6-flash`.
+    *   **Default Order (v0.8.0, GA models with a confirmed free-tier quota and no shutdown date, lite first)**: `gemini-3.5-flash-lite` -> `gemini-3.6-flash` -> `gemini-3.8-flash`. `FREE_TIER_LIMITS` numbers come from the AI Studio dashboard (last read 2026-11-11).
     *   **429 (Rate Limit)** -> Immediate fallback to next model.
     *   **5xx (Server Error)** -> Retry with backoff, then fallback.
     *   **401/403 (Auth)** -> Fatal error, stops chain.

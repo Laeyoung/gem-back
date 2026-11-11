@@ -38,10 +38,11 @@ The Gemini API has **RPM (Requests Per Minute) limits** on the free tier, causin
 Gem Back supports automatic fallback across Gemini models:
 
 **Default Fallback Chain** (v0.8.0 — current GA models with free-tier access, lite first):
-1. `gemini-3.5-flash-lite` — GA, lightweight
-2. `gemini-3.6-flash` — GA, higher quality
+1. `gemini-3.5-flash-lite` — GA, lightweight (free tier: 15 RPM / 500 RPD)
+2. `gemini-3.6-flash` — GA, higher quality (free tier: 5 RPM / 20 RPD)
+3. `gemini-3.8-flash` — GA, newest Flash (free tier: 5 RPM / 20 RPD)
 
-Both answered on a free-tier API key when probed on 2026-11-10. Their free-tier quotas are **not** bundled (see below), so pass an explicit `fallbackOrder` if you know which model has the larger daily quota on your account.
+All three are GA models with a confirmed free-tier quota and no announced shutdown date, so the default chain never triggers a deprecation warning. Each model has its own quota bucket, so a third model adds another 20 requests/day before the chain is exhausted.
 
 **Supported Models** (`ALL_MODELS`, synced with `v1beta/models` on 2026-11-10):
 
@@ -49,11 +50,11 @@ Both answered on a free-tier API key when probed on 2026-11-10. Their free-tier 
 |---|---|---|
 | `gemini-3.5-flash-lite` | GA | default #1 |
 | `gemini-3.6-flash` | GA | default #2 |
-| `gemini-3.8-flash` | GA | free-tier access unconfirmed (probe returned 503) |
+| `gemini-3.8-flash` | GA | default #3 |
 | `gemini-4-argon` | GA | 💳 paid only (free-tier limit: 0); 32,768 output tokens |
 | `gemini-3.7-flash` | superseded | endpoint stays up; requests auto-route to `gemini-3.8-flash` |
 | `gemini-3.5-flash` | superseded | endpoint stays up; requests auto-route to `gemini-3.6-flash` |
-| `gemini-3.1-flash-lite` | GA, ⚠️ shutdown 2027-05-07 | → `gemini-3.5-flash-lite` |
+| `gemini-3.1-flash-lite` | GA, ⚠️ shutdown 2027-05-07 | → `gemini-3.5-flash-lite`; not in the default chain because of the shutdown date |
 | `gemini-2.5-flash-lite` | GA | no shutdown date announced |
 | `gemini-2.5-flash` | ⚠️ deprecated | rerouted to `gemini-3.5-flash-lite` from 2026-12-01 |
 | `gemini-2.5-pro` | ⚠️ deprecated, 💳 paid only | rerouted to `gemini-3.8-flash` from 2026-12-01 |
@@ -67,17 +68,21 @@ Shutdown dates are the earliest possible retirement dates from the [official dep
 - `gemini-2.0-flash` (shut down 2026-06-01) → `gemini-3.6-flash`
 - `gemini-2.0-flash-lite` (shut down 2026-06-01) → `gemini-3.1-flash-lite`
 
-**Free-Tier Quota Snapshot** (observed 2026-05-28, not re-verified since):
+**Bundled Free-Tier Limits** (`FREE_TIER_LIMITS`; read from the Google AI Studio dashboard — Usage & Billing → Rate Limit — on 2026-11-11, Free tier):
 
 | Model | RPM | TPM | RPD |
 |---|---|---|---|
+| `gemini-3.5-flash-lite` | 15 | 250K | 500 |
 | `gemini-3.1-flash-lite` | 15 | 250K | 500 |
 | `gemini-2.5-flash-lite` | 10 | 250K | 20 |
-| `gemini-3.5-flash` | 5 | 250K | 20 |
+| `gemini-3.6-flash` | 5 | 250K | 20 |
+| `gemini-3.8-flash` | 5 | 250K | 20 |
 | `gemini-3-flash-preview` | 5 | 250K | 20 |
 | `gemini-2.5-flash` | 5 | 250K | 20 |
+| `gemini-3.5-flash` | 5 | 250K | 20 |
+| `gemini-3.7-flash` | 5 | 250K | 20 |
 
-Google no longer publishes per-model free-tier quotas in the docs (AI Studio dashboard only), so the newer models (`gemini-3.5-flash-lite`, `gemini-3.6-flash`, `gemini-3.7-flash`, `gemini-3.8-flash`) have no bundled limits and use the tracker default (15 RPM). Supply your own numbers with `customRateLimits` when monitoring is enabled.
+`gemini-3.5-flash` and `gemini-3.7-flash` are not listed on the dashboard: Google routes their requests to `gemini-3.6-flash` and `gemini-3.8-flash`, so they carry those models' limits. Paid-only models have a free-tier limit of 0 and fall back to the tracker default (15 RPM, no TPM tracking). Quotas can differ per account and change without notice; override them with `customRateLimits` when monitoring is enabled.
 
 **Paid-Only Models** (`NON_FREE_TIER_MODELS`; runtime warning when used on free-tier keys):
 - `gemini-4-argon`
@@ -102,6 +107,8 @@ DEPRECATED_MODELS.forEach(({ model, shutdownDate, replacement }) => {
 
 ## 📦 Installation
 
+Requires Node.js 20 or later.
+
 ```bash
 npm install gemback
 # or
@@ -122,7 +129,7 @@ v0.8.0 re-syncs the model list with the Gemini API (2026-11-10). Explicit `fallb
 - **Default fallback order changed** to current GA models:
 
   ```
-  gemini-3.5-flash-lite → gemini-3.6-flash
+  gemini-3.5-flash-lite → gemini-3.6-flash → gemini-3.8-flash
   ```
 
   To keep the v0.7 chain, pass it explicitly (all three still work, but now emit deprecation warnings at `logLevel: 'warn'`):
@@ -136,6 +143,7 @@ v0.8.0 re-syncs the model list with the Gemini API (2026-11-10). Explicit `fallb
 
 - **`DeprecatedModelInfo.shutdownDate` is now optional** (`string | undefined`): some models are superseded without an announced shutdown date.
 - **`@google/genai` dependency range moved from `^1.33.0` to `^2.32.0`** (only relevant if you also import the SDK directly, e.g. for `HarmCategory`).
+- **Node.js 20 or later is required** (`engines.node` is now `>=20.0.0`). `@google/genai` already requires Node 20, so Node 18 was not actually supported by the dependency.
 
 ### Behavior changes
 
@@ -216,7 +224,7 @@ const client = new GemBack({
   fallbackOrder: [
     'gemini-3.6-flash',       // Optional: higher quality first
     'gemini-3.5-flash-lite',  // Lightweight GA model
-    'gemini-3.1-flash-lite',  // Last-resort backup (500 RPD free tier as of 2026-05; shutdown 2027-05-07)
+    'gemini-3.1-flash-lite',  // Last-resort backup (500 RPD free tier as of 2026-11; shutdown 2027-05-07)
   ],
   maxRetries: 3,
   timeout: 30000,

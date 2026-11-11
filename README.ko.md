@@ -38,10 +38,11 @@ Gemini API는 무료 티어에서 **RPM(분당 요청 수) 제한**이 있어, �
 Gem Back은 Gemini 모델 전반에 걸친 자동 Fallback을 지원합니다:
 
 **기본 Fallback 체인** (v0.8.0 — 무료 티어로 접근 가능한 현행 GA 모델, lite 우선):
-1. `gemini-3.5-flash-lite` — GA, 경량
-2. `gemini-3.6-flash` — GA, 더 높은 품질
+1. `gemini-3.5-flash-lite` — GA, 경량 (무료 티어: 15 RPM / 500 RPD)
+2. `gemini-3.6-flash` — GA, 더 높은 품질 (무료 티어: 5 RPM / 20 RPD)
+3. `gemini-3.8-flash` — GA, 최신 Flash (무료 티어: 5 RPM / 20 RPD)
 
-두 모델 모두 2026-11-10 프로브에서 무료 티어 API 키로 응답했습니다. 다만 무료 티어 쿼터 수치는 번들되어 있지 **않으므로**(아래 참고), 본인 계정에서 일일 쿼터가 더 큰 모델을 알고 있다면 `fallbackOrder`를 명시적으로 전달하세요.
+세 모델 모두 무료 티어 쿼터가 확인된 GA 모델이고 발표된 종료일이 없어, 기본 체인에서는 deprecation 경고가 나오지 않습니다. 모델마다 쿼터가 따로 잡히므로 세 번째 모델이 있으면 체인이 소진되기 전에 하루 20회를 더 쓸 수 있습니다.
 
 **지원 모델** (`ALL_MODELS`, 2026-11-10 `v1beta/models` 기준 동기화):
 
@@ -49,11 +50,11 @@ Gem Back은 Gemini 모델 전반에 걸친 자동 Fallback을 지원합니다:
 |---|---|---|
 | `gemini-3.5-flash-lite` | GA | 기본 1순위 |
 | `gemini-3.6-flash` | GA | 기본 2순위 |
-| `gemini-3.8-flash` | GA | 무료 티어 접근 미확인 (프로브가 503 반환) |
+| `gemini-3.8-flash` | GA | 기본 3순위 |
 | `gemini-4-argon` | GA | 💳 유료 전용 (무료 티어 limit: 0); 출력 32,768 토큰 |
 | `gemini-3.7-flash` | 대체됨 | 엔드포인트는 유지; 요청이 `gemini-3.8-flash`로 자동 라우팅 |
 | `gemini-3.5-flash` | 대체됨 | 엔드포인트는 유지; 요청이 `gemini-3.6-flash`로 자동 라우팅 |
-| `gemini-3.1-flash-lite` | GA, ⚠️ 2027-05-07 종료 | → `gemini-3.5-flash-lite` |
+| `gemini-3.1-flash-lite` | GA, ⚠️ 2027-05-07 종료 | → `gemini-3.5-flash-lite`; 종료일이 있어 기본 체인에서 제외 |
 | `gemini-2.5-flash-lite` | GA | 종료일 미발표 |
 | `gemini-2.5-flash` | ⚠️ deprecated | 2026-12-01부터 `gemini-3.5-flash-lite`로 리라우팅 |
 | `gemini-2.5-pro` | ⚠️ deprecated, 💳 유료 전용 | 2026-12-01부터 `gemini-3.8-flash`로 리라우팅 |
@@ -67,17 +68,21 @@ Gem Back은 Gemini 모델 전반에 걸친 자동 Fallback을 지원합니다:
 - `gemini-2.0-flash` (2026-06-01 종료) → `gemini-3.6-flash`
 - `gemini-2.0-flash-lite` (2026-06-01 종료) → `gemini-3.1-flash-lite`
 
-**무료 티어 쿼터 스냅샷** (2026-05-28 관측, 이후 재검증하지 않음):
+**번들된 무료 티어 한도** (`FREE_TIER_LIMITS`; 2026-11-11 Google AI Studio 대시보드 — Usage & Billing → Rate Limit — Free tier 기준):
 
 | 모델 | RPM | TPM | RPD |
 |---|---|---|---|
+| `gemini-3.5-flash-lite` | 15 | 250K | 500 |
 | `gemini-3.1-flash-lite` | 15 | 250K | 500 |
 | `gemini-2.5-flash-lite` | 10 | 250K | 20 |
-| `gemini-3.5-flash` | 5 | 250K | 20 |
+| `gemini-3.6-flash` | 5 | 250K | 20 |
+| `gemini-3.8-flash` | 5 | 250K | 20 |
 | `gemini-3-flash-preview` | 5 | 250K | 20 |
 | `gemini-2.5-flash` | 5 | 250K | 20 |
+| `gemini-3.5-flash` | 5 | 250K | 20 |
+| `gemini-3.7-flash` | 5 | 250K | 20 |
 
-Google이 모델별 무료 티어 쿼터를 더 이상 문서에 공개하지 않기 때문에(AI Studio 대시보드에서만 확인 가능), 신규 모델(`gemini-3.5-flash-lite`, `gemini-3.6-flash`, `gemini-3.7-flash`, `gemini-3.8-flash`)에는 번들된 한도가 없고 트래커 기본값(15 RPM)을 사용합니다. 모니터링을 켠 경우 `customRateLimits`로 실제 수치를 직접 지정하세요.
+`gemini-3.5-flash`와 `gemini-3.7-flash`는 대시보드에 나오지 않습니다. Google이 요청을 각각 `gemini-3.6-flash`, `gemini-3.8-flash`로 보내므로 그 모델의 한도를 그대로 씁니다. 유료 전용 모델은 무료 티어 한도가 0이며 트래커 기본값(15 RPM, TPM 추적 없음)을 사용합니다. 쿼터는 계정마다 다를 수 있고 예고 없이 바뀔 수 있으니, 모니터링을 켠 경우 `customRateLimits`로 덮어쓰세요.
 
 **유료 전용 모델** (`NON_FREE_TIER_MODELS`; 무료 티어 키로 사용 시 런타임 경고):
 - `gemini-4-argon`
@@ -102,6 +107,8 @@ DEPRECATED_MODELS.forEach(({ model, shutdownDate, replacement }) => {
 
 ## 📦 설치
 
+Node.js 20 이상이 필요합니다.
+
 ```bash
 npm install gemback
 # 또는
@@ -122,7 +129,7 @@ v0.8.0은 모델 목록을 Gemini API(2026-11-10 기준)와 다시 동기화합�
 - **기본 Fallback 순서가 현행 GA 모델로 변경**되었습니다:
 
   ```
-  gemini-3.5-flash-lite → gemini-3.6-flash
+  gemini-3.5-flash-lite → gemini-3.6-flash → gemini-3.8-flash
   ```
 
   v0.7 체인을 유지하려면 명시적으로 전달하세요 (세 모델 모두 여전히 동작하지만, `logLevel: 'warn'`에서 deprecation 경고가 출력됩니다):
@@ -136,6 +143,7 @@ v0.8.0은 모델 목록을 Gemini API(2026-11-10 기준)와 다시 동기화합�
 
 - **`DeprecatedModelInfo.shutdownDate`가 선택 필드**(`string | undefined`)가 되었습니다: 종료일 발표 없이 대체된 모델이 있기 때문입니다.
 - **`@google/genai` 의존성 범위가 `^1.33.0`에서 `^2.32.0`으로 변경**되었습니다 (`HarmCategory` 등 SDK를 직접 import하는 경우에만 해당).
+- **Node.js 20 이상이 필요**합니다 (`engines.node`가 `>=20.0.0`으로 변경). `@google/genai`가 이미 Node 20을 요구하므로, 의존성 기준으로 Node 18은 실제로 지원되지 않던 상태였습니다.
 
 ### 동작 변경
 
@@ -216,7 +224,7 @@ const client = new GemBack({
   fallbackOrder: [
     'gemini-3.6-flash',       // 선택: 더 높은 품질의 모델을 먼저
     'gemini-3.5-flash-lite',  // 경량 GA 모델
-    'gemini-3.1-flash-lite',  // 최후 백업 (2026-05 기준 무료 티어 500 RPD; 2027-05-07 종료 예정)
+    'gemini-3.1-flash-lite',  // 최후 백업 (2026-11 기준 무료 티어 500 RPD; 2027-05-07 종료 예정)
   ],
   maxRetries: 3,
   timeout: 30000,

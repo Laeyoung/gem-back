@@ -114,15 +114,16 @@ function processModels(models: ModelMetadata[]): ProcessedModel[] {
  * Generate src/types/models.ts content
  */
 function generateTypesFile(models: ProcessedModel[]): string {
-  // Default fallback order (v0.8.0 — current GA models with free-tier access).
-  // Free-tier quota numbers are no longer published in the docs (AI Studio
-  // dashboard only), so the order is based on a free-tier ACCESS probe run on
-  // 2026-11-10 (one generateContent call per candidate), lite model first:
-  // 1) gemini-3.5-flash-lite (GA, answered 200 on a free-tier key)
-  // 2) gemini-3.6-flash      (GA, answered 200 on a free-tier key)
-  // Not included: gemini-3.8-flash (503 UNAVAILABLE on all three probe attempts — free-tier access
-  // unconfirmed) and gemini-4-argon (429, free-tier limit: 0 — paid only).
-  const targetFallbackOrder = ['gemini-3.5-flash-lite', 'gemini-3.6-flash'];
+  // Default fallback order (v0.8.0 — current GA models with free-tier access, lite first).
+  // Free-tier limits read from the AI Studio dashboard on 2026-11-11 (see
+  // src/config/free-tier-limits.ts):
+  // 1) gemini-3.5-flash-lite (GA, 15 RPM / 500 RPD — largest daily quota)
+  // 2) gemini-3.6-flash      (GA, 5 RPM / 20 RPD)
+  // 3) gemini-3.8-flash      (GA, 5 RPM / 20 RPD — no shutdown date, separate quota bucket)
+  // Not included: gemini-3.1-flash-lite (15 RPM / 500 RPD but shutdown 2027-05-07, would
+  // trigger a deprecation warning in the default config) and gemini-4-argon (free-tier
+  // limit 0 — paid only).
+  const targetFallbackOrder = ['gemini-3.5-flash-lite', 'gemini-3.6-flash', 'gemini-3.8-flash'];
 
   const fallbackList = targetFallbackOrder
     .map(name => models.find(m => m.name === name))

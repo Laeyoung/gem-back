@@ -3,8 +3,8 @@
 ## v0.8.0 — Gemini API 동기화 (issue #36)
 
 > 브랜치: `issue-36` (worktree `../wt-issue-36`)
-> 시작일/완료일: 2026-11-10
-> 상세 기록: [DEV_LOG](./DEV_LOG.md) 2026-11-10 항목
+> 시작일: 2026-11-10 / 보강: 2026-11-11
+> 상세 기록: [DEV_LOG](./DEV_LOG.md) 2026-11-10, 2026-11-11 항목
 
 ### 상태 범례
 - ⬜ 미착수 / 🔧 진행 중 / ✅ 완료 / ⏸️ 보류 / ❌ 차단됨
@@ -16,26 +16,27 @@
 | 1 | 생성 스크립트: 서빙 중인 기존 preview 유지, `-tts` 접미사·비텍스트 계열 제외 (`scripts/model-filters.ts`), 모델 재생성 (10 → 13) | ✅ | model-filters.test.ts, `fetch-models` + `generate-models` 실행 |
 | 2 | `gemini-2.0-flash(-lite)` → `REMOVED_MODELS`, 미등록 ID 방어 (RateLimitTracker / modelUsage) | ✅ | failure-summary.test.ts, free-tier-limits.test.ts |
 | 3 | `DEPRECATED_MODELS` 공식 표 반영, `shutdownDate` optional | ✅ | models.test.ts, deprecated.test.ts |
-| 4 | `DEFAULT_FALLBACK_ORDER` → `gemini-3.5-flash-lite` → `gemini-3.6-flash` (무료 티어 접근 프로브 기반) | ✅ | 프로브 결과 DEV_LOG 기록 |
-| 5 | `FREE_TIER_LIMITS`: 수치 미추가(미상), `gemini-4-argon` → `NON_FREE_TIER_MODELS` | ✅ | free-tier-limits.test.ts |
+| 4 | `DEFAULT_FALLBACK_ORDER` → `gemini-3.5-flash-lite` → `gemini-3.6-flash` → `gemini-3.8-flash` (2026-11-11 대시보드로 3.8-flash 무료 티어 확인 후 3순위 추가) | ✅ | models.test.ts, fallback.test.ts, fallback-flow.test.ts |
+| 5 | `FREE_TIER_LIMITS`: 2026-11-11 AI Studio 대시보드 수치 반영 (신규 3.5-flash-lite / 3.6-flash / 3.8-flash, 3.5/3.7-flash는 라우팅 대상 한도), `gemini-4-argon` → `NON_FREE_TIER_MODELS` | ✅ | free-tier-limits.test.ts |
 | 6 | "All models failed" 메시지에 모델별 원인 요약 (600자 상한, 키 마스킹) | ✅ | attempt-summary.test.ts, failure-summary.test.ts |
 | 7 | `@google/genai` `^2.32.0` | ✅ | typecheck/test + 실호출 스모크 1회 |
 | 8 | README(영/한), CHANGELOG 0.8.0, MONITORING.md, CLAUDE.md/GEMINI.md, package.json 0.8.0 | ✅ | — |
+| 9 | `engines.node` `>=20.0.0`, CI(test.yml) Node 18 → 20, CONTRIBUTING / TEST_SCENARIOS 문구 | ✅ | package-lock 루트 engines만 변경 |
 
 ### 검증 결과
 - ✅ `npm run typecheck` 통과
 - ✅ `npm run lint` clean
 - ✅ `npm run format:check` clean
-- ✅ `npm test` — 371/371 passing (23 files)
+- ✅ `npm test` — 374/374 passing (23 files, 2026-11-11)
 - ✅ `npm run build` 성공
 - ⬜ PR 생성 / 리뷰 / 머지 — 사람이 진행
 - ⬜ git tag v0.8.0 + push (릴리스 워크플로) — 머지 후 사람이 진행
 
 ### 후속 작업 (메인테이너)
-- ⬜ AI Studio 대시보드에서 `gemini-3.5-flash-lite`, `gemini-3.6-flash`, `gemini-3.7-flash`, `gemini-3.8-flash`의 무료 티어 RPM/TPM/RPD 확인 후 `FREE_TIER_LIMITS` 반영 (기존 5개 항목 재검증 포함)
-- ⬜ `gemini-3.8-flash` 무료 티어 접근 재확인 (프로브 3회 모두 503) → 가능하면 기본 체인 3순위 추가 검토
+- ✅ AI Studio 대시보드에서 무료 티어 RPM/TPM/RPD 확인 후 `FREE_TIER_LIMITS` 반영 (2026-11-11, 기존 5개 항목 재검증 포함)
+- ✅ `gemini-3.8-flash` 무료 티어 확인(5 RPM / 20 RPD) → 기본 체인 3순위 추가 (2026-11-11)
 - ⬜ `@google/genai` 3.x 평가 (Node >= 22 요구, 기본 API 버전 v1beta → v1)
-- ⬜ `package.json` `engines.node >= 18` vs `@google/genai`의 `>= 20` 불일치 정리
+- ✅ `package.json` `engines.node` → `>=20.0.0` (`@google/genai` 요구사항과 일치, 2026-11-11)
 
 ---
 

@@ -140,9 +140,13 @@ describe('GemBack', () => {
         expect((err as GeminiBackError).message).toContain('All models failed');
       }
 
-      // Should have tried all default fallback models (currently 2: gemini-3.5-flash-lite, gemini-3.6-flash)
+      // Should have tried all default fallback models (currently 3)
       expect(mockGeminiClient.generate).toHaveBeenCalledTimes(DEFAULT_FALLBACK_ORDER.length);
-      expect(DEFAULT_FALLBACK_ORDER).toEqual(['gemini-3.5-flash-lite', 'gemini-3.6-flash']);
+      expect(DEFAULT_FALLBACK_ORDER).toEqual([
+        'gemini-3.5-flash-lite',
+        'gemini-3.6-flash',
+        'gemini-3.8-flash',
+      ]);
     });
 
     it('should use specified model when provided in options', async () => {
