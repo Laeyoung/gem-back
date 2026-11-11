@@ -346,7 +346,7 @@ cd examples
 - [ ] CommonJS 로딩 성공
 - [ ] ESM 로딩 성공
 - [ ] TypeScript 타입 정의 동작
-- [ ] Node.js 18+ 호환성
+- [ ] Node.js 20+ 호환성
 
 ### 핵심 기능 (Phase 1)
 - [ ] 기본 텍스트 생성
