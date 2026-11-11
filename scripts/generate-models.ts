@@ -9,6 +9,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { ModelMetadata, ModelClassification, ProcessedModel } from './types';
+import { extractVersion, isGeneralTextModel } from './model-filters';
 
 const MODELS_DATA_FILE = path.join(__dirname, 'models-data.json');
 const TYPES_OUTPUT = path.join(__dirname, '../src/types/models.ts');
@@ -29,18 +30,6 @@ function classifyModel(modelName: string): ModelClassification {
 }
 
 /**
- * Extract version number from model name
- * Returns [major, minor] or [0, 0] if not found
- */
-function extractVersion(modelName: string): [number, number] {
-  const match = modelName.match(/gemini-(\d+)(?:\.(\d+))?/);
-  if (match) {
-    return [parseInt(match[1]), parseInt(match[2] ?? '0')];
-  }
-  return [0, 0];
-}
-
-/**
  * Calculate priority for model (lower = higher priority)
  */
 function calculatePriority(modelName: string, classification: ModelClassification): number {
@@ -49,8 +38,8 @@ function calculatePriority(modelName: string, classification: ModelClassificatio
   // Base priority by version
   let priority = 0;
 
-  // Gemini 3.x = 0-99
-  if (major === 3) {
+  // Gemini 3.x and newer = 0-99
+  if (major >= 3) {
     priority = 0;
   }
   // Gemini 2.x = 100-199
@@ -76,13 +65,6 @@ function calculatePriority(modelName: string, classification: ModelClassificatio
 }
 
 /**
- * Specialized variants that should NOT appear in the general ALL_MODELS list.
- * These are domain-specific models (TTS, custom-tools optimized) that don't
- * fit the gem-back fallback chain semantics (generic chat / generate).
- */
-const EXCLUDED_VARIANT_PATTERN = /-tts-|-customtools$/;
-
-/**
  * Models manually deprecated in prior releases that should be excluded from
  * ALL_MODELS even though the upstream API still returns them.
  * See src/config/deprecated.ts for DEPRECATED_MODELS metadata.
@@ -97,8 +79,10 @@ const MANUAL_EXCLUDES = new Set<string>([
 function processModels(models: ModelMetadata[]): ProcessedModel[] {
   return models
     .filter((model) => {
-      if (EXCLUDED_VARIANT_PATTERN.test(model.name)) {
-        console.log(`   ↪ Excluding specialized variant: ${model.name}`);
+      // Non-text families (omni, nano-banana, ...) and specialized variants
+      // (tts, transcribe, image, customtools) — see scripts/model-filters.ts.
+      if (!isGeneralTextModel(model.name)) {
+        console.log(`   ↪ Excluding non-text / specialized model: ${model.name}`);
         return false;
       }
       if (MANUAL_EXCLUDES.has(model.name)) {
@@ -130,16 +114,16 @@ function processModels(models: ModelMetadata[]): ProcessedModel[] {
  * Generate src/types/models.ts content
  */
 function generateTypesFile(models: ProcessedModel[]): string {
-  // Default fallback order (v0.7.0 — Phase 1 confirmed IDs, RPD-first strategy)
-  // See docs/plan-free-tier-models-2026-05.md §4 for rationale.
-  // 1) gemini-3.1-flash-lite (stable, 500 RPD — dominant daily quota)
-  // 2) gemini-3.5-flash      (20 RPD  — newest/highest quality)
-  // 3) gemini-3-flash-preview(20 RPD  — backup, no stable variant yet)
-  const targetFallbackOrder = [
-    'gemini-3.1-flash-lite',
-    'gemini-3.5-flash',
-    'gemini-3-flash-preview',
-  ];
+  // Default fallback order (v0.8.0 — current GA models with free-tier access, lite first).
+  // Free-tier limits read from the AI Studio dashboard on 2026-11-11 (see
+  // src/config/free-tier-limits.ts):
+  // 1) gemini-3.5-flash-lite (GA, 15 RPM / 500 RPD — largest daily quota)
+  // 2) gemini-3.6-flash      (GA, 5 RPM / 20 RPD)
+  // 3) gemini-3.8-flash      (GA, 5 RPM / 20 RPD — no shutdown date, separate quota bucket)
+  // Not included: gemini-3.1-flash-lite (15 RPM / 500 RPD but shutdown 2027-05-07, would
+  // trigger a deprecation warning in the default config) and gemini-4-argon (free-tier
+  // limit 0 — paid only).
+  const targetFallbackOrder = ['gemini-3.5-flash-lite', 'gemini-3.6-flash', 'gemini-3.8-flash'];
 
   const fallbackList = targetFallbackOrder
     .map(name => models.find(m => m.name === name))
@@ -172,7 +156,7 @@ export type GeminiModel =
 ${unionType};
 
 /**
- * Default fallback order for stable models
+ * Default fallback order: current GA models with free-tier access, lite first.
  * Preview and experimental models must be explicitly specified
  */
 export const DEFAULT_FALLBACK_ORDER: GeminiModel[] = [

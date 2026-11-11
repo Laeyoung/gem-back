@@ -133,7 +133,10 @@ export class RateLimitTracker {
    */
   getStatus(model: GeminiModel, apiKeyIndex?: number): RateLimitStatus {
     const key = this.getKey(model, apiKeyIndex);
-    const config = this.defaultLimits[model];
+    // Models outside ALL_MODELS (removed IDs, or forward-compat IDs newer than
+    // this library release) have no seeded entry — use the conservative default
+    // instead of throwing.
+    const config: RateLimitConfig = this.defaultLimits[model] ?? { rpm: 15, rpd: 1500 };
     const history = this.requestHistory.get(key) || [];
 
     const now = new Date();

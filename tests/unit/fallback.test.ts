@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GemBack } from '../../src/client/FallbackClient';
 import { GeminiClient } from '../../src/client/GeminiClient';
 import { GeminiBackError } from '../../src/types/errors';
+import { DEFAULT_FALLBACK_ORDER } from '../../src/types/models';
 
 vi.mock('../../src/client/GeminiClient');
 
@@ -26,15 +27,15 @@ describe('GemBack', () => {
     it('should use default fallback order', () => {
       const client = new GemBack({ apiKey: 'test-key' });
       const stats = client.getFallbackStats();
-      expect(stats.modelUsage).toHaveProperty('gemini-3.1-flash-lite');
-      expect(stats.modelUsage).toHaveProperty('gemini-3.5-flash');
+      expect(stats.modelUsage).toHaveProperty('gemini-3.5-flash-lite');
+      expect(stats.modelUsage).toHaveProperty('gemini-3.6-flash');
       expect(stats.modelUsage).toHaveProperty('gemini-3-flash-preview');
     });
 
     it('should accept custom fallback order', () => {
       const client = new GemBack({
         apiKey: 'test-key',
-        fallbackOrder: ['gemini-3.5-flash', 'gemini-2.5-flash-lite'],
+        fallbackOrder: ['gemini-3.6-flash', 'gemini-2.5-flash-lite'],
       });
       expect(client).toBeInstanceOf(GemBack);
     });
@@ -44,7 +45,7 @@ describe('GemBack', () => {
     it('should succeed on first model', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-3.1-flash-lite' as const,
+        model: 'gemini-3.5-flash-lite' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -60,7 +61,7 @@ describe('GemBack', () => {
       const rateLimitError = new Error('429 Rate limit exceeded');
       const successResponse = {
         text: 'Success',
-        model: 'gemini-3.5-flash' as const,
+        model: 'gemini-3.6-flash' as const,
         finishReason: 'STOP',
       };
 
@@ -71,7 +72,7 @@ describe('GemBack', () => {
       const client = new GemBack({ apiKey: 'test-key', maxRetries: 0 });
       const response = await client.generate('Hello');
 
-      expect(response.model).toBe('gemini-3.5-flash');
+      expect(response.model).toBe('gemini-3.6-flash');
       expect(mockGeminiClient.generate).toHaveBeenCalledTimes(2);
     });
 
@@ -94,7 +95,7 @@ describe('GemBack', () => {
       );
       const successResponse = {
         text: 'Recovered',
-        model: 'gemini-3.5-flash' as const,
+        model: 'gemini-3.6-flash' as const,
         finishReason: 'STOP',
       };
 
@@ -105,12 +106,12 @@ describe('GemBack', () => {
       // maxRetries > 0 to prove the 429 does NOT consume the retry budget.
       const client = new GemBack({
         apiKey: 'test-key',
-        fallbackOrder: ['gemini-3.1-flash-lite', 'gemini-3.5-flash'],
+        fallbackOrder: ['gemini-3.5-flash-lite', 'gemini-3.6-flash'],
         maxRetries: 3,
       });
       const response = await client.generate('Hello');
 
-      expect(response.model).toBe('gemini-3.5-flash');
+      expect(response.model).toBe('gemini-3.6-flash');
       // Exactly one call to the exhausted model (no retries) + one to the fallback.
       expect(mockGeminiClient.generate).toHaveBeenCalledTimes(2);
     });
@@ -139,8 +140,13 @@ describe('GemBack', () => {
         expect((err as GeminiBackError).message).toContain('All models failed');
       }
 
-      // Should have tried all default fallback models (currently 3: gemini-3.1-flash-lite, gemini-3.5-flash, gemini-3-flash-preview)
-      expect(mockGeminiClient.generate).toHaveBeenCalledTimes(3);
+      // Should have tried all default fallback models (currently 3)
+      expect(mockGeminiClient.generate).toHaveBeenCalledTimes(DEFAULT_FALLBACK_ORDER.length);
+      expect(DEFAULT_FALLBACK_ORDER).toEqual([
+        'gemini-3.5-flash-lite',
+        'gemini-3.6-flash',
+        'gemini-3.8-flash',
+      ]);
     });
 
     it('should use specified model when provided in options', async () => {
@@ -167,7 +173,7 @@ describe('GemBack', () => {
       const timeoutError = new Error('Request timeout');
       const successResponse = {
         text: 'Success',
-        model: 'gemini-3.1-flash-lite' as const,
+        model: 'gemini-3.5-flash-lite' as const,
         finishReason: 'STOP',
       };
 
@@ -203,15 +209,15 @@ describe('GemBack', () => {
       expect(chunks).toHaveLength(3); // 2 text chunks + 1 complete
       expect(chunks[0]).toEqual({
         text: 'Hello ',
-        model: 'gemini-3.1-flash-lite',
+        model: 'gemini-3.5-flash-lite',
         isComplete: false,
       });
       expect(chunks[1]).toEqual({
         text: 'World',
-        model: 'gemini-3.1-flash-lite',
+        model: 'gemini-3.5-flash-lite',
         isComplete: false,
       });
-      expect(chunks[2]).toEqual({ text: '', model: 'gemini-3.1-flash-lite', isComplete: true });
+      expect(chunks[2]).toEqual({ text: '', model: 'gemini-3.5-flash-lite', isComplete: true });
     });
 
     it('records an AttemptRecord and falls back when stream yields zero chunks', async () => {
@@ -242,7 +248,7 @@ describe('GemBack', () => {
 
       const client = new GemBack({
         apiKey: 'test-key',
-        fallbackOrder: ['gemini-3.5-flash'],
+        fallbackOrder: ['gemini-3.6-flash'],
         logLevel: 'silent',
       });
 
@@ -259,7 +265,7 @@ describe('GemBack', () => {
       expect(err).toBeDefined();
       expect(err.allAttempts).toHaveLength(1);
       expect(err.allAttempts[0].error).toBe('Empty stream response (no chunks yielded)');
-      expect(err.allAttempts[0].model).toBe('gemini-3.5-flash');
+      expect(err.allAttempts[0].model).toBe('gemini-3.6-flash');
     });
 
     it('records empty-stream AttemptRecord on generateContentStream path', async () => {
@@ -268,7 +274,7 @@ describe('GemBack', () => {
 
       const client = new GemBack({
         apiKey: 'test-key',
-        fallbackOrder: ['gemini-3.5-flash'],
+        fallbackOrder: ['gemini-3.6-flash'],
         logLevel: 'silent',
       });
 
@@ -309,7 +315,7 @@ describe('GemBack', () => {
         chunks.push(chunk);
       }
 
-      expect(chunks[0].model).toBe('gemini-3.5-flash');
+      expect(chunks[0].model).toBe('gemini-3.6-flash');
     });
 
     it('should fall back on a structured 429 quota error thrown from the stream', async () => {
@@ -340,7 +346,7 @@ describe('GemBack', () => {
 
       const client = new GemBack({
         apiKey: 'test-key',
-        fallbackOrder: ['gemini-3.1-flash-lite', 'gemini-3.5-flash'],
+        fallbackOrder: ['gemini-3.5-flash-lite', 'gemini-3.6-flash'],
       });
       const stream = client.generateStream('Hello');
 
@@ -349,7 +355,7 @@ describe('GemBack', () => {
         chunks.push(chunk);
       }
 
-      expect(chunks[0].model).toBe('gemini-3.5-flash');
+      expect(chunks[0].model).toBe('gemini-3.6-flash');
       expect(mockGeminiClient.generateStream).toHaveBeenCalledTimes(2);
     });
   });
@@ -371,18 +377,18 @@ describe('GemBack', () => {
       mockGeminiClient.generateContent = vi
         .fn()
         .mockRejectedValueOnce(quota429)
-        .mockResolvedValueOnce({ text: 'Recovered', model: 'gemini-3.5-flash', finishReason: 'STOP' });
+        .mockResolvedValueOnce({ text: 'Recovered', model: 'gemini-3.6-flash', finishReason: 'STOP' });
 
       const client = new GemBack({
         apiKey: 'test-key',
-        fallbackOrder: ['gemini-3.1-flash-lite', 'gemini-3.5-flash'],
+        fallbackOrder: ['gemini-3.5-flash-lite', 'gemini-3.6-flash'],
         maxRetries: 3,
       });
       const response = await client.generateContent({
         contents: [{ role: 'user', parts: [{ text: 'Hello' }] }],
       });
 
-      expect(response.model).toBe('gemini-3.5-flash');
+      expect(response.model).toBe('gemini-3.6-flash');
       // One call to the exhausted model (no retries) + one to the fallback.
       expect(mockGeminiClient.generateContent).toHaveBeenCalledTimes(2);
     });
@@ -401,7 +407,7 @@ describe('GemBack', () => {
 
       const client = new GemBack({
         apiKey: 'test-key',
-        fallbackOrder: ['gemini-3.1-flash-lite', 'gemini-3.5-flash'],
+        fallbackOrder: ['gemini-3.5-flash-lite', 'gemini-3.6-flash'],
       });
 
       const chunks = [];
@@ -411,7 +417,7 @@ describe('GemBack', () => {
         chunks.push(chunk);
       }
 
-      expect(chunks[0].model).toBe('gemini-3.5-flash');
+      expect(chunks[0].model).toBe('gemini-3.6-flash');
       expect(mockGeminiClient.generateContentStream).toHaveBeenCalledTimes(2);
     });
   });
@@ -420,7 +426,7 @@ describe('GemBack', () => {
     it('should format chat messages correctly', async () => {
       const mockResponse = {
         text: 'Chat response',
-        model: 'gemini-3.1-flash-lite' as const,
+        model: 'gemini-3.5-flash-lite' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -438,7 +444,7 @@ describe('GemBack', () => {
         'User: Hello\n\nAssistant: Hi there\n\nUser: How are you?\n\nAssistant:';
       expect(mockGeminiClient.generate).toHaveBeenCalledWith(
         expectedPrompt,
-        'gemini-3.1-flash-lite',
+        'gemini-3.5-flash-lite',
         'test-key',
         undefined
       );
@@ -458,16 +464,16 @@ describe('GemBack', () => {
       );
       mockGeminiClient.generate
         .mockRejectedValueOnce(quota429)
-        .mockResolvedValueOnce({ text: 'Recovered', model: 'gemini-3.5-flash', finishReason: 'STOP' });
+        .mockResolvedValueOnce({ text: 'Recovered', model: 'gemini-3.6-flash', finishReason: 'STOP' });
 
       const client = new GemBack({
         apiKey: 'test-key',
-        fallbackOrder: ['gemini-3.1-flash-lite', 'gemini-3.5-flash'],
+        fallbackOrder: ['gemini-3.5-flash-lite', 'gemini-3.6-flash'],
         maxRetries: 3,
       });
       const response = await client.chat([{ role: 'user', content: 'Hello' }]);
 
-      expect(response.model).toBe('gemini-3.5-flash');
+      expect(response.model).toBe('gemini-3.6-flash');
       expect(mockGeminiClient.generate).toHaveBeenCalledTimes(2);
     });
   });
@@ -480,8 +486,8 @@ describe('GemBack', () => {
       expect(stats.totalRequests).toBe(0);
       expect(stats.successRate).toBe(0);
       // Verify some key models are present in usage stats
-      expect(stats.modelUsage).toHaveProperty('gemini-3.1-flash-lite', 0);
-      expect(stats.modelUsage).toHaveProperty('gemini-3.5-flash', 0);
+      expect(stats.modelUsage).toHaveProperty('gemini-3.5-flash-lite', 0);
+      expect(stats.modelUsage).toHaveProperty('gemini-3.6-flash', 0);
       expect(stats.modelUsage).toHaveProperty('gemini-3-flash-preview', 0);
       expect(stats.failureCount).toBe(0);
       expect(stats.apiKeyStats).toBeUndefined();
@@ -490,7 +496,7 @@ describe('GemBack', () => {
     it('should track successful requests', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-3.1-flash-lite' as const,
+        model: 'gemini-3.5-flash-lite' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -501,7 +507,7 @@ describe('GemBack', () => {
       const stats = client.getFallbackStats();
       expect(stats.totalRequests).toBe(1);
       expect(stats.successRate).toBe(1);
-      expect(stats.modelUsage['gemini-3.1-flash-lite']).toBe(1);
+      expect(stats.modelUsage['gemini-3.5-flash-lite']).toBe(1);
       expect(stats.failureCount).toBe(0);
     });
 
@@ -527,7 +533,7 @@ describe('GemBack', () => {
       let callCount = 0;
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-3.1-flash-lite' as const,
+        model: 'gemini-3.5-flash-lite' as const,
         finishReason: 'STOP',
       };
 
@@ -573,7 +579,7 @@ describe('GemBack', () => {
     it('should rotate through API keys with round-robin', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-3.1-flash-lite' as const,
+        model: 'gemini-3.5-flash-lite' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -596,7 +602,7 @@ describe('GemBack', () => {
     it('should use least-used strategy when specified', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-3.1-flash-lite' as const,
+        model: 'gemini-3.5-flash-lite' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -617,7 +623,7 @@ describe('GemBack', () => {
     it('should track API key usage in stats', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-3.1-flash-lite' as const,
+        model: 'gemini-3.5-flash-lite' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);
@@ -662,7 +668,7 @@ describe('GemBack', () => {
     it('should work with single apiKey in backward compatibility mode', async () => {
       const mockResponse = {
         text: 'Success',
-        model: 'gemini-3.1-flash-lite' as const,
+        model: 'gemini-3.5-flash-lite' as const,
         finishReason: 'STOP',
       };
       mockGeminiClient.generate.mockResolvedValue(mockResponse);

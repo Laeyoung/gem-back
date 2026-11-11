@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-10
+
+Re-syncs the bundled model metadata with the Gemini API and the official deprecations table (both read on 2026-11-10). Explicit `fallbackOrder` chains made of models that still exist — including `gemini-3.5-flash`, `gemini-3.1-flash-lite` and `gemini-3-flash-preview` — keep working unchanged.
+
+### BREAKING CHANGES
+
+- **`gemini-2.0-flash` and `gemini-2.0-flash-lite` removed from the `GeminiModel` union / `ALL_MODELS`.** Both were shut down upstream on 2026-06-01 and are no longer listed by `v1beta/models`. They now live in `REMOVED_MODELS`. TypeScript callers that still name them get a compile error; at runtime (JavaScript, or `as any`) `FallbackClient` skips them without calling the SDK, records `AttemptRecord.reason = 'removed_from_api'`, logs the recommended replacement once (`gemini-3.6-flash` / `gemini-3.1-flash-lite`) and continues with the next model.
+- **`DEFAULT_FALLBACK_ORDER` changed** to current GA models with a confirmed free-tier quota and no shutdown date, lite first: `gemini-3.5-flash-lite` → `gemini-3.6-flash` → `gemini-3.8-flash` (was `gemini-3.1-flash-lite` → `gemini-3.5-flash` → `gemini-3-flash-preview`, all of which are now deprecated or superseded). `gemini-3.1-flash-lite` is left out because its 2027-05-07 shutdown date would make the default config log a deprecation warning. Callers relying on the previous order should pass an explicit `fallbackOrder`.
+- **`DeprecatedModelInfo.shutdownDate` is now optional** (`string | undefined`). Some models are superseded without an announced shutdown date; the field is omitted for those instead of carrying an invented date.
+- **`@google/genai` dependency moved from `^1.33.0` to `^2.32.0`.** gemback's own API is unaffected (the SDK's 2.0 breaking changes are Interactions-only), but projects that also import `@google/genai` directly will resolve 2.x.
+- **Node.js 18 is no longer supported: `engines.node` is now `>=20.0.0`.** `@google/genai` (1.33.0 and later, including ^2) already requires Node >= 20, so the old `>=18.0.0` range promised support the dependency did not provide. CI now runs on Node 20.
+
+### Added
+
+- **New models**: `gemini-3.5-flash-lite`, `gemini-3.6-flash`, `gemini-3.7-flash`, `gemini-3.8-flash`, `gemini-4-argon` (32,768 output tokens; the others 65,536).
+- **`REMOVED_MODELS` is now populated** (`gemini-2.0-flash`, `gemini-2.0-flash-lite`), plus an internal `REMOVED_MODEL_REPLACEMENTS` map used for the one-time removal error.
+- **`gemini-4-argon` added to `NON_FREE_TIER_MODELS`** — a free-tier key gets `429` with `limit: 0` for every free-tier quota metric.
+- **Per-model cause summary in the `ALL_MODELS_FAILED` message.** The message still starts with exactly `All models failed` (or `All models failed for streaming`) and now ends with a bounded summary built from the attempt records, e.g. `All models failed. Please try again later. [gemini-3.5-flash-lite: 429 RESOURCE_EXHAUSTED; gemini-3.6-flash: 503 UNAVAILABLE]`. Capped at 600 characters (`+N more` when truncated); `key=…` parameters and `AIza…` tokens are redacted. Applies to `generate`, `generateStream`, `chat`, `generateContent` and `generateContentStream`. `allAttempts` is unchanged.
+
+### Changed
+
+- **`DEPRECATED_MODELS` aligned with the official deprecations table:**
+  - `gemini-2.5-flash`: `2026-06-17` → `2026-12-01` (requests reroute to `gemini-3.5-flash-lite` from that date).
+  - `gemini-2.5-pro`: `2026-06-17` → `2026-12-01` (reroutes to `gemini-3.8-flash`).
+  - `gemini-2.5-flash-lite`: **entry removed** — GA with no announced shutdown date (`2026-07-22` was wrong).
+  - `gemini-3.1-flash-lite`: **added**, shutdown `2027-05-07`, replacement `gemini-3.5-flash-lite`.
+  - `gemini-3.1-flash-lite-preview`: `2026-05-29` → `2026-05-25`.
+  - `gemini-3-flash-preview`, `gemini-3.5-flash`, `gemini-3.7-flash`: **added without a date** (superseded; replacements `gemini-3.6-flash`, `gemini-3.6-flash`, `gemini-3.8-flash`). The 3.5/3.7 endpoints are not shutting down — Google routes them to the newer model automatically.
+  - `gemini-2.0-flash*` entries moved to `REMOVED_MODELS`.
+- **Deprecation warning copy**: models without a date log `has been superseded (no shutdown date announced)` instead of `is scheduled for shutdown on …`.
+- **Non-free-tier warning copy** no longer hard-codes `as of 2026-05-28` and no longer repeats the `[GemBack]` prefix.
+- **`FREE_TIER_LIMITS` re-verified against the Google AI Studio dashboard** (Usage & Billing → Rate Limit, Free tier, read on 2026-11-11). Added `gemini-3.5-flash-lite` (15 RPM / 250K TPM / 500 RPD), `gemini-3.6-flash` and `gemini-3.8-flash` (5 / 250K / 20 each). The existing entries (`gemini-3.1-flash-lite` 15/250K/500, `gemini-2.5-flash-lite` 10/250K/20, `gemini-2.5-flash` and `gemini-3-flash-preview` 5/250K/20) are unchanged. `gemini-3.5-flash` and `gemini-3.7-flash` are not on the dashboard because Google routes their requests to `gemini-3.6-flash` / `gemini-3.8-flash`; they carry those models' limits (5/250K/20). `NON_FREE_TIER_MODELS` (`gemini-2.5-pro`, `gemini-3.1-pro-preview`, `gemini-4-argon`) all show a free-tier limit of 0 on the same dashboard.
+- **Model generator** (`scripts/`): previews the library already ships are kept while the API still serves them (a new major no longer drops `gemini-3-flash-preview` / `gemini-3.1-pro-preview`); `*-tts` suffix IDs and non-text families (transcribe, nano-banana, omni, image, computer-use) are excluded by an ID-shape allow-list plus a variant pattern in the new `scripts/model-filters.ts`; `fetch-models` reports shipped models the API dropped.
+
+### Fixed
+
+- `RateLimitTracker.getStatus()` threw `TypeError: Cannot read properties of undefined (reading 'rpm')` for model IDs outside `ALL_MODELS` (removed IDs, or forward-compat IDs newer than the installed release) — with `enableMonitoring: true` this crashed the request before any model was tried. Such IDs now use the conservative default.
+- `FallbackStats.modelUsage` became `NaN` for model IDs outside `ALL_MODELS`; it now counts from 0.
+
+### Not included (follow-up)
+
+- **`@google/genai` 3.x** is intentionally not adopted here: 3.0.0 requires Node >= 22 and changes the default Gemini Developer API version from `v1beta` to `v1`. Both need a separate evaluation.
+
+### Migration
+
+See README "Migrating from v0.7 to v0.8".
+
 ## [0.7.1] - 2026-06-03
 
 ### Fixed
@@ -713,7 +760,9 @@ const client = new GemBack(options);
 - Contribution guidelines
 - MIT License
 
-[Unreleased]: https://github.com/Laeyoung/gem-back/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/Laeyoung/gem-back/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/Laeyoung/gem-back/compare/v0.7.1...v0.8.0
+[0.7.1]: https://github.com/Laeyoung/gem-back/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/Laeyoung/gem-back/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/Laeyoung/gem-back/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/Laeyoung/gem-back/compare/v0.4.0...v0.5.0

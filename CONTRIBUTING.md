@@ -27,7 +27,7 @@ This project follows a standard code of conduct. Please be respectful and constr
 
 ### Prerequisites
 
-- Node.js >= 18.0.0
+- Node.js >= 20.0.0
 - npm, yarn, or pnpm
 
 ### Installation

@@ -42,6 +42,14 @@ function parseErrorBody(error: Error): ErrorBody | undefined {
   return undefined;
 }
 
+/**
+ * Human-readable error message with the SDK's JSON envelope unwrapped
+ * (original casing preserved). Falls back to the raw message.
+ */
+export function getErrorDetailMessage(error: Error): string {
+  return parseErrorBody(error)?.message ?? error.message;
+}
+
 export function normalizeErrorMessage(error: Error): string {
   const body = parseErrorBody(error);
   if (body?.message) {
@@ -80,7 +88,7 @@ export function getErrorStatusCode(error: Error): number | undefined {
  * Resolve the canonical RPC status name (e.g. `RESOURCE_EXHAUSTED`,
  * `UNAVAILABLE`, `PERMISSION_DENIED`) from an error, when present.
  */
-function getErrorStatusName(error: Error): string | undefined {
+export function getErrorStatusName(error: Error): string | undefined {
   const sdkStatus = (error as { status?: unknown }).status;
   if (typeof sdkStatus === 'string') {
     return sdkStatus.toUpperCase();

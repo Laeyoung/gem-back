@@ -22,7 +22,12 @@ import {
   isAuthError,
   getErrorStatusCode,
 } from '../utils/error-handler';
-import { DEPRECATED_MODELS, REMOVED_MODELS } from '../config/deprecated';
+import { buildAllModelsFailedMessage } from '../utils/attempt-summary';
+import {
+  DEPRECATED_MODELS,
+  REMOVED_MODELS,
+  REMOVED_MODEL_REPLACEMENTS,
+} from '../config/deprecated';
 import { NON_FREE_TIER_MODELS } from '../config/free-tier-limits';
 
 export class GemBack {
@@ -224,7 +229,7 @@ export class GemBack {
           this.healthMonitor.recordRequest(model, responseTime, true);
         }
 
-        this.stats.modelUsage[model]++;
+        this.stats.modelUsage[model] = (this.stats.modelUsage[model] ?? 0) + 1;
         this.updateSuccessRate();
         if (keyIndex !== null && this.apiKeyRotator) {
           this.apiKeyRotator.recordSuccess(keyIndex);
@@ -277,7 +282,7 @@ export class GemBack {
       this.apiKeyRotator.recordFailure(keyIndex);
     }
     throw new GeminiBackError(
-      'All models failed. Please try again later.',
+      buildAllModelsFailedMessage('All models failed. Please try again later.', attempts),
       'ALL_MODELS_FAILED',
       attempts
     );
@@ -293,9 +298,11 @@ export class GemBack {
     if (this.warnedDeprecatedModels.has(model)) return;
     const deprecation = DEPRECATED_MODELS.find((d) => d.model === model);
     if (deprecation) {
+      const status = deprecation.shutdownDate
+        ? `is scheduled for shutdown on ${deprecation.shutdownDate}`
+        : 'has been superseded (no shutdown date announced)';
       this.logger.warn(
-        `Model "${model}" is scheduled for shutdown on ${deprecation.shutdownDate}. ` +
-          `Consider migrating to "${deprecation.replacement}".`
+        `Model "${model}" ${status}. Consider migrating to "${deprecation.replacement}".`
       );
       this.warnedDeprecatedModels.add(model);
     }
@@ -314,7 +321,7 @@ export class GemBack {
     if (this.warnedNonFreeTierModels.has(model)) return;
     if (!(NON_FREE_TIER_MODELS as readonly string[]).includes(model)) return;
     this.logger.warn(
-      `[GemBack] Model "${model}" is not on the free tier as of 2026-05-28; ` +
+      `Model "${model}" is not on the free tier (per gemback's bundled quota snapshot); ` +
         `expect 4xx on free-tier API keys.`
     );
     this.warnedNonFreeTierModels.add(model);
@@ -330,8 +337,10 @@ export class GemBack {
   private skipIfRemoved(model: GeminiModel, attempts: AttemptRecord[]): boolean {
     if (!REMOVED_MODELS.includes(model)) return false;
     if (!this.erroredRemovedModels.has(model)) {
+      const replacement = REMOVED_MODEL_REPLACEMENTS[model];
       this.logger.error(
-        `Model "${model}" was removed from the Gemini API. Skipping SDK call and falling back.`
+        `Model "${model}" was removed from the Gemini API. Skipping SDK call and falling back.` +
+          (replacement ? ` Migrate to "${replacement}".` : '')
       );
       this.erroredRemovedModels.add(model);
     }
@@ -416,7 +425,7 @@ export class GemBack {
             this.healthMonitor.recordRequest(model, responseTime, true);
           }
 
-          this.stats.modelUsage[model]++;
+          this.stats.modelUsage[model] = (this.stats.modelUsage[model] ?? 0) + 1;
           this.updateSuccessRate();
           if (keyIndex !== null && this.apiKeyRotator) {
             this.apiKeyRotator.recordSuccess(keyIndex);
@@ -486,7 +495,10 @@ export class GemBack {
       this.apiKeyRotator.recordFailure(keyIndex);
     }
     throw new GeminiBackError(
-      'All models failed for streaming. Please try again later.',
+      buildAllModelsFailedMessage(
+        'All models failed for streaming. Please try again later.',
+        attempts
+      ),
       'ALL_MODELS_FAILED',
       attempts
     );
@@ -591,7 +603,7 @@ export class GemBack {
           this.healthMonitor.recordRequest(model, responseTime, true);
         }
 
-        this.stats.modelUsage[model]++;
+        this.stats.modelUsage[model] = (this.stats.modelUsage[model] ?? 0) + 1;
         this.updateSuccessRate();
         if (keyIndex !== null && this.apiKeyRotator) {
           this.apiKeyRotator.recordSuccess(keyIndex);
@@ -644,7 +656,7 @@ export class GemBack {
       this.apiKeyRotator.recordFailure(keyIndex);
     }
     throw new GeminiBackError(
-      'All models failed. Please try again later.',
+      buildAllModelsFailedMessage('All models failed. Please try again later.', attempts),
       'ALL_MODELS_FAILED',
       attempts
     );
@@ -733,7 +745,7 @@ export class GemBack {
             this.healthMonitor.recordRequest(model, responseTime, true);
           }
 
-          this.stats.modelUsage[model]++;
+          this.stats.modelUsage[model] = (this.stats.modelUsage[model] ?? 0) + 1;
           this.updateSuccessRate();
           if (keyIndex !== null && this.apiKeyRotator) {
             this.apiKeyRotator.recordSuccess(keyIndex);
@@ -803,7 +815,10 @@ export class GemBack {
       this.apiKeyRotator.recordFailure(keyIndex);
     }
     throw new GeminiBackError(
-      'All models failed for streaming. Please try again later.',
+      buildAllModelsFailedMessage(
+        'All models failed for streaming. Please try again later.',
+        attempts
+      ),
       'ALL_MODELS_FAILED',
       attempts
     );

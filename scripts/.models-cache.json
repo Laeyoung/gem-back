@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-28T15:25:20.797Z",
+  "timestamp": "2026-11-10T13:19:52.314Z",
   "models": [
     {
       "name": "gemini-2.5-flash",
@@ -28,62 +28,6 @@
         "batchGenerateContent"
       ],
       "version": "2.5"
-    },
-    {
-      "name": "gemini-2.0-flash",
-      "displayName": "Gemini 2.0 Flash",
-      "description": "Gemini 2.0 Flash",
-      "inputTokenLimit": 1048576,
-      "outputTokenLimit": 8192,
-      "supportedMethods": [
-        "generateContent",
-        "countTokens",
-        "createCachedContent",
-        "batchGenerateContent"
-      ],
-      "version": "2.0"
-    },
-    {
-      "name": "gemini-2.0-flash-001",
-      "displayName": "Gemini 2.0 Flash 001",
-      "description": "Stable version of Gemini 2.0 Flash, our fast and versatile multimodal model for scaling across diverse tasks, released in January of 2025.",
-      "inputTokenLimit": 1048576,
-      "outputTokenLimit": 8192,
-      "supportedMethods": [
-        "generateContent",
-        "countTokens",
-        "createCachedContent",
-        "batchGenerateContent"
-      ],
-      "version": "2.0"
-    },
-    {
-      "name": "gemini-2.0-flash-lite-001",
-      "displayName": "Gemini 2.0 Flash-Lite 001",
-      "description": "Stable version of Gemini 2.0 Flash-Lite",
-      "inputTokenLimit": 1048576,
-      "outputTokenLimit": 8192,
-      "supportedMethods": [
-        "generateContent",
-        "countTokens",
-        "createCachedContent",
-        "batchGenerateContent"
-      ],
-      "version": "2.0"
-    },
-    {
-      "name": "gemini-2.0-flash-lite",
-      "displayName": "Gemini 2.0 Flash-Lite",
-      "description": "Gemini 2.0 Flash-Lite",
-      "inputTokenLimit": 1048576,
-      "outputTokenLimit": 8192,
-      "supportedMethods": [
-        "generateContent",
-        "countTokens",
-        "createCachedContent",
-        "batchGenerateContent"
-      ],
-      "version": "2.0"
     },
     {
       "name": "gemini-2.5-flash-preview-tts",
@@ -202,20 +146,6 @@
         "batchGenerateContent"
       ],
       "version": "2.0"
-    },
-    {
-      "name": "gemini-3-pro-preview",
-      "displayName": "Gemini 3 Pro Preview",
-      "description": "Gemini 3 Pro Preview",
-      "inputTokenLimit": 1048576,
-      "outputTokenLimit": 65536,
-      "supportedMethods": [
-        "generateContent",
-        "countTokens",
-        "createCachedContent",
-        "batchGenerateContent"
-      ],
-      "version": "3-pro-preview-11-2025"
     },
     {
       "name": "gemini-3-flash-preview",
@@ -353,6 +283,32 @@
       "version": "3.0"
     },
     {
+      "name": "gemini-3.1-flash-lite-image",
+      "displayName": "Nano Banana 2 Lite",
+      "description": "Gemini 3.1 Flash Lite Image.",
+      "inputTokenLimit": 65536,
+      "outputTokenLimit": 65536,
+      "supportedMethods": [
+        "generateContent",
+        "countTokens",
+        "batchGenerateContent"
+      ],
+      "version": "3.0"
+    },
+    {
+      "name": "gemini-nano-banana-2.1",
+      "displayName": "Nano Banana 2.1",
+      "description": "Gemini Nano Banana 2.1.",
+      "inputTokenLimit": 65536,
+      "outputTokenLimit": 65536,
+      "supportedMethods": [
+        "generateContent",
+        "countTokens",
+        "batchGenerateContent"
+      ],
+      "version": "3.0"
+    },
+    {
       "name": "gemini-3.5-flash",
       "displayName": "Gemini 3.5 Flash",
       "description": "Gemini 3.5 Flash",
@@ -365,6 +321,123 @@
         "batchGenerateContent"
       ],
       "version": "3.5-flash-05-2026"
+    },
+    {
+      "name": "gemini-3.5-flash-lite",
+      "displayName": "Gemini 3.5 Flash Lite",
+      "description": "Gemini 3.5 Flash Lite",
+      "inputTokenLimit": 1048576,
+      "outputTokenLimit": 65536,
+      "supportedMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+      ],
+      "version": "3.5-flash-lite-07-2026"
+    },
+    {
+      "name": "gemini-omni-flash-preview",
+      "displayName": "Gemini Omni Flash Preview",
+      "description": "Gemini Omni Flash Preview",
+      "inputTokenLimit": 131072,
+      "outputTokenLimit": 65536,
+      "supportedMethods": [
+        "generateContent",
+        "countTokens"
+      ],
+      "version": "001"
+    },
+    {
+      "name": "gemini-omni-1.1-flash",
+      "displayName": "Gemini Omni 1.1 Flash",
+      "description": "Gemini Omni 1.1 Flash ",
+      "inputTokenLimit": 131072,
+      "outputTokenLimit": 65536,
+      "supportedMethods": [
+        "generateContent",
+        "countTokens"
+      ],
+      "version": "001"
+    },
+    {
+      "name": "gemini-omni-1.2-flash",
+      "displayName": "Gemini Omni 1.2 Flash",
+      "description": "Gemini Omni 1.2 Flash",
+      "inputTokenLimit": 131072,
+      "outputTokenLimit": 65536,
+      "supportedMethods": [
+        "generateContent",
+        "countTokens"
+      ],
+      "version": "001"
+    },
+    {
+      "name": "gemini-3.5-transcribe",
+      "displayName": "Gemini 3.5 Transcribe",
+      "description": "Gemini 3.5 Transcribe",
+      "inputTokenLimit": 98304,
+      "outputTokenLimit": 32768,
+      "supportedMethods": [
+        "generateContent",
+        "countTokens"
+      ],
+      "version": "3.5-transcribe-08-2026"
+    },
+    {
+      "name": "gemini-3.6-flash",
+      "displayName": "Gemini 3.6 Flash",
+      "description": "Gemini 3.6 Flash",
+      "inputTokenLimit": 1048576,
+      "outputTokenLimit": 65536,
+      "supportedMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+      ],
+      "version": "3.6-flash-07-2026"
+    },
+    {
+      "name": "gemini-3.7-flash",
+      "displayName": "Gemini 3.7 Flash",
+      "description": "Gemini 3.7 Flash",
+      "inputTokenLimit": 1048576,
+      "outputTokenLimit": 65536,
+      "supportedMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+      ],
+      "version": "3.7-flash-08-2026"
+    },
+    {
+      "name": "gemini-3.8-flash",
+      "displayName": "Gemini 3.8 Flash",
+      "description": "Gemini 3.8 Flash",
+      "inputTokenLimit": 1048576,
+      "outputTokenLimit": 65536,
+      "supportedMethods": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+      ],
+      "version": "3.0"
+    },
+    {
+      "name": "gemini-4-argon",
+      "displayName": "Gemini 4 Argon",
+      "description": "Gemini 4 Argon",
+      "inputTokenLimit": 1048576,
+      "outputTokenLimit": 32768,
+      "supportedMethods": [
+        "generateContent",
+        "countTokens",
+        "batchGenerateContent"
+      ],
+      "version": "3.0"
     },
     {
       "name": "lyria-3-clip-preview",
@@ -391,6 +464,18 @@
       "version": "lyria-3-pro-preview"
     },
     {
+      "name": "lyria-3.5",
+      "displayName": "Lyria 3.5",
+      "description": "Music Generation model",
+      "inputTokenLimit": 1048576,
+      "outputTokenLimit": 65536,
+      "supportedMethods": [
+        "generateContent",
+        "countTokens"
+      ],
+      "version": "3.5"
+    },
+    {
       "name": "gemini-3.1-flash-tts-preview",
       "displayName": "Gemini 3.1 Flash TTS Preview",
       "description": "Gemini 3.1 Flash TTS Preview",
@@ -404,21 +489,35 @@
       "version": "3.1-flash-tts-preview"
     },
     {
-      "name": "gemini-robotics-er-1.5-preview",
-      "displayName": "Gemini Robotics-ER 1.5 Preview",
-      "description": "Gemini Robotics-ER 1.5 Preview",
-      "inputTokenLimit": 1048576,
-      "outputTokenLimit": 65536,
+      "name": "gemini-3.8-flash-tts",
+      "displayName": "Gemini 3.8 Flash TTS",
+      "description": "Gemini 3.8 Flash TTS",
+      "inputTokenLimit": 8192,
+      "outputTokenLimit": 16384,
       "supportedMethods": [
         "generateContent",
-        "countTokens"
+        "countTokens",
+        "batchGenerateContent"
       ],
-      "version": "1.5-preview"
+      "version": "3.8-flash-tts"
     },
     {
-      "name": "gemini-robotics-er-1.6-preview",
-      "displayName": "Gemini Robotics-ER 1.6 Preview",
-      "description": "Gemini Robotics-ER 1.6 Preview",
+      "name": "gemini-3.8-flash-lite-tts",
+      "displayName": "Gemini 3.8 Flash Lite TTS",
+      "description": "Gemini 3.8 Flash Lite TTS",
+      "inputTokenLimit": 8192,
+      "outputTokenLimit": 16384,
+      "supportedMethods": [
+        "generateContent",
+        "countTokens",
+        "batchGenerateContent"
+      ],
+      "version": "3.8-flash-lite-tts"
+    },
+    {
+      "name": "gemini-robotics-er-2-preview",
+      "displayName": "Gemini Robotics-ER 2 Preview",
+      "description": "Gemini Robotics-ER 2 Preview",
       "inputTokenLimit": 131072,
       "outputTokenLimit": 65536,
       "supportedMethods": [
@@ -427,7 +526,7 @@
         "createCachedContent",
         "batchGenerateContent"
       ],
-      "version": "1.6-preview"
+      "version": "2-preview"
     },
     {
       "name": "gemini-2.5-computer-use-preview-10-2025",
@@ -445,7 +544,7 @@
       "name": "antigravity-preview-05-2026",
       "displayName": "Antigravity Agent Preview",
       "description": "Preview release of Antigravity Agent (05-2026)",
-      "inputTokenLimit": 131072,
+      "inputTokenLimit": 1048576,
       "outputTokenLimit": 65536,
       "supportedMethods": [
         "generateContent",
@@ -454,10 +553,34 @@
       "version": "0.1"
     },
     {
+      "name": "antigravity-preview-09-2026",
+      "displayName": "Antigravity Agent Preview",
+      "description": "Preview release of Antigravity Agent (09-2026)",
+      "inputTokenLimit": 1048576,
+      "outputTokenLimit": 65536,
+      "supportedMethods": [
+        "generateContent",
+        "countTokens"
+      ],
+      "version": "0.1"
+    },
+    {
+      "name": "antigravity-preview-latest",
+      "displayName": "Antigravity Agent Preview Latest",
+      "description": "Latest preview release of Antigravity Agent",
+      "inputTokenLimit": 1048576,
+      "outputTokenLimit": 65536,
+      "supportedMethods": [
+        "generateContent",
+        "countTokens"
+      ],
+      "version": "Antigravity Agent Preview Latest"
+    },
+    {
       "name": "deep-research-max-preview-04-2026",
       "displayName": "Deep Research Max Preview (Apr-21-2026)",
       "description": "Preview release (April 21st, 2026) of Deep Research Max",
-      "inputTokenLimit": 131072,
+      "inputTokenLimit": 1048576,
       "outputTokenLimit": 65536,
       "supportedMethods": [
         "generateContent",
@@ -469,7 +592,7 @@
       "name": "deep-research-preview-04-2026",
       "displayName": "Deep Research Preview (Apr-21-2026)",
       "description": "Preview release (April 21th, 2026) of Deep Research",
-      "inputTokenLimit": 131072,
+      "inputTokenLimit": 1048576,
       "outputTokenLimit": 65536,
       "supportedMethods": [
         "generateContent",
@@ -479,9 +602,9 @@
     },
     {
       "name": "deep-research-pro-preview-12-2025",
-      "displayName": "Deep Research Pro Preview (Dec-12-2025)",
-      "description": "Preview release (December 12th, 2025) of Deep Research Pro",
-      "inputTokenLimit": 131072,
+      "displayName": "Deep Research Pro Preview (Dec-12-2025) [Rerouted]",
+      "description": "Deprecated preview agent; automatically rerouting traffic to deep-research-preview-04-2026.",
+      "inputTokenLimit": 1048576,
       "outputTokenLimit": 65536,
       "supportedMethods": [
         "generateContent",

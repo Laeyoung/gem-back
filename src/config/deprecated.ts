@@ -12,15 +12,24 @@ export type DeprecationReason = 'replaced_by_newer' | 'removed_from_api' | 'tier
 
 /**
  * Deprecated model information
- * Models that are scheduled for shutdown with replacement recommendations
+ * Models that are scheduled for shutdown, or superseded, with replacement
+ * recommendations. Source: the official deprecations table
+ * (https://aistudio.google.com/docs/deprecations), last synced 2026-11-10.
+ * Dates in that table are the EARLIEST possible retirement dates.
  *
- * Note: Preview models (e.g. gemini-3-flash-preview, gemini-3.1-pro-preview)
- * are inherently unstable and may be removed by Google without prior deprecation
- * notice. This list only tracks officially announced deprecation schedules.
+ * Note: Preview models (e.g. gemini-3.1-pro-preview) are inherently unstable
+ * and may be removed by Google without prior deprecation notice. This list
+ * only tracks officially announced deprecations / recommended replacements.
  */
 export interface DeprecatedModelInfo {
   model: GeminiModel;
-  shutdownDate: string; // ISO date string (YYYY-MM-DD)
+  /**
+   * ISO date string (YYYY-MM-DD) of the announced shutdown (or the date from
+   * which requests are rerouted to the replacement). Omitted when the model is
+   * superseded but no shutdown date has been announced — e.g. endpoints that
+   * Google keeps alive and transparently routes to a newer model.
+   */
+  shutdownDate?: string;
   replacement: GeminiModel;
   reason: DeprecationReason;
   /**
@@ -31,67 +40,81 @@ export interface DeprecatedModelInfo {
 }
 
 /**
- * Models that were removed from the upstream Gemini API since the last release.
+ * Models that were removed from the upstream Gemini API.
  *
- * Empty by default — populated only when `npm run fetch-models` (Phase 1 of the
- * v0.7+ release process) detects a model that disappeared. Calls referencing
- * these IDs are guaranteed to 404 and `FallbackClient` will skip the SDK call
- * entirely (see `AttemptRecord.reason === 'removed_from_api'`).
+ * Populated when `npm run fetch-models` reports a shipped model that
+ * disappeared from `v1beta/models`. Calls referencing these IDs are guaranteed
+ * to 404, so `FallbackClient` skips the SDK call entirely and falls through to
+ * the next model (see `AttemptRecord.reason === 'removed_from_api'`).
  *
  * Typed as `readonly string[]` (not `readonly GeminiModel[]`) because removed
  * model IDs are by definition no longer members of the `GeminiModel` union.
- * Downstream code that needs to detect ALL_MODELS shrinkage can take the diff:
- *
- * ```ts
- * const stillKnown = new Set<string>(ALL_MODELS);
- * const justRemoved = REMOVED_MODELS.filter((m) => !stillKnown.has(m));
- * ```
+ * TypeScript callers still naming them get a compile error; JavaScript callers
+ * (or `as any` casts) degrade gracefully at runtime via the skip path.
  */
-export const REMOVED_MODELS: readonly string[] = [] as const;
+export const REMOVED_MODELS: readonly string[] = [
+  'gemini-2.0-flash', // shut down 2026-06-01
+  'gemini-2.0-flash-lite', // shut down 2026-06-01
+] as const;
+
+/**
+ * Officially recommended replacement for each removed model, surfaced in the
+ * one-time runtime error so callers know what to migrate to.
+ */
+export const REMOVED_MODEL_REPLACEMENTS: Readonly<Record<string, GeminiModel>> = Object.freeze({
+  'gemini-2.0-flash': 'gemini-3.6-flash',
+  'gemini-2.0-flash-lite': 'gemini-3.1-flash-lite',
+});
 
 export const DEPRECATED_MODELS: DeprecatedModelInfo[] = [
   {
-    model: 'gemini-2.0-flash',
-    shutdownDate: '2026-06-01',
-    replacement: 'gemini-3-flash-preview',
-    reason: 'replaced_by_newer',
-    notes: 'Gemini 2.0 series end of life',
-  },
-  {
-    model: 'gemini-2.0-flash-lite',
-    shutdownDate: '2026-06-01',
-    replacement: 'gemini-3.1-flash-lite',
-    reason: 'replaced_by_newer',
-    notes: 'Gemini 2.0 series end of life',
-  },
-  {
     model: 'gemini-2.5-flash',
-    shutdownDate: '2026-06-17',
-    replacement: 'gemini-3.1-flash-lite',
+    shutdownDate: '2026-12-01',
+    replacement: 'gemini-3.5-flash-lite',
     reason: 'replaced_by_newer',
-    notes:
-      'Gemini 2.5 Flash scheduled deprecation — replaced by stable 3.1 Flash Lite for highest RPD',
+    notes: 'Deprecated; from 2026-12-01 requests are rerouted to gemini-3.5-flash-lite.',
   },
   {
     model: 'gemini-2.5-pro',
-    shutdownDate: '2026-06-17',
-    replacement: 'gemini-3.1-pro-preview',
+    shutdownDate: '2026-12-01',
+    replacement: 'gemini-3.8-flash',
     reason: 'replaced_by_newer',
-    notes: 'Gemini 2.5 Pro scheduled deprecation',
+    notes: 'Deprecated; from 2026-12-01 requests are rerouted to gemini-3.8-flash.',
   },
   {
-    model: 'gemini-2.5-flash-lite',
-    shutdownDate: '2026-07-22',
-    replacement: 'gemini-3.1-flash-lite',
+    model: 'gemini-3.1-flash-lite',
+    shutdownDate: '2027-05-07',
+    replacement: 'gemini-3.5-flash-lite',
     reason: 'replaced_by_newer',
-    notes: 'Gemini 2.5 Flash-Lite scheduled deprecation',
+    notes: 'GA model with an announced shutdown date.',
   },
   {
     model: 'gemini-3.1-flash-lite-preview',
-    shutdownDate: '2026-05-29',
+    shutdownDate: '2026-05-25',
     replacement: 'gemini-3.1-flash-lite',
     reason: 'replaced_by_newer',
     notes:
-      'Stable gemini-3.1-flash-lite released; preview retained for backward compatibility but will be removed in a future release.',
+      'Deprecated preview; announced shutdown date has passed but the API still lists it. May disappear at any time.',
+  },
+  {
+    model: 'gemini-3-flash-preview',
+    replacement: 'gemini-3.6-flash',
+    reason: 'replaced_by_newer',
+    notes:
+      'Preview model; no shutdown date announced. Recommended replacement is gemini-3.6-flash.',
+  },
+  {
+    model: 'gemini-3.5-flash',
+    replacement: 'gemini-3.6-flash',
+    reason: 'replaced_by_newer',
+    notes:
+      'No longer selectable in AI Studio. The endpoint is not shutting down; requests are routed automatically to gemini-3.6-flash.',
+  },
+  {
+    model: 'gemini-3.7-flash',
+    replacement: 'gemini-3.8-flash',
+    reason: 'replaced_by_newer',
+    notes:
+      'No longer selectable in AI Studio. The endpoint is not shutting down; requests are routed automatically to gemini-3.8-flash.',
   },
 ];

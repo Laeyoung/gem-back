@@ -5,6 +5,115 @@
 
 ---
 
+## 2026-11-11 ~17:40 — v0.8.0 보강: 무료 티어 한도 번들, 기본 체인 3순위 `gemini-3.8-flash`, Node >= 20 (issue #36)
+
+### 배경
+2026-11-10 동기화 때는 무료 티어 수치를 읽을 수 없어 신규 모델에 한도를 넣지 않았고, `gemini-3.8-flash`는 프로브가 503만 받아 무료 티어 접근이 미확인이었음. 2026-11-11 메인테이너가 Google AI Studio 대시보드(Usage & Billing → Rate Limit, "All models" 보기)에서 수치를 직접 읽음. 계정의 모든 프로젝트가 Free tier, 확인 프로젝트는 "Gemini Project 2". 대시보드 "used / limit" 칸의 limit 값을 사용.
+
+### 1. `FREE_TIER_LIMITS`
+| 모델 | RPM | TPM | RPD |
+|---|---|---|---|
+| `gemini-3.5-flash-lite` | 15 | 250K | 500 |
+| `gemini-3.1-flash-lite` | 15 | 250K | 500 |
+| `gemini-3.6-flash` | 5 | 250K | 20 |
+| `gemini-3.8-flash` | 5 | 250K | 20 |
+| `gemini-3-flash-preview` | 5 | 250K | 20 |
+| `gemini-2.5-flash` | 5 | 250K | 20 |
+| `gemini-2.5-flash-lite` | 10 | 250K | 20 |
+| `gemini-2.5-pro`, `gemini-3.1-pro-preview`, `gemini-4-argon` | 0 | 0 | 0 |
+
+- 기존 5개 항목(2026-05-28 스냅샷)은 값이 그대로임을 확인. 신규 3개(3.5-flash-lite, 3.6-flash, 3.8-flash) 추가.
+- `gemini-3.5-flash`, `gemini-3.7-flash`는 대시보드에 없음 — deprecations 표대로 요청이 각각 3.6-flash / 3.8-flash로 자동 라우팅되기 때문. 두 항목은 라우팅 대상 모델의 한도(5/250K/20)를 그대로 씀.
+  - **검토한 대안**: 두 항목을 삭제해 트래커 기본값(15 RPM, TPM 미추적) 사용 → 실제로는 5 RPM 버킷에서 소비되는데 15 RPM으로 예측해 rate-limit 예측이 무의미해짐. 기각. 3.5-flash 항목은 이미 5/250K/20이었으므로 유지가 하위 호환에도 맞음.
+- `NON_FREE_TIER_MODELS`는 변경 없음(대시보드 limit 0으로 재확인). 대시보드의 "Gemini 4 Carbon"(0/0/0)은 라이브러리에 없는 모델이라 무시.
+
+### 2. `DEFAULT_FALLBACK_ORDER` → `gemini-3.5-flash-lite` → `gemini-3.6-flash` → `gemini-3.8-flash`
+- 3.8-flash를 뺐던 유일한 이유는 무료 티어 접근 미확인이었음. 대시보드에서 5 RPM / 20 RPD로 확인됐고 종료일도 없어 deprecation 경고 없이 별도 쿼터 버킷 하나가 늘어남.
+- **검토한 대안**
+  - 2개 유지 → 3.8-flash의 하루 20회를 기본 설정에서 버림. 근거가 사라졌으므로 기각.
+  - `gemini-3.1-flash-lite`(15 RPM / 500 RPD) 추가 → 쿼터는 가장 크지만 2027-05-07 종료 예정이라 기본 설정에서 매번 deprecation 경고. 기존 결정("경고 없는 현행 GA")과 충돌해 기각. README 예시에서 백업으로 계속 안내.
+  - 3.8-flash를 3.6-flash 앞에 두기 → 두 모델 한도가 같아 순서로 얻는 이득이 없음. 직전 릴리스에서 검증된 순서를 앞에 그대로 두는 편이 변화가 작음.
+- `scripts/generate-models.ts`의 `targetFallbackOrder`만 수정하고 `npm run generate-models`(커밋된 `scripts/models-data.json` 사용, API 미호출)로 재생성. 생성물 diff는 `DEFAULT_FALLBACK_ORDER`와 생성 시각뿐.
+
+### 3. `engines.node` `>=18.0.0` → `>=20.0.0`
+- `@google/genai`가 1.33.0부터 Node >= 20 요구(전날 기록한 불일치). gemback이 18을 약속해도 의존성이 받쳐주지 않음 → BREAKING CHANGES에 명시.
+- `.github/workflows/test.yml`이 Node 18 단일 버전으로 돌고 있어 20으로 변경(matrix 아님). release / test-pr / showcase 워크플로는 이미 20.
+- **검토한 대안**: 18 유지 + 문서 경고만 → 설치 시 엔진 불일치를 숨기는 셈이라 기각.
+
+### API 호출
+없음. `fetch-models` / `test:e2e` 미실행.
+
+### 검증
+- `npm run typecheck` / `lint` / `format:check` clean, `npm test` 374/374 (23 files), `npm run build` 성공.
+
+---
+
+## 2026-11-10 ~22:00 — v0.8.0: Gemini API 동기화 (issue #36)
+
+### 배경
+0.7.1의 모델 메타데이터는 2026-05-28 생성본. 2026-11-10 기준 `v1beta/models`(47개)와 공식 deprecations 표에서 벗어나 있었음: 2.0 계열 종료(2026-06-01), 신규 GA 모델(3.5-flash-lite / 3.6 / 3.7 / 3.8-flash / 4-argon), deprecation 날짜 변경. 다운스트림(knou-ibt)이 `gemini-3.5-flash → gemini-3.1-flash-lite → gemini-3-flash-preview` 체인을 쓰므로 이 세 ID는 깨지면 안 됨.
+
+### 1. 생성 스크립트
+- **문제**: `fetch-models`가 "최신 major의 preview만 허용" 규칙이라, API에 Gemini 4가 뜨자 `gemini-3-flash-preview` / `gemini-3.1-pro-preview` / `gemini-3.1-flash-lite-preview`가 union에서 빠질 상황. `EXCLUDED_VARIANT_PATTERN = /-tts-|-customtools$/`는 `-tts`로 끝나는 ID(`gemini-3.8-flash-tts`)와 비텍스트 계열(transcribe, nano-banana, omni)을 못 걸렀음. `calculatePriority`는 major 4를 "구버전(300)"으로 분류.
+- **수정**: 선택 규칙을 순수 함수 모듈 `scripts/model-filters.ts`로 분리.
+  - `isGeneralTextModel`: ID 형태 allow-list `^gemini-<major>[.<minor>]-` + variant deny 패턴(`-tts`, `-transcribe`, `-image`, `-computer-use`, `-customtools`).
+  - `selectLibraryModels`: stable ∪ 최신 major의 preview ∪ **라이브러리가 이미 싣고 있는 preview**(현재 `src/types/models.ts`에서 읽음).
+  - `fetch-models`가 "라이브러리엔 있는데 API에서 사라진 모델"을 경고로 출력 → `REMOVED_MODELS` 갱신 트리거.
+- **검토한 대안**
+  - preview 버전 조건을 아예 제거 → 구버전의 새 preview까지 무차별 유입. 기존 필터의 의도(신규 preview는 최신 major만)를 버리게 되어 기각.
+  - 유지할 preview를 수동 목록으로 관리 → 목록이 계속 자라고 누락 시 조용히 union에서 빠짐. 기각.
+  - 직전 `models-data.json`을 "기존 모델" 기준으로 사용 → `--all` 실행 한 번에 오염됨. 생성 결과물(`src/types/models.ts`)을 기준으로 삼는 편이 견고.
+  - 비텍스트 계열을 `MANUAL_EXCLUDES`에 나열 → omni-1.1/1.2처럼 버전이 늘 때마다 수정 필요. ID 형태 allow-list가 더 단순.
+- **결정 이유**: 규칙이 I/O 없는 순수 함수라 2026-11-10 API 스냅샷으로 단위 테스트 가능(`tests/unit/model-filters.test.ts`).
+
+### 2. 제거 모델 (`gemini-2.0-flash`, `gemini-2.0-flash-lite`)
+- `REMOVED_MODELS`에 등록, union/`ALL_MODELS`/`DEPRECATED_MODELS`/`NON_FREE_TIER_MODELS`에서 제거. 기존 skip 메커니즘(`reason: 'removed_from_api'`) 그대로 사용.
+- 1회성 에러 로그에 공식 대체 모델을 표기하도록 `REMOVED_MODEL_REPLACEMENTS` 추가 (index 미노출).
+- **부수 발견(수정)**: `ALL_MODELS` 밖의 ID(제거된 ID를 `RateLimitTracker`에 직접 넘기거나, 라이브러리보다 새로운 ID를 `as any`로 넘긴 경우)에서 `getStatus()`가 `TypeError`(config undefined) — `enableMonitoring: true`면 모델 시도 전에 요청이 죽음. 보수적 기본값으로 폴백. `modelUsage[model]++`가 `NaN`이 되는 것도 함께 수정. 메타데이터가 API보다 늦는 상황(이번 이슈의 본질)에서 크래시를 막는 방어.
+- **검토한 대안**: 제거된 ID를 대체 모델로 자동 치환 → 호출자가 모르는 모델로 과금/품질이 바뀜. 문서화된 skip 동작 유지.
+
+### 3. `DEPRECATED_MODELS`
+- 공식 표 반영: 2.5-flash/2.5-pro → 2026-12-01(리라우팅), 2.5-flash-lite 항목 삭제(종료일 미발표), 3.1-flash-lite 2027-05-07 추가, 3.1-flash-lite-preview 2026-05-25.
+- 종료일 없이 대체된 모델(3-flash-preview, 자동 라우팅되는 3.5-flash / 3.7-flash)을 표현하기 위해 **`shutdownDate`를 optional로 변경**. 경고 문구는 날짜가 없으면 `has been superseded (no shutdown date announced)`.
+- **검토한 대안**: 날짜를 임의로 채우기(기각 — 표에 없는 날짜를 만들지 않음) / `reason`에 `'superseded'` 추가(기각 — 기존 union `replaced_by_newer`로 충분, 타입 변경 최소화) / 해당 모델을 목록에서 제외(기각 — 사용자가 대체 모델 안내를 못 받음).
+- `gemini-3.1-pro-preview`는 표에 대체 모델이 없어(`replacement` 필수) 등록하지 않음.
+
+### 4. `DEFAULT_FALLBACK_ORDER`
+- 무료 티어 쿼터 수치는 더 이상 문서에 공개되지 않음(AI Studio 대시보드 전용) → RPD 순위를 매길 수 없어 **접근 가능 여부 프로브**로 결정. 무료 티어 키로 모델당 최소 `generateContent` 1회:
+
+  | 모델 | 결과 |
+  |---|---|
+  | `gemini-3.5-flash-lite` | 200 OK |
+  | `gemini-3.6-flash` | 200 OK |
+  | `gemini-3.8-flash` | 503 UNAVAILABLE ("currently experiencing high demand") — 3회 시도 모두 |
+  | `gemini-4-argon` | 429 RESOURCE_EXHAUSTED — `generate_content_free_tier_requests` / `..._input_token_count` 4개 metric 모두 `limit: 0` |
+
+- 결정: `gemini-3.5-flash-lite` → `gemini-3.6-flash` (lite 우선). 3.8-flash는 응답을 받지 못해 제외(유료 전용으로 단정할 근거도 없어 `NON_FREE_TIER_MODELS`에는 넣지 않음). 4-argon은 `NON_FREE_TIER_MODELS`.
+- **검토한 대안**: `gemini-3.1-flash-lite`(2026-05 기준 500 RPD)를 꼬리에 유지 → 종료일(2027-05-07)이 있는 모델이라 기본 체인에서 매번 deprecation 경고가 발생. 기본값은 "경고 없는 현행 GA"로 두고 README 예시에서 백업으로 안내.
+- 기본 체인이 3 → 2 모델로 줄었음. 3.8-flash 접근이 확인되면 3순위로 추가 검토.
+
+### 5. `FREE_TIER_LIMITS`
+- 수치를 지어내지 않음. 4-argon의 429 본문은 `limit: 0`만 알려주므로 항목 추가 없음. 신규 모델은 트래커 기본값(15 RPM, TPM 미추적). 기존 5개 항목은 2026-05-28 스냅샷이며 재검증하지 못했음을 주석에 명시.
+- **메인테이너 확인 필요**: `gemini-3.5-flash-lite`, `gemini-3.6-flash`, `gemini-3.7-flash`, `gemini-3.8-flash`의 RPM/TPM/RPD (AI Studio 대시보드), 그리고 자동 라우팅되는 `gemini-3.5-flash`의 기존 수치(5/250K/20)가 여전히 유효한지.
+
+### 6. "All models failed" 메시지
+- 접두사는 그대로(`All models failed` / `All models failed for streaming` — 다운스트림이 정규식 매칭), 뒤에 시도 기록 요약을 덧붙임: `[model: 429 RESOURCE_EXHAUSTED; model: 503 UNAVAILABLE]`.
+- `src/utils/attempt-summary.ts`: 구조화 에러는 `<code> <STATUS>`, 비구조화는 공백 정리 후 80자, 전체 600자 상한(`+N more`), `key=…`/`AIza…` 마스킹(잘라내기 **전에** 마스킹해 경계에서 키 조각이 남지 않게 함). `allAttempts`는 불변.
+- 4개 throw 지점(generate / generateStream / generateContent / generateContentStream; chat은 generate 위임) 모두 적용.
+
+### 7. `@google/genai` ^1.33.0 → ^2.32.0
+- 2.0.0 breaking change는 Interactions 전용. 2.32.0 설치 후 typecheck / 전체 테스트 통과, 빌드된 `dist/`로 JSON 모드 `generateContent` 실호출 1회 성공(`gemini-3.5-flash-lite`, `{"ok": true}`).
+- **3.x는 보류**: 3.0.0은 Node >= 22 요구 + Gemini Developer API 기본 버전이 v1beta → v1로 변경. 별도 평가 필요.
+- **발견**: `@google/genai`는 1.33.0부터 이미 `engines.node >= 20`. gemback `package.json`의 `engines.node >= 18`은 0.7.x부터 의존성과 불일치(이번 변경으로 생긴 것 아님). gemback engines 상향은 별도 결정 사항으로 남김.
+
+### 실 API 호출 수
+generateContent 총 7회(프로브 6: 3.5-flash-lite 1, 3.6-flash 1, 3.8-flash 3, 4-argon 1 / SDK 스모크 1). 그 외 zsh의 `$m:g…` 수식어 확장으로 URL이 깨진 요청 4건이 404(모델 미도달)로 끝남 — 이후 `${m}`로 수정.
+
+### 검증
+- `npm run typecheck` / `lint` / `format:check` clean, `npm test` 371/371 (23 files), `npm run build` 성공.
+
+---
+
 ## 2026-06-03 ~00:20 — fix: 구조화된 429(RESOURCE_EXHAUSTED) quota 오류 fallback 누락
 
 ### 배경 (다운스트림 버그 리포트)

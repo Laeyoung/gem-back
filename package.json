@@ -1,6 +1,6 @@
 {
   "name": "gemback",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "description": "Smart Gemini API Fallback Library for Node.js & TypeScript",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -58,7 +58,7 @@
   },
   "homepage": "https://github.com/Laeyoung/gem-back#readme",
   "dependencies": {
-    "@google/genai": "^1.33.0"
+    "@google/genai": "^2.32.0"
   },
   "devDependencies": {
     "@octokit/rest": "^20.0.0",
@@ -77,6 +77,6 @@
     "vitest": "^1.2.0"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   }
 }
